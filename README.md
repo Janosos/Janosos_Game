@@ -1,16 +1,48 @@
-# dino_run_flame
+# Janosos Game 🦖
 
-A new Flutter project.
+Un emocionante juego de "endless runner" estilo retro, creado con tecnología moderna.
 
-## Getting Started
+![Janosos Game](assets/images/title_retro.png)
 
-This project is a starting point for a Flutter application.
+## 🛠️ Tecnologías Utilizadas
 
-A few resources to get you started if this is your first Flutter project:
+Este proyecto ha sido desarrollado utilizando:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+*   **[Flutter](https://flutter.dev/)**: El framework de UI de Google para crear aplicaciones compiladas nativamente.
+*   **[Flame Engine](https://flame-engine.org/)**: Un motor de juegos 2D minimalista que se ejecuta sobre Flutter, proporcionando el bucle de juego, sistema de componentes (FCS), colisiones y física básica.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🎮 Características (Versión V3)
+
+*   **Multijugador Local / Selección de Personajes**: Juega con 6 personajes únicos (Jano, Parker, Chema, Conra, Shyno, Nakama).
+*   **Habilidades Únicas**:
+    *   *Jano*: Disparo destructor de obstáculos.
+    *   *Parker*: Vida extra (escudo pasivo).
+    *   *Chema*: Tanque con escudo regenerativo (con penalización de puntos).
+    *   *Conra*: Invisibilidad temporal.
+    *   *Shyno*: Doble salto.
+    *   *Nakama*: Planeo/Gravedad Zero.
+*   **Estética Retro**: Gráficos pixel art 16-bit, incluyendo UI personalizada y fondos animados.
+*   **Sistema de Vidas y Puntuación**: HUD dinámico con indicadores de salud y cooldowns.
+
+## 🚀 Cómo Ejecutar
+
+Asegúrate de tener Flutter instalado y configurado.
+
+```bash
+# Obtener dependencias
+flutter pub get
+
+# Ejecutar en Windows
+flutter run -d windows
+
+# Ejecutar en Android
+flutter run -d android
+```
+
+## 📂 Estructura del Proyecto
+
+*   `lib/game`: Contiene la lógica del juego (Componentes, HUD, Física).
+*   `assets/images`: Sprites y recursos gráficos.
+
+---
+*Desarrollado para la comunidad Janosos.*
