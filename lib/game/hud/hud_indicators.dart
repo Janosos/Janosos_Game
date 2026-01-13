@@ -57,8 +57,8 @@ class HudIndicators extends PositionComponent with HasGameRef<DinoRunGame> {
          timerPaint.render(canvas, timeLeft, Vector2(40, 5));
        }
     }
-    // Pistolero: Show cooldown?
-    else if (dino.characterType == CharacterType.pistolero) {
+    // Pistolero or Fantasma: Show cooldown
+    else if (dino.characterType == CharacterType.pistolero || dino.characterType == CharacterType.fantasma) {
         if (dino.cooldownTimer > 0) {
            timerPaint.render(canvas, dino.cooldownTimer.toStringAsFixed(1), Vector2(0, 0));
         } else {
