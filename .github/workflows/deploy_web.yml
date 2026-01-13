@@ -1,0 +1,28 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      
+      - run: flutter pub get
+
+      # Build for web with correct base href for GitHub Pages (repo name)
+      # CHANGE "Janosos_Game" if the repository name is different!
+      - run: flutter build web --release --base-href "/Janosos_Game/"
+
+      # Deploy to gh-pages branch
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
