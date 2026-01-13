@@ -27,29 +27,32 @@ class DinoRunApp extends StatelessWidget {
           return Center(
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(10),
-              ),
+              // Optional: Transparent background or remove decoration
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Janosos Game',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Navigate to Character Selection
+                   // Title
+                   Image.asset(
+                     'assets/images/title_retro.png',
+                     width: MediaQuery.of(context).size.width * 0.8, // Responsive width
+                     height: 150,
+                     fit: BoxFit.contain,
+                   ),
+                  const SizedBox(height: 50),
+                  // Retro Button
+                  GestureDetector(
+                    onTap: () {
                       game.overlays.remove('StartMenu');
                       game.overlays.add('CharacterSelection');
                     },
-                    child: const Text('Start Game', style: TextStyle(fontSize: 24)),
+                    child: MouseRegion( // Optional hover effect helper if needed
+                      cursor: SystemMouseCursors.click,
+                      child: Image.asset(
+                        'assets/images/start_button_retro.png',
+                        width: 200,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
                 ],
               ),

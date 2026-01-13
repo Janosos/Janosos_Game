@@ -44,7 +44,7 @@ def make_transparent(image_path):
         print(f"Failed to process {image_path}: {e}")
 
 assets_dir = r"c:\Users\Janosos\Desktop\Janosos Game\assets\images"
-files = ["heart_indicator.png", "tank_shield_icon.png", "ability_button.png"]
+files = ["heart_indicator.png", "tank_shield_icon.png", "ability_button.png", "title_retro.png", "start_button_retro.png", "bullet.png"]
 
 for f in files:
     make_transparent(os.path.join(assets_dir, f))
