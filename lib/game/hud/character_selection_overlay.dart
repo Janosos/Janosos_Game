@@ -4,12 +4,12 @@ import 'package:flame/components.dart';
 import '../dino_run_game.dart';
 
 enum CharacterType {
-  pistolero('El Pistolero', 'Disparo Destructor: Dispara un proyectil recto que destruye obstáculos. (Cooldown: 15s)'),
-  vitalista('El Vitalista', 'Vida Extra: Tiene una "capa" de vida adicional. El primer choque no lo mata.'),
-  tanque('El Tanque', 'Escudo con Costo: Absorbe un golpe (regenera 15s). Penalización: -500 puntos al impactar.'),
-  fantasma('El Fantasma', 'Intangibilidad: Se vuelve incorpóreo por 3 seg al activarse.'),
-  atleta('El Atleta', 'Doble Salto: Permite realizar un segundo salto en el aire.'),
-  gravedadZero('El Gravedad-Zero', 'Planeo: Mantén presionado el salto para reducir la velocidad de caída.');
+  pistolero('Jano', 'Disparo Destructor: Dispara un proyectil recto que destruye obstáculos. (Cooldown: 10s)'),
+  vitalista('Parker', 'Vida Extra: Tiene una vida adicional. El primer choque no lo mata.'),
+  tanque('Chema', 'Escudo con Costo: Absorbe un golpe (regenera 15s). Penalización: -500 puntos al impactar.'),
+  fantasma('Conra', 'Intangibilidad: Se vuelve incorpóreo por 3 seg. (Cooldown: 10s)'),
+  atleta('Shyno', 'Doble Salto: Permite realizar un segundo salto en el aire.'),
+  gravedadZero('Nakama', 'Planeo: Mantén presionado el salto para reducir la velocidad de caída.');
 
   final String name;
   final String description;
