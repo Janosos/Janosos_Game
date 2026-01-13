@@ -64,6 +64,7 @@ files = {
     # Title and Button now use Black BG cleaner
     "title_retro.png": clean_black_bg,
     "start_button_retro.png": clean_black_bg,
+    "version_v3_retro.png": clean_black_bg,
     
     # Bullet typically has grey artifacts, black cleaner might work if it was generated on black?
     # No, bullet was existing. Let's stick to generic or the previous grey cleaner if we had kept it.

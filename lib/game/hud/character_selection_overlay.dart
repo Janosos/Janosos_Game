@@ -7,7 +7,7 @@ enum CharacterType {
   pistolero('Jano', 'Disparo Destructor: Dispara un proyectil recto que destruye obstáculos. (Cooldown: 10s)'),
   vitalista('Parker', 'Vida Extra: Tiene una vida adicional. El primer choque no lo mata.'),
   tanque('Chema', 'Escudo con Costo: Absorbe un golpe (regenera 15s). Penalización: -500 puntos al impactar.'),
-  fantasma('Conra', 'Intangibilidad: Se vuelve incorpóreo por 3 seg. (Cooldown: 10s)'),
+  fantasma('Conra', 'Intangibilidad: se vuelve invisible por 3 seg. (Cooldown: 10s)'),
   atleta('Shyno', 'Doble Salto: Permite realizar un segundo salto en el aire.'),
   gravedadZero('Nakama', 'Planeo: Mantén presionado el salto para reducir la velocidad de caída.');
 
