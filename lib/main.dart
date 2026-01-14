@@ -72,7 +72,7 @@ class DinoRunApp extends StatelessWidget {
           child: IgnorePointer( // Ensure it doesn't block clicks
             child: Image.asset(
               'assets/images/version_v3_retro.png',
-              width: 50, // Small retro size
+              width: 35, // Reduced by 30%
               fit: BoxFit.contain,
             ),
           ),

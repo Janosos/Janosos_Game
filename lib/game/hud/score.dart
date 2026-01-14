@@ -37,10 +37,7 @@ class ScoreSystem extends TextComponent with HasGameRef<DinoRunGame> {
     // Increase score
     _score += dt * 10; 
     
-    // Check if we beat the high score immediately for UI thrill
-    if (_score.toInt() > _highScore) {
-      _highScore = _score.toInt();
-    }
+
     
     updateText();
   }

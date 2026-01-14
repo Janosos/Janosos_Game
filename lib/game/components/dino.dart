@@ -116,10 +116,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     
     // Shooting Animation
     SpriteAnimation? shootAnimation;
-    if (characterType == CharacterType.pistolero) {
-        final shootSprite = await gameRef.loadSprite('pistolero_shoot.png');
-        shootAnimation = SpriteAnimation.spriteList([shootSprite], stepTime: 1.0);
-    }
+
 
     animations = {
       DinoState.idle: runAnimation,

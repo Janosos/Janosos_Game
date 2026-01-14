@@ -68,7 +68,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
       'ability_button.png',
       'heart_indicator.png',
       'tank_shield_icon.png',
-      'pistolero_shoot.png',
+
       'jano_clean.png',
       'parker_clean.png',
       'chema_clean.png',
@@ -120,6 +120,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   }
 
   void gameOver() {
+    _scoreSystem.saveHighScore();
     pauseEngine();
     overlays.add('GameOverMenu');
   }
