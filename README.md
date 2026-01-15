@@ -24,6 +24,15 @@ Este proyecto ha sido desarrollado utilizando:
 *   **Estética Retro**: Gráficos pixel art 16-bit, incluyendo UI personalizada y fondos animados.
 *   **Sistema de Vidas y Puntuación**: HUD dinámico con indicadores de salud y cooldowns.
 
+## 🎵 Novedades Version V4
+
+*   **Sistema de Audio Completo**:
+    *   Música de fondo en loop (`LoopSong`).
+    *   Efectos de sonido para salto, selección, disparo, invisibilidad y daño.
+*   **Corrección de Bugs**:
+    *   Solución al problema de reproducción de audio en Windows.
+    *   Optimización de assets para transparencia (Versión Label V4).
+
 ## 🚀 Cómo Ejecutar
 
 Asegúrate de tener Flutter instalado y configurado.

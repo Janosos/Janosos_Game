@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
+import 'package:flame_audio/flame_audio.dart';
 import '../dino_run_game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
@@ -208,11 +209,13 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       _yVelocity = jumpForce;
       _isJumping = true;
       current = DinoState.jumping;
+      FlameAudio.play('Jump.wav');
     } else {
       // Access Double Jump or Glide trigger
       if (characterType == CharacterType.atleta && !hasDoubleJumped) {
          _yVelocity = jumpForce; // Double jump
          hasDoubleJumped = true;
+         FlameAudio.play('Jump.wav');
       } else if (characterType == CharacterType.gravedadZero) {
         // Handled by holding button, but maybe jump press toggles?
         // Usually glide is holding.
@@ -232,6 +235,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
         // Spawning at center height relative to position (bottom-left)
         gameRef.add(Projectile(position: position + Vector2(size.x, -size.y / 2)));
         cooldownTimer = pistoleroCooldown;
+        FlameAudio.play('Shoot.wav');
         
         // Trigger animation
         current = DinoState.shooting;
@@ -242,6 +246,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
          isIntangible = true;
          abilityDurationTimer = fantasmaDuration;
          cooldownTimer = fantasmaCooldown; // Or duration + cooldown?
+         FlameAudio.play('Invisibility.wav');
        }
     }
   }
@@ -257,6 +262,10 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
         // Absorb hit
         hasShield = false; 
         print("Shield absorbed hit! Lives remaining: 1");
+        FlameAudio.play('Hit.wav'); // Sound for shield hit too? Maybe custom, for now Hit.wav is fine or none.
+        // Actually, request said "Sonido para cuando se recibe un hit por parte de un objeto". 
+        // Shield absorb is a "hit" technically, but maybe we only want it on DAMAGE?
+        // Let's play it for feedback.
         
         // Tanque penalty
         if (characterType == CharacterType.tanque) {
@@ -284,6 +293,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
   @override
   void hit() {
       current = DinoState.hit;
+      FlameAudio.play('Hit.wav');
       gameRef.gameOver();
   }
   

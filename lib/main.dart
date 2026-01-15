@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flame_audio/flame_audio.dart';
 
 import 'game/dino_run_game.dart';
 import 'game/hud/character_selection_overlay.dart';
@@ -51,6 +52,7 @@ class DinoRunApp extends StatelessWidget {
                        const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: () {
+                          FlameAudio.play('Select.wav');
                           game.resetGame();
                         },
                         child: const Text('Restart', style: TextStyle(fontSize: 24)),
@@ -71,7 +73,7 @@ class DinoRunApp extends StatelessWidget {
           bottom: 20,
           child: IgnorePointer( // Ensure it doesn't block clicks
             child: Image.asset(
-              'assets/images/version_v3_retro.png',
+              'assets/images/version_v4_retro.png',
               width: 35, // Reduced by 30%
               fit: BoxFit.contain,
             ),

@@ -1,4 +1,6 @@
+
 import 'package:flame/events.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/camera.dart';
@@ -31,18 +33,23 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   // Character Selection
   CharacterType selectedCharacter = CharacterType.pistolero;
 
+
+
   @override
   Future<void> onLoad() async {
     // Dynamic resolution based on window size
     // camera.viewport = FixedResolutionViewport(resolution: Vector2(960, 540));
-
     
     // Debug mode
     // debugMode = true;
+    
+    // Initialize BGM
+    FlameAudio.bgm.initialize();
 
     // Add background/sky
     _sky = SkyComponent();
     add(_sky);
+
 
     // Add ground
     _ground = GroundComponent();
@@ -78,12 +85,24 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
       'bullet.png' // just in case
     ]);
 
+    // Preload Audio
+    await FlameAudio.audioCache.loadAll([
+      'Jump.wav',
+      'Select.wav',
+      'Shoot.wav',
+      'Invisibility.wav',
+      'Hit.wav',
+      'Hit.wav',
+      'LoopSong.wav',
+    ]);
+
     // Initialize Game State
     pauseEngine();
     overlays.add('StartMenu');
   }
 
-  void startGame(CharacterType character) {
+  void startGame(CharacterType character) async {
+    // 1. Critical Game Logic (UI & State)
     selectedCharacter = character;
     overlays.remove('StartMenu');
     overlays.remove('CharacterSelection'); // Ensure this is removed
@@ -117,9 +136,28 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     _obstacleManager.reset();
     _scoreSystem.reset();
     currentSpeed = startSpeed;
+
+    // 2. Audio Logic
+    print("Starting BGM (FlameAudio.bgm)...");
+    try {
+      // Ensure any previous bgm is stopped
+      if (FlameAudio.bgm.isPlaying) {
+         await FlameAudio.bgm.stop();
+      }
+      FlameAudio.bgm.play('LoopSong.wav', volume: 0.5);
+      print("BGM command sent.");
+    } catch (e) {
+      print("Error setup BGM: $e");
+    }
   }
 
   void gameOver() {
+    try {
+      FlameAudio.bgm.stop();
+    } catch(e) {
+      print("Error stopping BGM: $e");
+    }
+    
     _scoreSystem.saveHighScore();
     pauseEngine();
     overlays.add('GameOverMenu');
@@ -182,5 +220,11 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   @override
   void onTapUp(TapUpInfo info) {
     _dino.stopGlide();
+  }
+  
+  @override
+  void onRemove() {
+    FlameAudio.bgm.dispose();
+    super.onRemove();
   }
 }

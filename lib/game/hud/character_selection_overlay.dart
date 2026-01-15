@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/widgets.dart';
 import 'package:flame/components.dart';
+import 'package:flame_audio/flame_audio.dart';
 import '../dino_run_game.dart';
 
 enum CharacterType {
@@ -81,6 +82,8 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                     final bool isSelected = selectedCharacter == type;
                     return GestureDetector(
                       onTap: () {
+                        // Play select sound
+                        FlameAudio.play('Select.wav');
                         setState(() {
                           selectedCharacter = type;
                         });
@@ -188,6 +191,7 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: selectedCharacter != null ? () {
+                FlameAudio.play('Select.wav');
                 widget.game.startGame(selectedCharacter!);
               } : null,
               style: ElevatedButton.styleFrom(

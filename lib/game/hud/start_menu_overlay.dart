@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flame_audio/flame_audio.dart';
 import '../dino_run_game.dart';
 
 class StartMenuOverlay extends StatefulWidget {
@@ -72,6 +73,7 @@ class _StartMenuOverlayState extends State<StartMenuOverlay> with SingleTickerPr
               const SizedBox(height: 50),
               GestureDetector(
                 onTap: () {
+                  FlameAudio.play('Select.wav');
                   widget.game.overlays.remove('StartMenu');
                   widget.game.overlays.add('CharacterSelection');
                   // Do not stop controller here; widget will be disposed.
