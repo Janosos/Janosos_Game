@@ -1,11 +1,11 @@
 {
-    "name": "dino_run_flame",
-    "short_name": "dino_run_flame",
+    "name": "Janosos Game",
+    "short_name": "Janosos Game",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Juego oficial de Janosos. Corre y esquiva obstáculos.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
