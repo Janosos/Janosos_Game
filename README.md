@@ -46,7 +46,7 @@ Este proyecto ha sido desarrollado utilizando:
 
 ## 🚀 Cómo Ejecutar
 
-Asegúrate de tener Flutter instalado y configurado.
+Asegúrate de tener Flutter instalado y configurado ó juega [aquí.](https://janosos.github.io/Janosos_Game/)
 
 ```bash
 # Obtener dependencias
