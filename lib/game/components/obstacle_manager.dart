@@ -26,7 +26,14 @@ class ObstacleManager extends Component with HasGameRef<DinoRunGame> {
     add(obstacle); // Add to ObstacleManager's children, not gameRef
     
     // Randomize next spawn time
-    _timer.limit = 1.5 + _random.nextDouble() * 2.0;
+    double nextTime = 1.5 + _random.nextDouble() * 2.0;
+
+    // Faster spawns if Nanic is Super Charged
+    if (gameRef.dino.isSuperCharged) {
+       nextTime = nextTime * 0.5; // Twice as fast (50% delay)
+    }
+    
+    _timer.limit = nextTime;
   }
   
   void reset() {

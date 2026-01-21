@@ -1,67 +1,73 @@
 from PIL import Image
-import sys
 import os
 
-def clean_image(image_path, output_path, bg_color=None, tolerance=30):
-    print(f"Processing {image_path}...")
+def clean_asset(filename):
+    base_path = r'c:\Users\Janosos\Desktop\Janosos Game\assets\images'
+    path = os.path.join(base_path, filename)
+    
+    if not os.path.exists(path):
+        print(f"File not found: {filename}")
+        return
+
     try:
-        img = Image.open(image_path).convert("RGBA")
-        datas = img.getdata()
+        img = Image.open(path).convert('RGBA')
+        width, height = img.size
+        pixels = img.load()
         
-        newData = []
+        print(f"Cleaning {filename} ({width}x{height})...")
+
+        # Flood Fill from corners
+        visited = set()
+        queue = []
         
-        # Chroma Key Mode: If no specific bg_color is strict, or if we want aggressive green removal
-        # We'll use a heuristic: if Green is significantly dominant
-        use_chroma_key = True
+        # Check all 4 corners
+        corners = [(0, 0), (width-1, 0), (0, height-1), (width-1, height-1)]
         
-        for item in datas:
-            r, g, b, a = item
+        for cx, cy in corners:
+            queue.append((cx, cy))
             
-            is_transparent = False
+        # Tolerance for checkerboard (White/Grey)
+        # Usually checkerboard is distinct from the colorful asset
+        
+        while queue:
+            x, y = queue.pop(0)
+            if (x, y) in visited: continue
+            if x < 0 or x >= width or y < 0 or y >= height: continue
             
-            if bg_color:
-                # Distance based (strict)
-                r_bg, g_bg, b_bg = bg_color[:3]
-                dist = ((r - r_bg)**2 + (g - g_bg)**2 + (b - b_bg)**2)**0.5
-                if dist < tolerance:
-                    is_transparent = True
+            visited.add((x, y))
+            r, g, b, a = pixels[x, y]
             
-            # Additional Green Chroma Key Check (Aggressive)
-            # Check if pixel is "Greenish"
-            # Green needs to be higher than Red and Blue, and dominant
-            if not is_transparent and use_chroma_key:
-                 # If Green is brighter than Red+20 and Blue+20 (avoiding dark blacks/greys)
-                 # And Green is a significant portion of the brightness
-                 if g > r + 20 and g > b + 20:
-                     # It's green! Make it transparent
-                     is_transparent = True
+            # Identify Background
+            # Checkerboard is usually greyscale (r~g~b) and > 100 brightness
+            # Aura is BLUE/CYAN (High B/G)
+            # Linktning is YELLOW (High R/G)
+            # Orb is YELLOW
             
-            if is_transparent:
-                newData.append((0, 0, 0, 0))
-            else:
-                newData.append(item)
+            brightness = (r + g + b) // 3
+            saturation = max(r, g, b) - min(r, g, b)
+            
+            is_bg = False
+            
+            # Simple Checkerboard rule: Low Saturation (< 30) AND Brightness > 50
+            if saturation < 30 and brightness > 50:
+                is_bg = True
                 
-        img.putdata(newData)
-        img.save(output_path, "PNG")
-        print(f"Saved to {output_path}")
+            if is_bg:
+                pixels[x, y] = (0, 0, 0, 0)
+                
+                # Add neighbors
+                queue.append((x+1, y))
+                queue.append((x-1, y))
+                queue.append((x, y+1))
+                queue.append((x, y-1))
+
+        img.save(path)
+        print(f"Saved cleaned {filename}")
         
     except Exception as e:
-        print(f"Error processing {image_path}: {e}")
+        print(f"Error cleaning {filename}: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python clean_assets.py <input_file> <output_file> [r,g,b]")
-        sys.exit(1)
-        
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    
-    bg = None
-    if len(sys.argv) > 3:
-        try:
-            bg_str = sys.argv[3].split(',')
-            bg = (int(bg_str[0]), int(bg_str[1]), int(bg_str[2]), 255)
-        except:
-            pass
-            
-    clean_image(input_file, output_file, bg)
+    assets = ['lightning_icon.png', 'orb.png', 'aura.png']
+    for a in assets:
+        clean_asset(a)

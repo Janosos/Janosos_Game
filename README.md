@@ -33,6 +33,17 @@ Este proyecto ha sido desarrollado utilizando:
     *   Solución al problema de reproducción de audio en Windows.
     *   Optimización de assets para transparencia (Versión Label V4).
 
+## ⚡ Novedades Version V5
+
+*   **Nuevo Personaje: Nanic**:
+    *   *Habilidad Pasiva*: Aumenta velocidad y recibe doble puntuación cuando está sobrecargada.
+    *   *Habilidad Activa*: "Aura Eléctrica". Al activar, Nanic destruye el siguiente obstáculo con el que choque.
+    *   *Mecánica Energía*: Recolecta orbes para cargar la barra de energía.
+*   **Mejoras Técnicas**:
+    *   Soporte PWA (Progressive Web App): Iconos nativos para iOS y Android en versión Web.
+    *   Indicador de versión actualizado a V5.
+    *   Limpieza de código y eliminación de modos de depuración para mayor rendimiento.
+
 ## 🚀 Cómo Ejecutar
 
 Asegúrate de tener Flutter instalado y configurado.

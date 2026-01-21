@@ -24,6 +24,7 @@ class AbilityButton extends HudButtonComponent {
 
   @override
   void onTapDown(TapDownEvent event) {
+    print("Ability Button Tapped!");
     super.onTapDown(event);
     game.dino.activateAbility();
     event.handled = true; // Stop propagation to game tap detector

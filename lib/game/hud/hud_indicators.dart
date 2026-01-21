@@ -11,10 +11,13 @@ class HudIndicators extends PositionComponent with HasGameRef<DinoRunGame> {
 
   HudIndicators() : super(position: Vector2(20, 60), priority: 100);
 
+  late Sprite lightningSprite; // New icon
+
   @override
   Future<void> onLoad() async {
     heartSprite = await gameRef.loadSprite('heart_indicator.png');
     shieldSprite = await gameRef.loadSprite('tank_shield_icon.png');
+    lightningSprite = await gameRef.loadSprite('lightning_icon.png'); // Load asset
     timerPaint = TextPaint(
       style: const TextStyle(
         color: Colors.cyanAccent,
@@ -34,10 +37,6 @@ class HudIndicators extends PositionComponent with HasGameRef<DinoRunGame> {
     // Vitalista: Show hearts
     if (dino.characterType == CharacterType.vitalista) {
       if (dino.hasShield) {
-        // Draw 2 hearts (one for shield/extra life, one for base life)
-        // Or visually: Base life + Extra layer. 
-        // User asked for "indicador de corazones".
-        // Let's draw 2 hearts if hasShield, 1 if not.
         heartSprite.render(canvas, position: Vector2(0, 0), size: Vector2(32, 32));
         heartSprite.render(canvas, position: Vector2(35, 0), size: Vector2(32, 32));
       } else {
@@ -64,6 +63,38 @@ class HudIndicators extends PositionComponent with HasGameRef<DinoRunGame> {
         } else {
            timerPaint.render(canvas, 'READY', Vector2(0, 0));
         }
+    }
+    // Nanic: Show Energy Bar
+    else if (dino.characterType == CharacterType.nanic) {
+      // Draw Bar Background
+      final Paint bgPaint = Paint()..color = Colors.grey.withOpacity(0.5);
+      final Paint fillPaint = Paint()..color = Colors.yellow;
+      final Paint borderPaint = Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 2;
+      
+      final barWidth = 100.0;
+      final barHeight = 20.0;
+      final fillWidth = (dino.energy / dino.maxEnergy) * barWidth;
+      
+      final rrect = RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, barWidth, barHeight), const Radius.circular(10));
+      final fillRRect = RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, fillWidth, barHeight), const Radius.circular(10));
+      
+      // Draw Background
+      canvas.drawRRect(rrect, bgPaint);
+      
+      // Draw Fill
+      canvas.drawRRect(fillRRect, fillPaint);
+      
+      // Draw Border
+      canvas.drawRRect(rrect, borderPaint);
+      
+      // Draw Lightning Icon to the right (Larger)
+      lightningSprite.render(canvas, position: Vector2(barWidth + 5, -12), size: Vector2(48, 48)); 
+
+      // Draw text
+      if (dino.isSuperCharged) {
+         // Move text below the bar (positive Y)
+         timerPaint.render(canvas, 'MAX POWER!', Vector2(0, barHeight + 5));
+      }
     }
   }
 }

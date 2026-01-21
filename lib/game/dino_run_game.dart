@@ -8,6 +8,7 @@ import 'components/dino.dart';
 import 'components/ground.dart';
 import 'components/sky.dart';
 import 'components/obstacle_manager.dart';
+import 'components/orb.dart';
 import 'hud/score.dart';
 import 'hud/character_selection_overlay.dart';
 import 'hud/ability_button.dart';
@@ -29,6 +30,10 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   double currentSpeed = 200.0;
   final double startSpeed = 200.0;
   final double maxSpeed = 600.0;
+  double speedMultiplier = 1.0;
+  
+  // Spawners
+  double orbTimer = 2.0;
   
   // Character Selection
   CharacterType selectedCharacter = CharacterType.pistolero;
@@ -82,6 +87,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
       'conra_clean.png',
       'shyno_clean.png',
       'nakama_clean.png',
+      'nanic_clean.png',
       'bullet.png' // just in case
     ]);
 
@@ -107,10 +113,9 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     overlays.remove('StartMenu');
     overlays.remove('CharacterSelection'); // Ensure this is removed
     overlays.remove('GameOverMenu');
-    resumeEngine();
     
-    // Set character
-    _dino.setCharacter(selectedCharacter);
+    // Set character (Await to ensure dimensions/assets are ready before engine resumes)
+    await _dino.setCharacter(selectedCharacter);
     
     // Cleanup HUD
     if (_abilityButton != null) {
@@ -127,28 +132,33 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     camera.viewport.add(_hudIndicators!);
     
     // Ability Button Management
-    if (selectedCharacter == CharacterType.pistolero || selectedCharacter == CharacterType.fantasma) {
+    if (selectedCharacter == CharacterType.pistolero || 
+        selectedCharacter == CharacterType.fantasma || 
+        selectedCharacter == CharacterType.nanic) {
       _abilityButton = AbilityButton(game: this);
       camera.viewport.add(_abilityButton!);
     }
     
     _dino.reset();
     _obstacleManager.reset();
+    children.whereType<OrbComponent>().forEach((orb) => orb.removeFromParent());
     _scoreSystem.reset();
     currentSpeed = startSpeed;
 
-    // 2. Audio Logic
-    print("Starting BGM (FlameAudio.bgm)...");
+    // Audio Logic
+    // print("Starting BGM (FlameAudio.bgm)...");
     try {
-      // Ensure any previous bgm is stopped
       if (FlameAudio.bgm.isPlaying) {
          await FlameAudio.bgm.stop();
       }
       FlameAudio.bgm.play('LoopSong.wav', volume: 0.5);
-      print("BGM command sent.");
+      // print("BGM command sent.");
     } catch (e) {
       print("Error setup BGM: $e");
     }
+    
+    // Resume Engine LAST
+    resumeEngine();
   }
 
   void gameOver() {
@@ -186,13 +196,36 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     super.update(dt);
     
     // Increase speed based on score
-    // Every 500 points, increase speed by 10% or additive
     if (isMounted) {
       double score = _scoreSystem.currentScore;
-      double newSpeed = startSpeed + (score / 10); // +10 speed per 100 points
+      double newSpeed = startSpeed + (score / 10); 
       if (newSpeed > maxSpeed) newSpeed = maxSpeed;
-      currentSpeed = newSpeed;
+      currentSpeed = newSpeed * speedMultiplier;
     }
+    
+    // Orb Spawning for Nanic
+    if (selectedCharacter == CharacterType.nanic && !dino.isSuperCharged) {
+      orbTimer -= dt;
+      if (orbTimer <= 0) {
+        orbTimer = 3.0; 
+        
+        double spawnY = size.y * 0.75 - 40; 
+        if (orbTimer % 2 > 1) spawnY -= 100; 
+        
+        add(OrbComponent(
+          position: Vector2(size.x + 50, spawnY), 
+          speed: currentSpeed 
+        ));
+      }
+    }
+  }
+
+  void increaseSpeed() {
+    speedMultiplier = 1.8; // Increased from 1.5
+  }
+
+  void resetSpeed() {
+    speedMultiplier = 1.0;
   }
 
   @override
@@ -206,6 +239,8 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     if (_abilityButton != null) {
        // Check if point is inside button
        if (_abilityButton!.containsPoint(info.eventPosition.widget)) {
+         print("Manual tap check hit functionality.");
+         _dino.activateAbility();
          return; // Do not jump
        }
     }

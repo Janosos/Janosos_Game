@@ -1,6 +1,7 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../dino_run_game.dart';
+import 'character_selection_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ScoreSystem extends TextComponent with HasGameRef<DinoRunGame> {
@@ -35,7 +36,12 @@ class ScoreSystem extends TextComponent with HasGameRef<DinoRunGame> {
     if (!_isLoaded) return;
     
     // Increase score
-    _score += dt * 10; 
+    // Increase score
+    double multiplier = 1.0;
+    if (gameRef.dino.characterType == CharacterType.nanic && gameRef.dino.isSuperCharged) {
+       multiplier = 2.0;
+    }
+    _score += dt * 10 * multiplier; 
     
 
     
