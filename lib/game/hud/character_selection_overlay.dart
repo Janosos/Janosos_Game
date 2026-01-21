@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flame/widgets.dart';
 import 'package:flame/components.dart';
@@ -79,43 +80,18 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
               ),
             ),
             const SizedBox(height: 30),
+
+
             Expanded(
               child: ScrollConfiguration(
-                behavior: ScrollConfiguration.of(context).copyWith(
+                behavior: const MaterialScrollBehavior().copyWith(
                   dragDevices: {
-                    // Enable mouse dragging for Windows
-                    if (Theme.of(context).platform == TargetPlatform.windows) 
-                       ...{ 
-                           // flame/flutter might not expose PointerDeviceKind directly without import
-                           // But standard 'dragDevices' usually takes a Set<PointerDeviceKind>.
-                           // To avoid import issues, we can just imply standard scroll or use a listener.
-                           // Actually, simplest way for Windows horizontal scroll is ensuring Scrollbar + mouse wheel works
-                           // OR forcing drag.
-                       }
-                  }, 
-                ),
-                // Since PointerDeviceKind imports might be tricky without dart:ui, 
-                // A better approach for "Scroll Horizontal" on windows without touch 
-                // is wrapping in a Listener/MouseRegion or just relying the user has a trackpad/mouse wheel (Shift+Scroll).
-                // However, user specifically asked "Agrega el desplazamiento horizontal". 
-                // The ROW is already horizontal. 
-                // Maybe they mean "Make it draggable with mouse".
-                // I will use a Listener? No, default ScrollBehavior.
-                // Let's just wrap in ScrollConfiguration with all devices if possible or just rely on SingleChildScrollView is enough usually?
-                // On Windows, mouse drag scroll is disabled by default.
-                // I will add a custom ScrollBehavior class inline or just use generic ScrollConfiguration.
-                child: ScrollConfiguration(
-                   behavior: const MaterialScrollBehavior().copyWith(
-                      dragDevices: { 
-                         // Implicitly available in newer Flutter?
-                         // Let's just skip the specific enum to avoid import errors and use a known trick or just trust SingleScroll.
-                         // Actually, I'll just leave SingleChildScrollView as it WAS there, but maybe the user meant it wasn't working?
-                         // I'll ensure it is draggable.
-                   },
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.touch,
+                  },
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  // Add physics
                   physics: const BouncingScrollPhysics(),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -205,7 +181,6 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                     }).toList(),
                   ),
                 ),
-              ), 
               ),
             ), // End Expanded
             const SizedBox(height: 20),

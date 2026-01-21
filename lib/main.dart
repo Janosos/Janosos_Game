@@ -69,12 +69,12 @@ class DinoRunApp extends StatelessWidget {
         ),
         // Static Version Label (Bottom Left)
         Positioned(
-          left: 20,
-          bottom: 20,
+          left: 5,
+          bottom: 5,
           child: IgnorePointer( // Ensure it doesn't block clicks
             child: Image.asset(
               'assets/images/version_v5_retro.png',
-              width: 35, 
+              width: 25, 
               fit: BoxFit.contain,
             ),
           ),

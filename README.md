@@ -32,6 +32,7 @@ Este proyecto ha sido desarrollado utilizando:
 *   **Corrección de Bugs**:
     *   Solución al problema de reproducción de audio en Windows.
     *   Optimización de assets para transparencia (Versión Label V4).
+    *   **Mejora de UX**: Desplazamiento horizontal habilitado con "arrastrar" (mouse drag) en PC y touch en móviles para la selección de personajes.
 
 ## ⚡ Novedades Version V5
 
