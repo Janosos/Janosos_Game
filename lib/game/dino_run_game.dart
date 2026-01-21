@@ -144,6 +144,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     children.whereType<OrbComponent>().forEach((orb) => orb.removeFromParent());
     _scoreSystem.reset();
     currentSpeed = startSpeed;
+    speedMultiplier = 1.0;
 
     // Audio Logic
     // print("Starting BGM (FlameAudio.bgm)...");
@@ -180,6 +181,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
     _obstacleManager.reset();
     _scoreSystem.reset();
     currentSpeed = startSpeed;
+    speedMultiplier = 1.0;
     if (_abilityButton != null) {
       camera.viewport.remove(_abilityButton!);
       _abilityButton = null;
@@ -221,7 +223,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   }
 
   void increaseSpeed() {
-    speedMultiplier = 1.8; // Increased from 1.5
+    speedMultiplier = 1.5; 
   }
 
   void resetSpeed() {
