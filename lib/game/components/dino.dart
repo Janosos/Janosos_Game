@@ -55,7 +55,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     await _loadCharacterSprite();
     
     anchor = Anchor.bottomLeft;
-    position = Vector2(50, gameRef.size.y * 0.75); 
+    position = Vector2(50, gameRef.size.y - DinoRunGame.virtualGroundHeight);  
     size = Vector2(88, 88); 
     
     _updateHitbox();
@@ -219,7 +219,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
        if (isGliding && _yVelocity > 0) _yVelocity = 100;
        y += _yVelocity * dt;
        
-       double groundY = gameRef.size.y * 0.75;
+       double groundY = gameRef.size.y - DinoRunGame.virtualGroundHeight;
        if (y > groundY) {
          y = groundY;
          _yVelocity = 0;
@@ -334,7 +334,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
   
   @override
   void reset() {
-    position = Vector2(50, gameRef.size.y * 0.75);
+    position = Vector2(50, gameRef.size.y - DinoRunGame.virtualGroundHeight);
     _yVelocity = 0;
     _isJumping = false;
     current = DinoState.running;

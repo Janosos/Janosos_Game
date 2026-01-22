@@ -4,6 +4,8 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flame/camera.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'components/dino.dart';
 import 'components/ground.dart';
 import 'components/sky.dart';
@@ -14,7 +16,7 @@ import 'hud/character_selection_overlay.dart';
 import 'hud/ability_button.dart';
 import 'hud/hud_indicators.dart';
 
-class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
+class DinoRunGame extends FlameGame with TapDetector, KeyboardEvents, HasCollisionDetection {
   late DinoComponent _dino;
   late GroundComponent _ground;
   late SkyComponent _sky;
@@ -31,6 +33,9 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   final double startSpeed = 200.0;
   final double maxSpeed = 600.0;
   double speedMultiplier = 1.0;
+
+  // Layout Constants
+  static const double virtualGroundHeight = 160.0;
   
   // Spawners
   double orbTimer = 2.0;
@@ -211,7 +216,7 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
       if (orbTimer <= 0) {
         orbTimer = 3.0; 
         
-        double spawnY = size.y * 0.75 - 40; 
+        double spawnY = size.y - DinoRunGame.virtualGroundHeight - 40; 
         if (orbTimer % 2 > 1) spawnY -= 100; 
         
         add(OrbComponent(
@@ -257,6 +262,29 @@ class DinoRunGame extends FlameGame with TapDetector, HasCollisionDetection {
   @override
   void onTapUp(TapUpInfo info) {
     _dino.stopGlide();
+  }
+
+  @override
+  KeyEventResult onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    final isSpace = keysPressed.contains(LogicalKeyboardKey.space);
+    
+    if (event is KeyDownEvent) {
+      if (isSpace) {
+        if (overlays.isActive('GameOverMenu')) {
+          resetGame();
+        } else {
+          _dino.jump();
+        }
+        return KeyEventResult.handled;
+      }
+    } else if (event is KeyUpEvent) {
+       if (event.logicalKey == LogicalKeyboardKey.space) {
+          _dino.stopGlide();
+          return KeyEventResult.handled;
+       }
+    }
+
+    return KeyEventResult.ignored;
   }
   
   @override

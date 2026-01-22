@@ -47,4 +47,4 @@ app.*.map.json
 # Build & APKs
 /build/
 *.apk
-!Janosos Game V5.apk
+

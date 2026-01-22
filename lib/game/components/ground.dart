@@ -12,7 +12,7 @@ class GroundComponent extends ParallaxComponent<DinoRunGame> with HasGameRef<Din
         ParallaxImageData('layer_3_ground_modern.png'),
       ],
       baseVelocity: Vector2(200, 0), // Match dino speed roughly
-      fill: LayerFill.none, // Don't stretch! Use actual image size
+      fill: LayerFill.height, // Scale to fill valid height
       alignment: Alignment.bottomLeft,
       repeat: ImageRepeat.repeatX,
     );
@@ -22,9 +22,14 @@ class GroundComponent extends ParallaxComponent<DinoRunGame> with HasGameRef<Din
     // Explicitly size and position
     // We want it at the bottom. The image is "Seamless city street".
     // Let's assume height is sufficient or we let it tile.
-    anchor = Anchor.bottomLeft;
-    position = Vector2(0, gameRef.size.y);
-    size = Vector2(gameRef.size.x, gameRef.size.y * 0.25); // 25% height area
+    // We want it at the bottom.
+    anchor = Anchor.topLeft; // Easier to position from top of ground
+    // However, ParallaxComponent usually uses top-left.
+    // Let's stick to standard positioning logic. 
+    // We want the TOP of the ground to be at (screenHeight - 160).
+    
+    size = Vector2(gameRef.size.x, DinoRunGame.virtualGroundHeight); 
+    position = Vector2(0, gameRef.size.y - DinoRunGame.virtualGroundHeight);
   }
   
   @override
@@ -37,7 +42,7 @@ class GroundComponent extends ParallaxComponent<DinoRunGame> with HasGameRef<Din
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
     // Update position and size when window resizes
-    position = Vector2(0, size.y);
-    this.size = Vector2(size.x, size.y * 0.25);
+    this.size = Vector2(size.x, DinoRunGame.virtualGroundHeight);
+    position = Vector2(0, size.y - DinoRunGame.virtualGroundHeight);
   }
 }

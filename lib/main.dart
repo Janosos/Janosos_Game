@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'game/dino_run_game.dart';
 import 'game/hud/character_selection_overlay.dart';
@@ -72,10 +73,12 @@ class DinoRunApp extends StatelessWidget {
           left: 5,
           bottom: 5,
           child: IgnorePointer( // Ensure it doesn't block clicks
-            child: Image.asset(
-              'assets/images/version_v5_retro.png',
-              width: 25, 
-              fit: BoxFit.contain,
+            child: Text(
+              'V5.1',
+              style: GoogleFonts.pressStart2p(
+                fontSize: 10, // Adjusted size
+                color: Colors.white,
+              ),
             ),
           ),
         ),

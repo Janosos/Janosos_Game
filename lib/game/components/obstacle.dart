@@ -37,7 +37,7 @@ class Obstacle extends SpriteAnimationComponent with HasGameRef<DinoRunGame>, Co
     priority = 10; 
     
     // Position on ground
-    position = Vector2(gameRef.size.x, gameRef.size.y * 0.75);
+    position = Vector2(gameRef.size.x, gameRef.size.y - DinoRunGame.virtualGroundHeight);
     
     // Forgiving hitbox (smaller than sprite and shifted right)
     add(RectangleHitbox(
