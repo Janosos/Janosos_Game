@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'widgets/retro_pixel_widgets.dart';
 
 class JanososAppShell extends StatelessWidget {
   const JanososAppShell({
@@ -29,24 +32,82 @@ class JanososAppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
+    const cyan = Color(0xFF29FFE4);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('JANOSOS V6'),
-        actions: [
-          IconButton(
-            tooltip: 'Configuración y cuenta',
-            onPressed: () => context.go('/settings'),
-            icon: const Icon(Icons.settings_outlined),
+        backgroundColor: const Color(0xFF070D16),
+        elevation: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PixelIconAsset(
+              assetName: PixelIconAsset.gamepad,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'JANOSOS V6',
+              style: GoogleFonts.pressStart2p(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: cyan,
+                letterSpacing: 2,
+                shadows: [
+                  Shadow(
+                    color: cyan.withValues(alpha: 0.8),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(2),
+          child: Container(
+            height: 2,
+            color: const Color(0xFF1E354F),
           ),
-          const SizedBox(width: 8),
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFF1E354F), width: 1.5),
+            ),
+            child: IconButton(
+              tooltip: 'Configuración y cuenta',
+              onPressed: () => context.go('/settings'),
+              icon: const Icon(Icons.settings_outlined, color: cyan, size: 20),
+            ),
+          ),
         ],
       ),
       body: wide
           ? Row(
               children: [
                 NavigationRail(
+                  backgroundColor: const Color(0xFF070D16),
                   selectedIndex: _selectedIndex,
                   labelType: NavigationRailLabelType.all,
+                  selectedIconTheme: const IconThemeData(color: cyan),
+                  unselectedIconTheme:
+                      const IconThemeData(color: Color(0xFF7A9BB8)),
+                  selectedLabelTextStyle: GoogleFonts.pressStart2p(
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                    color: cyan,
+                  ),
+                  unselectedLabelTextStyle: GoogleFonts.pressStart2p(
+                    fontSize: 8,
+                    color: const Color(0xFF7A9BB8),
+                  ),
+                  indicatorColor: cyan.withValues(alpha: 0.15),
+                  indicatorShape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                    side: BorderSide(color: cyan, width: 1.5),
+                  ),
                   onDestinationSelected: (index) {
                     context.go(_destinations[index].path);
                   },
@@ -58,25 +119,38 @@ class JanososAppShell extends StatelessWidget {
                       ),
                   ],
                 ),
-                const VerticalDivider(width: 1),
+                const VerticalDivider(width: 1, color: Color(0xFF1E354F)),
                 Expanded(child: child),
               ],
             )
           : child,
       bottomNavigationBar: wide
           ? null
-          : NavigationBar(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (index) {
-                context.go(_destinations[index].path);
-              },
-              destinations: [
-                for (final destination in _destinations)
-                  NavigationDestination(
-                    icon: Icon(destination.icon),
-                    label: destination.label,
-                  ),
-              ],
+          : Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Color(0xFF1E354F), width: 2),
+                ),
+              ),
+              child: NavigationBar(
+                backgroundColor: const Color(0xFF070D16),
+                indicatorColor: cyan.withValues(alpha: 0.15),
+                indicatorShape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                  side: BorderSide(color: cyan, width: 1.5),
+                ),
+                selectedIndex: _selectedIndex,
+                onDestinationSelected: (index) {
+                  context.go(_destinations[index].path);
+                },
+                destinations: [
+                  for (final destination in _destinations)
+                    NavigationDestination(
+                      icon: Icon(destination.icon),
+                      label: destination.label,
+                    ),
+                ],
+              ),
             ),
     );
   }

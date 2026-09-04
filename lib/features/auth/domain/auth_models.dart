@@ -6,12 +6,14 @@ class AuthUserProfile {
     required this.email,
     required this.displayName,
     required this.isEmailVerified,
+    this.isGuest = false,
   });
 
   final String id;
   final String email;
   final String displayName;
   final bool isEmailVerified;
+  final bool isGuest;
 }
 
 enum AuthSessionStatus { signedOut, verificationRequired, authenticated }

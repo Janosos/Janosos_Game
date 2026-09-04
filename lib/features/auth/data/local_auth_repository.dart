@@ -135,6 +135,28 @@ class LocalAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> continueAsGuest() async {
+    const guestId = 'local_guest_account';
+    var guestAccount = _accounts
+        .where((account) => account.id == guestId)
+        .firstOrNull;
+    if (guestAccount == null) {
+      guestAccount = _LocalAccount(
+        id: guestId,
+        email: 'invitado@janosos.local',
+        displayName: 'Invitado Local',
+        passwordSalt: 'guest_salt',
+        passwordHash: 'guest_hash',
+        passwordAlgorithm: 'none',
+        isGuest: true,
+      );
+      _accounts.add(guestAccount);
+      await _persistAccounts();
+    }
+    await _setSession(AuthSessionSnapshot.authenticated(guestAccount.toProfile()));
+  }
+
+  @override
   Future<void> signOut() async {
     await _setSession(const AuthSessionSnapshot.signedOut());
   }
@@ -271,6 +293,7 @@ class _LocalAccount {
     required this.passwordSalt,
     required this.passwordHash,
     required this.passwordAlgorithm,
+    this.isGuest = false,
   });
 
   factory _LocalAccount.fromJson(Map<String, dynamic> json) {
@@ -281,6 +304,7 @@ class _LocalAccount {
       passwordSalt: json['password_salt'] as String,
       passwordHash: json['password_hash'] as String,
       passwordAlgorithm: json['password_algorithm'] as String? ?? 'sha256-v1',
+      isGuest: json['is_guest'] as bool? ?? false,
     );
   }
 
@@ -290,6 +314,7 @@ class _LocalAccount {
   String passwordSalt;
   String passwordHash;
   String passwordAlgorithm;
+  final bool isGuest;
 
   AuthUserProfile toProfile() {
     return AuthUserProfile(
@@ -297,6 +322,7 @@ class _LocalAccount {
       email: email,
       displayName: displayName,
       isEmailVerified: true,
+      isGuest: isGuest,
     );
   }
 
@@ -308,6 +334,7 @@ class _LocalAccount {
       'password_salt': passwordSalt,
       'password_hash': passwordHash,
       'password_algorithm': passwordAlgorithm,
+      'is_guest': isGuest,
     };
   }
 }

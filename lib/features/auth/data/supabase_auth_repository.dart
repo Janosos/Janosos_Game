@@ -131,6 +131,19 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> reauthenticate() => _guard(_client.auth.reauthenticate);
 
   @override
+  Future<void> continueAsGuest() async {
+    final guestProfile = const AuthUserProfile(
+      id: 'local_guest_account',
+      email: 'invitado@janosos.local',
+      displayName: 'Invitado Local',
+      isEmailVerified: true,
+      isGuest: true,
+    );
+    _session = AuthSessionSnapshot.authenticated(guestProfile);
+    _sessionController.add(_session);
+  }
+
+  @override
   Future<void> signOut() => _guard(_client.auth.signOut);
 
   @override

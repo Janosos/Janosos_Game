@@ -10,6 +10,7 @@ enum AuthOperation {
   idle,
   registering,
   signingIn,
+  continuingAsGuest,
   sendingReset,
   updatingPassword,
   openingProvider,
@@ -83,6 +84,13 @@ class AuthController extends Notifier<AuthViewState> {
       () => ref
           .read(authRepositoryProvider)
           .signIn(email: email, password: password),
+    );
+  }
+
+  Future<bool> continueAsGuest() {
+    return _run(
+      AuthOperation.continuingAsGuest,
+      () => ref.read(authRepositoryProvider).continueAsGuest(),
     );
   }
 

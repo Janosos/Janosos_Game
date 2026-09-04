@@ -105,18 +105,22 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                   ),
                   Expanded(
                     flex: 1,
-                    child: Text(
-                      type.definition.displayName.toUpperCase(),
-                      style: GoogleFonts.pressStart2p(
-                        // RETRO FONT
-                        fontSize:
-                            10, // kept at 10, was 8 previously? Wait, in my previous edit I replaced it.
-                        // Checking previous content: it was 8. I will make it 10.
-                        color: isSelected
-                            ? selectedBorderColor
-                            : const Color(0xFF888888),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          type.definition.displayName.toUpperCase(),
+                          maxLines: 1,
+                          style: GoogleFonts.pressStart2p(
+                            fontSize: 9,
+                            color: isSelected
+                                ? selectedBorderColor
+                                : const Color(0xFF888888),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                 ],
@@ -225,25 +229,28 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                 // Title
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    'SELECCIONA TU PERSONAJE',
-                    style: GoogleFonts.pressStart2p(
-                      fontSize: isSmallScreen ? 16 : 24, // increased from 14
-                      color: titleColor,
-                      shadows: [
-                        const Shadow(
-                          color: Colors.black,
-                          offset: Offset(3, 3),
-                          blurRadius: 0,
-                        ),
-                        const Shadow(
-                          color: Color(0x8029ffe4),
-                          offset: Offset(0, 0),
-                          blurRadius: 10,
-                        ),
-                      ],
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'SELECCIONA TU PERSONAJE',
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isSmallScreen ? 14 : 22,
+                        color: titleColor,
+                        shadows: [
+                          const Shadow(
+                            color: Colors.black,
+                            offset: Offset(3, 3),
+                            blurRadius: 0,
+                          ),
+                          const Shadow(
+                            color: Color(0x8029ffe4),
+                            offset: Offset(0, 0),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
 
@@ -259,7 +266,7 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                 // Button
                 SizedBox(
                   width: double.infinity,
-                  height: isSmallScreen ? 50 : 60,
+                  height: isSmallScreen ? 48 : 60,
                   child: ElevatedButton(
                     onPressed: selectedCharacter != null
                         ? () {
@@ -287,11 +294,14 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                         ),
                       ),
                     ),
-                    child: Text(
-                      'CONFIRMAR SELECCIÓN',
-                      style: GoogleFonts.pressStart2p(
-                        fontSize: isSmallScreen ? 14 : 14, // increased from 12
-                        fontWeight: FontWeight.bold,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'CONFIRMAR SELECCIÓN',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isSmallScreen ? 12 : 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

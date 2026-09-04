@@ -140,4 +140,29 @@ void main() {
       await repository.dispose();
     },
   );
+
+  test('activates, persists, and signs out guest local session', () async {
+    final preferences = await SharedPreferences.getInstance();
+    final repository = await LocalAuthRepository.create(preferences);
+
+    expect(repository.currentSession.isAuthenticated, isFalse);
+
+    await repository.continueAsGuest();
+    expect(repository.currentSession.isAuthenticated, isTrue);
+    expect(repository.currentSession.user?.isGuest, isTrue);
+    expect(repository.currentSession.user?.id, 'local_guest_account');
+    expect(repository.currentSession.user?.displayName, 'Invitado Local');
+
+    await repository.dispose();
+
+    // Verify persistence across app launches
+    final restored = await LocalAuthRepository.create(preferences);
+    expect(restored.currentSession.isAuthenticated, isTrue);
+    expect(restored.currentSession.user?.isGuest, isTrue);
+    expect(restored.currentSession.user?.id, 'local_guest_account');
+
+    await restored.signOut();
+    expect(restored.currentSession.isAuthenticated, isFalse);
+    await restored.dispose();
+  });
 }

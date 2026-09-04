@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
 import '../../../game/domain/character_id.dart';
 import '../../leaderboard/application/leaderboard_controller.dart';
@@ -194,53 +196,78 @@ class _BossRushCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final description = Row(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.local_fire_department_outlined),
+        const Icon(Icons.local_fire_department, color: RetroColors.magenta),
         const SizedBox(width: 12),
-        Flexible(
-          child: Text(
-            'Boss Rush encadena los diez jefes, recupera una vida entre '
-            'combates y usa un ranking separado. No concede moneda de campaña. '
-            '${hasActiveCampaign
-                ? 'Termina primero la campaña activa.'
-                : unlocked
-                ? 'Modo desbloqueado para este personaje.'
-                : 'Requiere haber completado la campaña.'}',
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'MODO BOSS RUSH',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: RetroColors.magenta,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Encadena los diez jefes consecutivos con una sola vida recuperable. '
+                '${hasActiveCampaign
+                    ? 'Termina primero la campaña activa.'
+                    : unlocked
+                    ? 'Modo desbloqueado para este personaje.'
+                    : 'Requiere haber completado la campaña.'}',
+                style: GoogleFonts.vt323(
+                  fontSize: 16,
+                  color: RetroColors.textBright,
+                  height: 1.15,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
-    final button = FilledButton.tonalIcon(
+
+    final button = RetroArcadeButton(
+      text: 'BOSS RUSH',
+      fontSize: 9,
+      primaryColor: RetroColors.magenta,
+      icon: Icons.whatshot,
       onPressed: unlocked && !hasActiveCampaign
           ? () => context.go(
               '/game?experience=boss_rush&character=${selectedCharacter.serialized}',
             )
           : null,
-      icon: const Icon(Icons.whatshot_outlined),
-      label: const Text('BOSS RUSH'),
     );
-    return Card(
-      color: Theme.of(context).colorScheme.tertiaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 620) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [description, const SizedBox(height: 14), button],
-              );
-            }
-            return Row(
+
+    return RetroArcadeCard(
+      borderColor: RetroColors.magenta.withValues(alpha: 0.8),
+      backgroundColor: const Color(0xFF140B16),
+      padding: const EdgeInsets.all(16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 620) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: description),
-                const SizedBox(width: 16),
+                description,
+                const SizedBox(height: 12),
                 button,
               ],
             );
-          },
-        ),
+          }
+          return Row(
+            children: [
+              Expanded(child: description),
+              const SizedBox(width: 16),
+              button,
+            ],
+          );
+        },
       ),
     );
   }
@@ -253,27 +280,33 @@ class _CampaignNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.secondaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(progress == null ? Icons.flag_outlined : Icons.route_outlined),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                progress == null
-                    ? 'Comienza en el nivel 1. Cada victoria desbloquea la '
-                          'siguiente etapa para este personaje.'
-                    : 'Campaña activa · nivel ${progress!.currentLevel}/10 · '
-                          '${progress!.temporaryCurrency} monedas en riesgo. '
-                          'El personaje queda fijado hasta completar o perder.',
+    return RetroArcadeCard(
+      borderColor: progress == null ? const Color(0xFF1E354F) : RetroColors.gold,
+      backgroundColor: const Color(0xFF0F1722),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PixelIconAsset(
+            assetName: progress == null
+                ? PixelIconAsset.gamepad
+                : PixelIconAsset.coin,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              progress == null
+                  ? 'Comienza en el nivel 1. Cada victoria desbloquea la siguiente etapa para este personaje.'
+                  : 'Campaña activa · nivel ${progress!.currentLevel}/10 · ${progress!.temporaryCurrency} monedas en riesgo. El personaje queda fijado hasta completar o perder.',
+              style: GoogleFonts.vt323(
+                fontSize: 17,
+                color: RetroColors.textBright,
+                height: 1.15,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -294,67 +327,136 @@ class _LevelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(child: Text('${level.level}')),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    level.scenario,
-                    style: Theme.of(context).textTheme.titleLarge,
+    final borderColor = completed
+        ? RetroColors.green.withValues(alpha: 0.6)
+        : available
+            ? RetroColors.cyan
+            : const Color(0xFF1E354F);
+
+    return RetroArcadeCard(
+      borderColor: borderColor,
+      accentHeaderColor: available ? RetroColors.cyan : null,
+      glow: available,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              RetroBadge(
+                text: 'LVL ${level.level}',
+                color: completed
+                    ? RetroColors.green
+                    : available
+                        ? RetroColors.cyan
+                        : Colors.white54,
+                fontSize: 8,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  level.scenario.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.pressStart2p(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                Icon(
-                  completed
-                      ? Icons.check_circle_outline
-                      : available
-                      ? Icons.lock_open_outlined
-                      : Icons.lock_outline,
-                ),
-              ],
+              ),
+              Icon(
+                completed
+                    ? Icons.check_circle
+                    : available
+                        ? Icons.lock_open
+                        : Icons.lock,
+                color: completed
+                    ? RetroColors.green
+                    : available
+                        ? RetroColors.cyan
+                        : Colors.white38,
+                size: 18,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'JEFE',
+            style: GoogleFonts.pressStart2p(
+              fontSize: 8,
+              color: RetroColors.magenta,
+              letterSpacing: 1,
             ),
-            const SizedBox(height: 18),
-            Text('JEFE', style: Theme.of(context).textTheme.labelMedium),
-            const SizedBox(height: 4),
-            Text(level.boss, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text(level.mechanic),
-            const Spacer(),
-            Row(
-              children: [
-                const Icon(Icons.auto_awesome_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(child: Text('${level.uniqueReward} · 1%')),
-              ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            level.boss,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.pressStart2p(
+              fontSize: 10,
+              color: Colors.white,
             ),
-            const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.tonalIcon(
-                onPressed: available
-                    ? () => context.go(
-                        '/game?experience=campaign&character=${selectedCharacter.serialized}&level=${level.level}',
-                      )
-                    : null,
-                icon: Icon(available ? Icons.play_arrow : Icons.construction),
-                label: Text(
-                  completed
-                      ? 'COMPLETADO'
-                      : available
-                      ? 'JUGAR NIVEL ${level.level}'
-                      : 'BLOQUEADO',
-                ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: Text(
+              level.mechanic,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.vt323(
+                fontSize: 16,
+                color: RetroColors.textMuted,
+                height: 1.15,
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const PixelIconAsset(
+                assetName: PixelIconAsset.coin,
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${level.uniqueReward} · 1%',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.vt323(
+                    fontSize: 16,
+                    color: RetroColors.gold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: RetroArcadeButton(
+              text: completed
+                  ? 'COMPLETADO'
+                  : available
+                      ? 'JUGAR NIVEL ${level.level}'
+                      : 'BLOQUEADO',
+              fontSize: 8,
+              primaryColor: completed
+                  ? RetroColors.green
+                  : available
+                      ? RetroColors.cyan
+                      : Colors.grey.shade800,
+              textColor: completed || available ? Colors.black : Colors.white38,
+              onPressed: available
+                  ? () => context.go(
+                        '/game?experience=campaign&character=${selectedCharacter.serialized}&level=${level.level}',
+                      )
+                  : null,
+            ),
+          ),
+        ],
       ),
     );
   }

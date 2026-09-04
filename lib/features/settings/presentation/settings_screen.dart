@@ -37,42 +37,62 @@ class SettingsScreen extends ConsumerWidget {
                     child: Icon(Icons.person_outline),
                   ),
                   title: Text(user?.displayName ?? 'Jugador'),
-                  subtitle: Text(user?.email ?? ''),
-                  trailing: environment.usesLocalBackend
-                      ? const Chip(label: Text('LOCAL'))
-                      : const Chip(label: Text('CLOUD')),
+                  subtitle: Text(
+                    user?.isGuest == true
+                        ? 'Partida local sin cuenta vinculada'
+                        : user?.email ?? '',
+                  ),
+                  trailing: user?.isGuest == true
+                      ? const Chip(label: Text('INVITADO'))
+                      : environment.usesLocalBackend
+                          ? const Chip(label: Text('LOCAL'))
+                          : const Chip(label: Text('CLOUD')),
                 ),
                 if (auth.error != null)
                   _MessageBox(message: auth.error!, isError: true),
                 if (auth.notice != null) _MessageBox(message: auth.notice!),
                 const Divider(height: 32),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy
-                          ? null
-                          : () => _link(ref, AuthProviderId.google),
-                      icon: const Icon(Icons.account_circle_outlined),
-                      label: const Text('Vincular Google'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy
-                          ? null
-                          : () => _link(ref, AuthProviderId.apple),
-                      icon: const Icon(Icons.apple),
-                      label: const Text('Vincular Apple'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy
-                          ? null
-                          : () => _changePassword(context, ref),
-                      icon: const Icon(Icons.password_outlined),
-                      label: const Text('Cambiar contraseña'),
-                    ),
-                  ],
-                ),
+                if (user?.isGuest == true) ...[
+                  const Text(
+                    'Estás en una sesión de invitado. Para activar el respaldo en la nube y competir en los rankings globales, conecta o crea una cuenta:',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: auth.isBusy
+                        ? null
+                        : () => ref.read(authControllerProvider.notifier).signOut(),
+                    icon: const Icon(Icons.cloud_upload_outlined),
+                    label: const Text('CONECTAR O CREAR CUENTA'),
+                  ),
+                ] else
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: auth.isBusy
+                            ? null
+                            : () => _link(ref, AuthProviderId.google),
+                        icon: const Icon(Icons.account_circle_outlined),
+                        label: const Text('Vincular Google'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: auth.isBusy
+                            ? null
+                            : () => _link(ref, AuthProviderId.apple),
+                        icon: const Icon(Icons.apple),
+                        label: const Text('Vincular Apple'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: auth.isBusy
+                            ? null
+                            : () => _changePassword(context, ref),
+                        icon: const Icon(Icons.password_outlined),
+                        label: const Text('Cambiar contraseña'),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -121,20 +141,26 @@ class SettingsScreen extends ConsumerWidget {
                       ? null
                       : () =>
                             ref.read(authControllerProvider.notifier).signOut(),
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Cerrar sesión'),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.tonalIcon(
-                  onPressed: auth.isBusy
-                      ? null
-                      : () => _confirmDeletion(context, ref),
-                  icon: const Icon(Icons.delete_forever_outlined),
-                  label: const Text('Eliminar mi cuenta'),
-                  style: FilledButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
+                  icon: Icon(user?.isGuest == true ? Icons.exit_to_app : Icons.logout),
+                  label: Text(
+                    user?.isGuest == true
+                        ? 'Salir al menú principal'
+                        : 'Cerrar sesión',
                   ),
                 ),
+                if (user?.isGuest != true) ...[
+                  const SizedBox(height: 12),
+                  FilledButton.tonalIcon(
+                    onPressed: auth.isBusy
+                        ? null
+                        : () => _confirmDeletion(context, ref),
+                    icon: const Icon(Icons.delete_forever_outlined),
+                    label: const Text('Eliminar mi cuenta'),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

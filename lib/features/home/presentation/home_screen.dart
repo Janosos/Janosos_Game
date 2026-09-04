@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../auth/application/auth_controller.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -13,68 +15,237 @@ class HomeScreen extends ConsumerWidget {
     final auth = ref.watch(authControllerProvider);
     final environment = ref.watch(appEnvironmentProvider);
     final user = auth.session.user;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isMobile = screenWidth < 600;
+
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       children: [
-        Semantics(
-          header: true,
-          child: Text(
-            'Hola, ${user?.displayName ?? 'jugador'}',
-            style: Theme.of(context).textTheme.headlineMedium,
+        // Banner retro arcade de título
+        Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: isMobile ? 8 : 12),
+            child: Image.asset(
+              'assets/images/title_retro.png',
+              height: isMobile ? 54 : 72,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.none,
+              errorBuilder: (_, __, ___) => Text(
+                '★ JANOSOS ARCADE ★',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: isMobile ? 15 : 20,
+                  color: RetroColors.cyan,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          environment.usesLocalBackend
-              ? 'Modo local de desarrollo: tus pruebas se guardan en este dispositivo.'
-              : 'Tu cuenta está conectada y lista para sincronizar.',
+
+        // Saludo con tipografía retro
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'JUGADOR: ${(user?.displayName ?? 'INVITADO').toUpperCase()}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isMobile ? 11 : 13,
+                        fontWeight: FontWeight.bold,
+                        color: RetroColors.cyan,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user?.isGuest == true
+                        ? 'PARTIDA LOCAL • ESTE DISPOSITIVO'
+                        : environment.usesLocalBackend
+                            ? 'MODO LOCAL DE DESARROLLO'
+                            : 'CUENTA CONECTADA • NUBE ACTIVA',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.vt323(
+                      fontSize: isMobile ? 16 : 18,
+                      color: RetroColors.textMuted,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            RetroBadge(
+              text: user?.isGuest == true ? 'INVITADO' : 'ONLINE',
+              color: user?.isGuest == true
+                  ? RetroColors.gold
+                  : RetroColors.green,
+            ),
+          ],
         ),
-        const SizedBox(height: 24),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+        if (user?.isGuest == true) ...[
+          const SizedBox(height: 14),
+          RetroArcadeCard(
+            borderColor: RetroColors.gold.withValues(alpha: 0.6),
+            backgroundColor: const Color(0xFF141A12),
+            padding: const EdgeInsets.all(14),
+            child: Row(
               children: [
-                Text(
-                  'CORREDOR CLÁSICO',
-                  style: Theme.of(context).textTheme.titleLarge,
+                const PixelIconAsset(
+                  assetName: PixelIconAsset.gamepad,
+                  size: 28,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Corre con reglas normalizadas o entra a la campaña completa de diez niveles.',
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PARTIDA GUARDADA EN ESTE EQUIPO',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: RetroColors.gold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Tus desbloqueos se guardan aquí. Puedes conectar cloud cuando quieras.',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.vt323(
+                          fontSize: 15,
+                          color: Colors.white70,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  onPressed: () => context.go('/game?experience=standard'),
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('JUGAR AHORA'),
+                const SizedBox(width: 8),
+                RetroArcadeButton(
+                  text: 'CONECTAR',
+                  fontSize: 8,
+                  primaryColor: RetroColors.gold,
+                  onPressed: () => context.go('/settings'),
                 ),
               ],
             ),
           ),
+        ],
+
+        const SizedBox(height: 18),
+
+        // Tarjeta principal: JUGAR AHORA / CORREDOR CLÁSICO
+        RetroArcadeCard(
+          borderColor: RetroColors.cyan,
+          accentHeaderColor: RetroColors.cyan,
+          glow: true,
+          padding: EdgeInsets.all(isMobile ? 18 : 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const PixelIconAsset(
+                        assetName: PixelIconAsset.gamepad,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'CORREDOR CLÁSICO',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isMobile ? 11 : 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const RetroBadge(
+                    text: '10 NIVELES',
+                    color: RetroColors.gold,
+                    fontSize: 8,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Corre con reglas normalizadas o enfréntate a los jefes de la campaña completa.',
+                style: GoogleFonts.vt323(
+                  fontSize: isMobile ? 18 : 20,
+                  color: RetroColors.textBright,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              RetroArcadeButton(
+                text: 'INSERT COIN / JUGAR AHORA',
+                pixelIcon: const PixelIconAsset(
+                  assetName: PixelIconAsset.coin,
+                  size: 20,
+                ),
+                primaryColor: RetroColors.cyan,
+                fontSize: isMobile ? 9 : 11,
+                isFullWidth: true,
+                onPressed: () => context.go('/game?experience=standard'),
+              ),
+            ],
+          ),
         ),
+
         const SizedBox(height: 16),
+
+        // Acciones secundarias en cuadrícula arcade responsiva
         Wrap(
-          spacing: 16,
-          runSpacing: 16,
+          spacing: 14,
+          runSpacing: 14,
           children: [
             _HomeAction(
-              icon: Icons.map_outlined,
-              title: 'Progresión mundial',
-              subtitle: '10 niveles y sus jefes.',
+              pixelAsset: PixelIconAsset.trophy,
+              title: 'Campaña Mundial',
+              subtitle: '10 mundos y jefes arcade.',
+              badgeText: 'CAMPAÑA',
+              badgeColor: RetroColors.gold,
+              isFullWidth: isMobile,
               onTap: () => context.go('/campaign'),
             ),
             _HomeAction(
-              icon: Icons.leaderboard_outlined,
+              pixelAsset: PixelIconAsset.coin,
               title: 'Leaderboard',
-              subtitle: 'Clasificación por personaje.',
+              subtitle: 'Récords y puntuaciones globales.',
+              badgeText: 'RANKING',
+              badgeColor: RetroColors.cyan,
+              isFullWidth: isMobile,
               onTap: () => context.go('/leaderboard'),
             ),
             _HomeAction(
-              icon: Icons.groups_outlined,
+              pixelAsset: PixelIconAsset.gamepad,
               title: 'Personajes',
-              subtitle: 'Habilidades exclusivas y progreso.',
+              subtitle: 'Habilidades exclusivas y catálogo.',
+              badgeText: 'ROSTER',
+              badgeColor: RetroColors.magenta,
+              isFullWidth: isMobile,
               onTap: () => context.go('/characters'),
             ),
           ],
@@ -86,38 +257,65 @@ class HomeScreen extends ConsumerWidget {
 
 class _HomeAction extends StatelessWidget {
   const _HomeAction({
-    required this.icon,
+    required this.pixelAsset,
     required this.title,
     required this.subtitle,
+    required this.badgeText,
+    required this.badgeColor,
     required this.onTap,
+    this.isFullWidth = false,
   });
 
-  final IconData icon;
+  final String pixelAsset;
   final String title;
   final String subtitle;
+  final String badgeText;
+  final Color badgeColor;
   final VoidCallback onTap;
+  final bool isFullWidth;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 260,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      width: isFullWidth ? double.infinity : 270,
+      child: RetroArcadeCard(
+        borderColor: const Color(0xFF1E354F),
+        onTap: onTap,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(icon, size: 36),
-                const SizedBox(height: 16),
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 6),
-                Text(subtitle),
+                PixelIconAsset(assetName: pixelAsset, size: 32),
+                RetroBadge(text: badgeText, color: badgeColor, fontSize: 7),
               ],
             ),
-          ),
+            const SizedBox(height: 14),
+            Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.pressStart2p(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.vt323(
+                fontSize: 15,
+                color: RetroColors.textMuted,
+                height: 1.1,
+              ),
+            ),
+          ],
         ),
       ),
     );

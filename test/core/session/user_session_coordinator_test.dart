@@ -118,6 +118,9 @@ class _FakeAuthRepository implements AuthRepository {
       throw UnsupportedError('not used');
 
   @override
+  Future<void> continueAsGuest() => throw UnsupportedError('not used');
+
+  @override
   Future<void> signOut() => throw UnsupportedError('not used');
 
   @override

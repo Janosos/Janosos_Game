@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
 import '../../../game/domain/character_id.dart';
 import '../../../game/domain/run_configuration.dart';
@@ -68,10 +70,25 @@ class _LeaderboardContent extends ConsumerWidget {
               ],
             ),
           ),
-          const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.public), text: 'Top global'),
-              Tab(icon: Icon(Icons.history), text: 'Mi historial'),
+          TabBar(
+            indicatorColor: RetroColors.cyan,
+            indicatorSize: TabBarIndicatorSize.tab,
+            labelStyle: GoogleFonts.pressStart2p(
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+            ),
+            unselectedLabelStyle: GoogleFonts.pressStart2p(fontSize: 9),
+            labelColor: RetroColors.cyan,
+            unselectedLabelColor: RetroColors.textMuted,
+            tabs: const [
+              Tab(
+                icon: PixelIconAsset(assetName: PixelIconAsset.trophy, size: 20),
+                text: 'Top global',
+              ),
+              Tab(
+                icon: PixelIconAsset(assetName: PixelIconAsset.coin, size: 20),
+                text: 'Mi historial',
+              ),
             ],
           ),
           Expanded(
@@ -243,37 +260,89 @@ class _LeaderboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final medal = switch (entry.position) {
-      1 => '🥇',
-      2 => '🥈',
-      3 => '🥉',
-      _ => '#${entry.position}',
-    };
-    return Card(
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 10,
-        ),
-        leading: SizedBox(
-          width: 48,
-          child: Center(
-            child: Text(medal, style: Theme.of(context).textTheme.titleLarge),
-          ),
-        ),
-        title: Text(entry.displayName),
-        subtitle: Text(
-          '${entry.completed ? 'Completada' : 'Fallida'} · '
-          'Nivel ${entry.levelReached}/10 · ${_formatDuration(entry.durationMs)}\n'
-          '${_formatDate(entry.endedAt)} · ${entry.contentVersion}',
-        ),
-        isThreeLine: true,
-        trailing: Semantics(
-          label: '${entry.totalScore} puntos',
-          child: Text(
-            '${entry.totalScore}',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+    final isTop1 = entry.position == 1;
+    final isTop3 = entry.position <= 3;
+    final borderColor = isTop1
+        ? RetroColors.gold
+        : isTop3
+            ? RetroColors.cyan
+            : const Color(0xFF1E354F);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: RetroArcadeCard(
+        borderColor: borderColor,
+        glow: isTop1,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 44,
+              child: Center(
+                child: isTop1
+                    ? const PixelIconAsset(
+                        assetName: PixelIconAsset.trophy,
+                        size: 32,
+                      )
+                    : Text(
+                        '#${entry.position}',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: 12,
+                          color: isTop3 ? RetroColors.cyan : Colors.white60,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.displayName,
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${entry.completed ? 'Completada' : 'Fallida'} · '
+                    'Nivel ${entry.levelReached}/10 · ${_formatDuration(entry.durationMs)}\n'
+                    '${_formatDate(entry.endedAt)} · ${entry.contentVersion}',
+                    style: GoogleFonts.vt323(
+                      fontSize: 16,
+                      color: RetroColors.textMuted,
+                      height: 1.15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Semantics(
+              label: '${entry.totalScore} puntos',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const PixelIconAsset(
+                    assetName: PixelIconAsset.coin,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${entry.totalScore}',
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: RetroColors.gold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

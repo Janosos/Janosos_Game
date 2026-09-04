@@ -19,6 +19,8 @@ abstract interface class AuthRepository {
 
   Future<void> reauthenticate();
 
+  Future<void> continueAsGuest();
+
   Future<void> signOut();
 
   Future<void> deleteAccount();

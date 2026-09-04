@@ -47,6 +47,20 @@ class FakeAuthRepository implements AuthRepository {
   Future<void> reauthenticate() async {}
 
   @override
+  Future<void> continueAsGuest() async {
+    _session = AuthSessionSnapshot.authenticated(
+      const AuthUserProfile(
+        id: 'guest-user',
+        email: 'invitado@janosos.local',
+        displayName: 'Invitado',
+        isEmailVerified: true,
+        isGuest: true,
+      ),
+    );
+    _controller.add(_session);
+  }
+
+  @override
   Future<void> register(RegistrationRequest request) async {}
 
   @override

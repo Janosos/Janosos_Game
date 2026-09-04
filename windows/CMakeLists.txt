@@ -1,6 +1,22 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+
+if(NOT DEFINED CMAKE_GENERATOR_INSTANCE OR CMAKE_GENERATOR_INSTANCE STREQUAL "")
+  if(EXISTS "C:/Program Files/Microsoft Visual Studio/2022/Community")
+    set(CMAKE_GENERATOR_INSTANCE "C:/Program Files/Microsoft Visual Studio/2022/Community" CACHE PATH "Visual Studio instance" FORCE)
+  endif()
+endif()
+
 project(janosos_game LANGUAGES CXX)
+
+file(GLOB _MSVC_VERSIONS "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/*")
+foreach(_MSVC_DIR ${_MSVC_VERSIONS})
+  if(EXISTS "${_MSVC_DIR}/atlmfc/include")
+    include_directories(SYSTEM "${_MSVC_DIR}/atlmfc/include")
+    link_directories("${_MSVC_DIR}/atlmfc/lib/x64")
+    break()
+  endif()
+endforeach()
 
 # audioplayers_windows still consumes the transitional coroutine header. Newer
 # MSVC toolsets intentionally make that deprecation fatal unless consumers opt
