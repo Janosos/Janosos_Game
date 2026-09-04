@@ -1,14 +1,15 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
-import '../dino_run_game.dart';
-import 'character_selection_overlay.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-class ScoreSystem extends TextComponent with HasGameRef<DinoRunGame> {
+import '../dino_run_game.dart';
+import '../domain/character_id.dart';
+
+class ScoreSystem extends TextComponent with HasGameReference<DinoRunGame> {
+  ScoreSystem({int initialHighScore = 0}) : _highScore = initialHighScore;
+
   double _score = 0;
-  int _highScore = 0;
-  late SharedPreferences _prefs;
-  bool _isLoaded = false;
+  int _highScore;
+  int _lastEmittedScore = 0;
 
   @override
   Future<void> onLoad() async {
@@ -17,62 +18,72 @@ class ScoreSystem extends TextComponent with HasGameRef<DinoRunGame> {
       style: const TextStyle(
         color: Colors.white,
         fontSize: 24,
-        fontFamily: 'Courier', 
+        fontFamily: 'Courier',
         fontWeight: FontWeight.bold,
         shadows: [
           Shadow(blurRadius: 2, color: Colors.black, offset: Offset(2, 2)),
         ],
       ),
     );
-    
-    _prefs = await SharedPreferences.getInstance();
-    _highScore = _prefs.getInt('high_score') ?? 0;
-    _isLoaded = true;
     updateText();
   }
 
   @override
   void update(double dt) {
-    if (!_isLoaded) return;
-    
-    // Increase score
-    // Increase score
-    double multiplier = 1.0;
-    if (gameRef.dino.characterType == CharacterType.nanic && gameRef.dino.isSuperCharged) {
-       multiplier = 2.0;
+    super.update(dt);
+    var multiplier = 1.0;
+    if (game.dino.characterId == CharacterId.nanic &&
+        game.dino.isSuperCharged) {
+      multiplier = 2;
     }
-    _score += dt * 10 * multiplier; 
-    
+    advance(dt, multiplier: multiplier);
+  }
 
-    
+  void advance(double dt, {double multiplier = 1}) {
+    _score += dt * 10 * multiplier;
+    final wholeScore = _score.toInt();
+    if (wholeScore != _lastEmittedScore && isMounted) {
+      _lastEmittedScore = wholeScore;
+      game.scoreChanged(wholeScore);
+    }
     updateText();
   }
 
   void updateText() {
-    String scoreStr = _score.toInt().toString().padLeft(5, '0');
-    String highStr = _highScore.toString().padLeft(5, '0');
-    text = 'HI $highStr  $scoreStr';
-  }
-  
-  void saveHighScore() {
-    if (_score.toInt() >= _highScore) {
-       _prefs.setInt('high_score', _score.toInt());
-    }
+    final scoreText = _score.toInt().toString().padLeft(5, '0');
+    final highScoreText = _highScore.toString().padLeft(5, '0');
+    text = 'HI $highScoreText  $scoreText';
   }
 
-  void reset() {
-    // Save previous run if high score (just in case not saved yet)
-    saveHighScore(); 
-    _score = 0;
-    // Reload high score to ensure we have the absolute latest
-    _highScore = _prefs.getInt('high_score') ?? _highScore;
+  int completeRun() {
+    final wholeScore = _score.toInt();
+    if (wholeScore > _highScore) {
+      _highScore = wholeScore;
+      updateText();
+    }
+    return _highScore;
   }
-  
+
+  void reset({int? highScore}) {
+    if (highScore != null && highScore > _highScore) {
+      _highScore = highScore;
+    }
+    _score = 0;
+    _lastEmittedScore = 0;
+    updateText();
+  }
+
   double get currentScore => _score;
   double get score => _score;
-  
+  int get highScore => _highScore;
+
   set score(double value) {
-    _score = value;
+    _score = value < 0 ? 0 : value;
+    final wholeScore = _score.toInt();
+    if (wholeScore != _lastEmittedScore && isMounted) {
+      _lastEmittedScore = wholeScore;
+      game.scoreChanged(wholeScore);
+    }
     updateText();
   }
 }

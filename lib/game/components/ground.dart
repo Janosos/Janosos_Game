@@ -3,39 +3,37 @@ import 'package:flame/parallax.dart';
 import 'package:flutter/material.dart';
 import '../dino_run_game.dart';
 
-class GroundComponent extends ParallaxComponent<DinoRunGame> with HasGameRef<DinoRunGame> {
+class GroundComponent extends ParallaxComponent<DinoRunGame> {
   @override
   Future<void> onLoad() async {
     // Parallax logic prevents compression by repeating the texture
-    parallax = await gameRef.loadParallax(
-      [
-        ParallaxImageData('layer_3_ground_modern.png'),
-      ],
+    parallax = await game.loadParallax(
+      [ParallaxImageData('layer_3_ground_modern.png')],
       baseVelocity: Vector2(200, 0), // Match dino speed roughly
       fill: LayerFill.height, // Scale to fill valid height
       alignment: Alignment.bottomLeft,
       repeat: ImageRepeat.repeatX,
     );
-    
-    priority = 5; 
-    
+
+    priority = 5;
+
     // Explicitly size and position
     // We want it at the bottom. The image is "Seamless city street".
     // Let's assume height is sufficient or we let it tile.
     // We want it at the bottom.
     anchor = Anchor.topLeft; // Easier to position from top of ground
     // However, ParallaxComponent usually uses top-left.
-    // Let's stick to standard positioning logic. 
+    // Let's stick to standard positioning logic.
     // We want the TOP of the ground to be at (screenHeight - 160).
-    
-    size = Vector2(gameRef.size.x, DinoRunGame.virtualGroundHeight); 
-    position = Vector2(0, gameRef.size.y - DinoRunGame.virtualGroundHeight);
+
+    size = Vector2(game.size.x, DinoRunGame.virtualGroundHeight);
+    position = Vector2(0, game.size.y - DinoRunGame.virtualGroundHeight);
   }
-  
+
   @override
-  void update(double dt){
+  void update(double dt) {
     super.update(dt);
-    parallax?.baseVelocity = Vector2(gameRef.currentSpeed, 0);
+    parallax?.baseVelocity = Vector2(game.currentSpeed, 0);
   }
 
   @override

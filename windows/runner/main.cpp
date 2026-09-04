@@ -2,11 +2,18 @@
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
 
+#include "app_links/app_links_plugin_c_api.h"
+
 #include "flutter_window.h"
 #include "utils.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
+  // Forward a protocol activation to an already-running game instance.
+  if (SendAppLinkToInstance()) {
+    return EXIT_SUCCESS;
+  }
+
   // Attach to console when present (e.g., 'flutter run') or create a
   // new console when running with a debugger.
   if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
@@ -27,7 +34,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"dino_run_flame", origin, size)) {
+  if (!window.Create(L"Janosos Game", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

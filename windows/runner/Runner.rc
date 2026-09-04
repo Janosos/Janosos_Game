@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "dino_run_flame" "\0"
+            VALUE "CompanyName", "Janosos" "\0"
+            VALUE "FileDescription", "Janosos Game" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "dino_run_flame" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "dino_run_flame.exe" "\0"
-            VALUE "ProductName", "dino_run_flame" "\0"
+            VALUE "InternalName", "janosos_game" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Janosos. All rights reserved." "\0"
+            VALUE "OriginalFilename", "janosos_game.exe" "\0"
+            VALUE "ProductName", "Janosos Game" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Janosos Game
+Comment=Janosos V6
+Exec=janosos_game %u
+Icon=io.janosos.game
+Terminal=false
+Type=Application
+Categories=Game;
+MimeType=x-scheme-handler/io.janosos.game;
+StartupWMClass=io.janosos.game

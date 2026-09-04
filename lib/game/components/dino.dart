@@ -1,43 +1,56 @@
+import 'dart:developer' as developer;
+
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame_audio/flame_audio.dart';
 import '../dino_run_game.dart';
+import '../domain/character_definition.dart';
+import '../domain/character_id.dart';
+import '../domain/run_configuration.dart';
 import 'projectile.dart';
 import 'obstacle.dart';
 import 'orb.dart';
-import '../hud/character_selection_overlay.dart';
 
 enum DinoState { idle, running, jumping, hit, shooting }
 
 class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
-    with HasGameRef<DinoRunGame>, CollisionCallbacks {
+    with HasGameReference<DinoRunGame>, CollisionCallbacks {
   // Constants
   final double gravity = 1000.0;
-  final double jumpForce = -500.0;
-  
+  double get jumpForce => -500 * _configuration.stats.jumpMultiplier;
+
   double _yVelocity = 0.0;
   bool _isJumping = false;
 
   // Character Logic
-  CharacterType characterType = CharacterType.pistolero;
-  String characterName = 'jano';
-  
+  RunConfiguration _configuration = RunConfiguration.legacy(
+    characterId: CharacterId.jano,
+  );
+
+  CharacterId get characterId => _configuration.characterId;
+
   // Ability timers & limits
   double cooldownTimer = 0.0;
-  double abilityDurationTimer = 0.0; 
-  
+  double abilityDurationTimer = 0.0;
+  double _damageInvulnerabilityTimer = 0;
+  double _recoveryTimer = 0;
+  int _recoveryBasisPoints = 0;
+
   // Specific State
-  bool hasShield = false; 
-  bool isIntangible = false; 
-  bool canDoubleJump = false; 
-  bool hasDoubleJumped = false; 
-  bool isGliding = false; 
-  
+  bool hasShield = false;
+  bool isIntangible = false;
+  bool canDoubleJump = false;
+  bool hasDoubleJumped = false;
+  bool isGliding = false;
+
   // Nanic State
   double energy = 0.0;
   final double maxEnergy = 100.0;
   bool isSuperCharged = false;
   bool isDischarging = false;
+  bool _firstOrbBonusUsed = false;
+  bool get isDamageInvulnerable => _damageInvulnerabilityTimer > 0;
+  bool get isAirborne => _isJumping;
 
   // Cooldowns
   final double pistoleroCooldown = 10.0;
@@ -53,17 +66,16 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
   Future<void> onLoad() async {
     await super.onLoad();
     await _loadCharacterSprite();
-    
+
     anchor = Anchor.bottomLeft;
-    position = Vector2(50, gameRef.size.y - DinoRunGame.virtualGroundHeight);  
-    size = Vector2(88, 88); 
-    
+    position = Vector2(50, game.size.y - DinoRunGame.virtualGroundHeight);
+    size = Vector2(88, 88);
+
     _updateHitbox();
   }
-  
-  Future<void> setCharacter(CharacterType type) async {
-    characterType = type;
-    characterName = getCharacterNameAsset(type);
+
+  Future<void> setConfiguration(RunConfiguration configuration) async {
+    _configuration = configuration;
     await _loadCharacterSprite();
     _resetAbilities();
     _updateHitbox();
@@ -78,63 +90,78 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     Vector2 hitboxSize;
     Vector2 hitboxPosition;
 
-    if (characterType == CharacterType.nanic) {
-      hitboxSize = Vector2(28, 48); 
-      hitboxPosition = Vector2(10, 20); 
+    if (characterId == CharacterId.nanic) {
+      hitboxSize = Vector2(28, 48);
+      hitboxPosition = Vector2(10, 20);
     } else {
       hitboxSize = Vector2(48, 58);
       hitboxPosition = Vector2(20, 20);
     }
 
-    add(RectangleHitbox(
-      position: hitboxPosition,
-      size: hitboxSize,
-    ));
-  }
-
-  String getCharacterNameAsset(CharacterType type) {
-    switch (type) {
-      case CharacterType.pistolero: return 'jano';
-      case CharacterType.vitalista: return 'parker';
-      case CharacterType.tanque: return 'chema';
-      case CharacterType.fantasma: return 'conra';
-      case CharacterType.atleta: return 'shyno';
-      case CharacterType.gravedadZero: return 'nakama';
-      case CharacterType.nanic: return 'nanic';
-    }
+    add(RectangleHitbox(position: hitboxPosition, size: hitboxSize));
   }
 
   void _resetAbilities() {
     cooldownTimer = 0;
     abilityDurationTimer = 0;
+    _damageInvulnerabilityTimer = 0;
+    _recoveryTimer = 0;
+    _recoveryBasisPoints = 0;
     isIntangible = false;
     isGliding = false;
     hasDoubleJumped = false;
-    
+
     // Nanic Reset
     energy = 0;
     isSuperCharged = false;
     isDischarging = false;
+    _firstOrbBonusUsed = false;
     if (auraComponent != null) auraComponent!.opacity = 0.0;
-    
-    if (characterType == CharacterType.vitalista || characterType == CharacterType.tanque) {
-      hasShield = true; 
+
+    final definition = characterId.definition;
+    if (definition.hasTrait(CharacterCoreTrait.regeneratingShield) ||
+        (_configuration.experience == RunExperience.endlessRunner &&
+            definition.hasTrait(CharacterCoreTrait.extraLife))) {
+      hasShield = true;
     } else {
       hasShield = false;
     }
   }
 
   Future<void> _loadCharacterSprite() async {
-    final spriteSheet = await gameRef.images.load('${characterName}_clean.png');
+    final spriteSheet = await game.images.load(
+      characterId.definition.assetName,
+    );
     final double fw = spriteSheet.width / 2;
     final double fh = spriteSheet.height / 2;
-    
-    final frame0 = Sprite(spriteSheet, srcPosition: Vector2(0, 0), srcSize: Vector2(fw, fh));
-    final frame1 = Sprite(spriteSheet, srcPosition: Vector2(fw, 0), srcSize: Vector2(fw, fh));
-    final frame2 = Sprite(spriteSheet, srcPosition: Vector2(0, fh), srcSize: Vector2(fw, fh));
-    final frame3 = Sprite(spriteSheet, srcPosition: Vector2(fw, fh), srcSize: Vector2(fw, fh));
 
-    final runAnimation = SpriteAnimation.spriteList([frame0, frame1, frame2, frame3], stepTime: 0.15);
+    final frame0 = Sprite(
+      spriteSheet,
+      srcPosition: Vector2(0, 0),
+      srcSize: Vector2(fw, fh),
+    );
+    final frame1 = Sprite(
+      spriteSheet,
+      srcPosition: Vector2(fw, 0),
+      srcSize: Vector2(fw, fh),
+    );
+    final frame2 = Sprite(
+      spriteSheet,
+      srcPosition: Vector2(0, fh),
+      srcSize: Vector2(fw, fh),
+    );
+    final frame3 = Sprite(
+      spriteSheet,
+      srcPosition: Vector2(fw, fh),
+      srcSize: Vector2(fw, fh),
+    );
+
+    final runAnimation = SpriteAnimation.spriteList([
+      frame0,
+      frame1,
+      frame2,
+      frame3,
+    ], stepTime: 0.15);
     final jumpAnimation = SpriteAnimation.spriteList([frame1], stepTime: 1);
     final hitAnimation = SpriteAnimation.spriteList([frame3], stepTime: 1);
     SpriteAnimation? shootAnimation;
@@ -142,92 +169,158 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     animations = {
       DinoState.idle: runAnimation,
       DinoState.running: runAnimation,
-      DinoState.jumping: jumpAnimation, 
+      DinoState.jumping: jumpAnimation,
       DinoState.hit: hitAnimation,
       DinoState.shooting: shootAnimation ?? runAnimation,
     };
-    
+    paint.colorFilter = _configuration.palette.colorFilter;
+
     current = DinoState.running;
 
-    if (characterType == CharacterType.vitalista) { 
-      size = Vector2(75, 75); 
-    } else if (characterType == CharacterType.fantasma) {
-      size = Vector2(80, 80); 
-    } else if (characterType == CharacterType.nanic) {
-      size = Vector2(48, 68); 
+    if (characterId == CharacterId.parker) {
+      size = Vector2(75, 75);
+    } else if (characterId == CharacterId.conra) {
+      size = Vector2(80, 80);
+    } else if (characterId == CharacterId.nanic) {
+      size = Vector2(48, 68);
     } else {
       size = Vector2(88, 88);
     }
 
     // Init Aura
     if (auraComponent == null) {
-        try {
-            final auraSprite = await gameRef.loadSprite('aura.png');
-            auraComponent = SpriteComponent(
-                sprite: auraSprite,
-                size: Vector2(100, 100),
-                anchor: Anchor.center,
-                position: size / 2, 
-            );
-            auraComponent!.priority = -1; // Keep behind
-            auraComponent!.opacity = 0.0;
-            add(auraComponent!);
-        } catch (e) {
-            print("Error loading aura: $e");
-        }
+      try {
+        final auraSprite = await game.loadSprite('aura.png');
+        auraComponent = SpriteComponent(
+          sprite: auraSprite,
+          size: Vector2(100, 100),
+          anchor: Anchor.center,
+          position: size / 2,
+        );
+        auraComponent!.priority = -1; // Keep behind
+        auraComponent!.opacity = 0.0;
+        add(auraComponent!);
+      } on Object catch (error, stackTrace) {
+        developer.log(
+          'Unable to load aura sprite',
+          name: 'DinoComponent',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
     } else {
-        auraComponent!.position = size / 2;
+      auraComponent!.position = size / 2;
     }
   }
 
   @override
   void update(double dt) {
-    if (gameRef.isMounted) {
-       super.update(dt);
-       if (cooldownTimer > 0) cooldownTimer -= dt;
-       
-       if (cooldownTimer <= 0 && characterType == CharacterType.tanque) hasShield = true;
+    if (game.isMounted) {
+      super.update(dt);
+      if (_recoveryTimer > 0) {
+        _recoveryTimer -= dt;
+      } else {
+        _recoveryBasisPoints = 0;
+      }
+      if (cooldownTimer > 0) {
+        cooldownTimer -= dt * (1 + _recoveryBasisPoints / 10000);
+      }
+      if (_damageInvulnerabilityTimer > 0) {
+        _damageInvulnerabilityTimer -= dt;
+      }
 
-       if (abilityDurationTimer > 0) {
-         abilityDurationTimer -= dt;
-         if (characterType != CharacterType.nanic) {
-            if (abilityDurationTimer % 0.2 < 0.1) opacity = 0.5; else opacity = 1.0;
-            if (abilityDurationTimer <= 0) {
-              opacity = 1.0;
-              isIntangible = false;
-              if (current == DinoState.shooting) current = DinoState.running;
-            }
-         } else {
-            // Nanic Discharge
-            if (abilityDurationTimer <= 0) {
-               isDischarging = false;
-            }
-         }
-       } else {
-         opacity = 1.0;
-       }
-       
-       // Aura check
-       if (characterType == CharacterType.nanic && (isSuperCharged || isDischarging) && auraComponent != null) {
-           auraComponent!.opacity = 1.0;
-           auraComponent!.angle += dt * 10;
-       } else if (auraComponent != null) {
-           auraComponent!.opacity = 0.0;
-       }
+      if (cooldownTimer <= 0 && characterId == CharacterId.chema) {
+        hasShield = true;
+      }
 
-       _yVelocity += gravity * dt;
-       if (isGliding && _yVelocity > 0) _yVelocity = 100;
-       y += _yVelocity * dt;
-       
-       double groundY = gameRef.size.y - DinoRunGame.virtualGroundHeight;
-       if (y > groundY) {
-         y = groundY;
-         _yVelocity = 0;
-         _isJumping = false;
-         isGliding = false;
-         hasDoubleJumped = false;
-         if (current != DinoState.hit) current = DinoState.running;
-       }
+      if (abilityDurationTimer > 0) {
+        abilityDurationTimer -= dt;
+        if (characterId != CharacterId.nanic) {
+          if (abilityDurationTimer % 0.2 < 0.1) {
+            opacity = 0.5;
+          } else {
+            opacity = 1.0;
+          }
+          if (abilityDurationTimer <= 0) {
+            opacity = 1.0;
+            isIntangible = false;
+            final graceMs = game.passiveParameter(
+              'phase_exit_grace',
+              'duration_ms',
+            );
+            if (graceMs > 0) {
+              _damageInvulnerabilityTimer = graceMs / 1000;
+            }
+            if (current == DinoState.shooting) current = DinoState.running;
+          }
+        } else {
+          // Nanic Discharge
+          if (abilityDurationTimer <= 0) {
+            isDischarging = false;
+          }
+        }
+      } else {
+        opacity = 1.0;
+      }
+
+      // Aura check
+      if (characterId == CharacterId.nanic &&
+          (isSuperCharged || isDischarging) &&
+          auraComponent != null) {
+        auraComponent!.opacity = 1.0;
+        auraComponent!.angle += dt * 10;
+      } else if (auraComponent != null) {
+        auraComponent!.opacity = 0.0;
+      }
+
+      _yVelocity += gravity * dt;
+      if (isGliding && _yVelocity > 0) {
+        final reduction = game.passiveParameter(
+          'glide_fall_reduction',
+          'basis_points',
+        );
+        _yVelocity = 100 * (1 - reduction.clamp(0, 1000) / 10000);
+      }
+      y += _yVelocity * dt;
+
+      double groundY = game.size.y - DinoRunGame.virtualGroundHeight;
+      if (y > groundY) {
+        final landedFromAir = _isJumping;
+        final landedFromGlide = isGliding;
+        y = groundY;
+        _yVelocity = 0;
+        _isJumping = false;
+        isGliding = false;
+        hasDoubleJumped = false;
+        if (current != DinoState.hit) current = DinoState.running;
+        if (landedFromAir) {
+          final reductionMs = game.passiveParameter(
+            'precision_landing_cooldown',
+            'reduction_ms',
+          );
+          final minimumMs = game.passiveParameter(
+            'precision_landing_cooldown',
+            'minimum_cooldown_ms',
+          );
+          if (reductionMs > 0 && cooldownTimer > minimumMs / 1000) {
+            cooldownTimer = (cooldownTimer - reductionMs / 1000).clamp(
+              minimumMs / 1000,
+              double.infinity,
+            );
+          }
+        }
+        if (landedFromGlide) {
+          applyRecovery(
+            Duration(
+              milliseconds: game.passiveParameter(
+                'glide_landing_recovery',
+                'duration_ms',
+              ),
+            ),
+            game.passiveParameter('glide_landing_recovery', 'basis_points'),
+          );
+        }
+      }
     }
   }
 
@@ -237,104 +330,182 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       _yVelocity = jumpForce;
       _isJumping = true;
       current = DinoState.jumping;
-      FlameAudio.play('Jump.wav');
+      if (_configuration.audioEnabled) FlameAudio.play('Jump.wav');
     } else {
-      if (characterType == CharacterType.atleta && !hasDoubleJumped) {
-         _yVelocity = jumpForce; 
-         hasDoubleJumped = true;
-         FlameAudio.play('Jump.wav');
-      } else if (characterType == CharacterType.gravedadZero) {
-         isGliding = true;
+      if (characterId.definition.hasTrait(CharacterCoreTrait.doubleJump) &&
+          !hasDoubleJumped) {
+        final control = game.passiveParameter(
+          'double_jump_control',
+          'basis_points',
+        );
+        _yVelocity = jumpForce * (1 + control.clamp(0, 1000) / 10000);
+        hasDoubleJumped = true;
+        if (_configuration.audioEnabled) FlameAudio.play('Jump.wav');
+      } else if (characterId.definition.hasTrait(CharacterCoreTrait.glide)) {
+        isGliding = true;
       }
     }
   }
-  
-  void stopGlide() { isGliding = false; }
-  
+
+  void stopGlide() {
+    isGliding = false;
+  }
+
   void activateAbility() {
-    if (characterType == CharacterType.pistolero && cooldownTimer <= 0) {
-         gameRef.add(Projectile(position: position + Vector2(size.x, -size.y / 2)));
-         cooldownTimer = pistoleroCooldown;
-         FlameAudio.play('Shoot.wav');
-         current = DinoState.shooting;
-         abilityDurationTimer = 0.5;
-    } else if (characterType == CharacterType.fantasma && cooldownTimer <= 0) {
-         isIntangible = true;
-         abilityDurationTimer = fantasmaDuration;
-         cooldownTimer = fantasmaCooldown; 
-         FlameAudio.play('Invisibility.wav');
-    } else if (characterType == CharacterType.nanic && isSuperCharged) {
-           // Start Discharge (Active Aura)
-           isDischarging = true;
-           abilityDurationTimer = dischargeDuration;
-           
-           energy = 0;
-           isSuperCharged = false;
-           gameRef.resetSpeed(); 
-           
-           FlameAudio.play('Shoot.wav'); // Activation sound
+    final activeSkillId = _configuration.loadout.activeSkillId;
+    if (activeSkillId != null && cooldownTimer <= 0) {
+      cooldownTimer = game.activatePurchasedSkill(activeSkillId);
+      return;
+    }
+    final activeAbility = _configuration.loadout.activeAbility;
+    if (activeAbility == ActiveAbilityId.pistolShot && cooldownTimer <= 0) {
+      game.add(Projectile(position: position + Vector2(size.x, -size.y / 2)));
+      cooldownTimer = pistoleroCooldown / _configuration.stats.speedMultiplier;
+      if (_configuration.audioEnabled) FlameAudio.play('Shoot.wav');
+      current = DinoState.shooting;
+      abilityDurationTimer = 0.5;
+      game.abilityActivated(ActiveAbilityId.pistolShot);
+    } else if (activeAbility == ActiveAbilityId.intangibility &&
+        cooldownTimer <= 0) {
+      isIntangible = true;
+      final durationBonus = game.passiveParameter(
+        'intangibility_duration',
+        'basis_points',
+      );
+      abilityDurationTimer =
+          fantasmaDuration * (1 + durationBonus.clamp(0, 1000) / 10000);
+      cooldownTimer = fantasmaCooldown / _configuration.stats.speedMultiplier;
+      if (_configuration.audioEnabled) FlameAudio.play('Invisibility.wav');
+      game.abilityActivated(ActiveAbilityId.intangibility);
+    } else if (activeAbility == ActiveAbilityId.electricDischarge &&
+        isSuperCharged) {
+      // Start Discharge (Active Aura)
+      isDischarging = true;
+      abilityDurationTimer = dischargeDuration;
+
+      energy = 0;
+      isSuperCharged = false;
+      game.resetSpeed();
+
+      if (_configuration.audioEnabled) FlameAudio.play('Shoot.wav');
+      game.abilityActivated(ActiveAbilityId.electricDischarge);
     }
   }
-  
+
   @override
-  void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
+  void onCollisionStart(
+    Set<Vector2> intersectionPoints,
+    PositionComponent other,
+  ) {
     super.onCollisionStart(intersectionPoints, other);
-    
+
     if (other is OrbComponent) {
-      if (characterType == CharacterType.nanic && !isSuperCharged && !isDischarging) {
+      if (characterId.definition.hasTrait(CharacterCoreTrait.energyCharge) &&
+          !isSuperCharged &&
+          !isDischarging) {
         other.removeFromParent();
-        energy += 20; 
-        FlameAudio.play('Select.wav'); 
+        final doubleCharge =
+            game.hasPassiveEffect('first_orb_double_charge') &&
+            !_firstOrbBonusUsed;
+        energy += doubleCharge ? 40 : 20;
+        if (doubleCharge) _firstOrbBonusUsed = true;
+        if (_configuration.audioEnabled) FlameAudio.play('Select.wav');
         if (energy >= maxEnergy) {
           energy = maxEnergy;
           isSuperCharged = true;
-          gameRef.increaseSpeed(); 
+          game.increaseSpeed();
         }
       }
-      return; 
+      return;
     }
 
     if (other is Obstacle) {
-      if (characterType == CharacterType.nanic && isDischarging) {
-          other.removeFromParent(); 
-          FlameAudio.play('Hit.wav'); 
-          isDischarging = false;
-          abilityDurationTimer = 0;
-          return; 
+      if (isDamageInvulnerable) return;
+      if (characterId == CharacterId.nanic && isDischarging) {
+        other.removeFromParent();
+        if (_configuration.audioEnabled) FlameAudio.play('Hit.wav');
+        isDischarging = false;
+        abilityDurationTimer = 0;
+        return;
       }
 
-      if (isIntangible) return; 
+      if (isIntangible) return;
 
       if (hasShield) {
-        hasShield = false; 
-        FlameAudio.play('Hit.wav'); 
-        if (characterType == CharacterType.tanque) {
-          gameRef.scoreSystem.score -= 500;
-          if (gameRef.scoreSystem.score < 0) gameRef.scoreSystem.score = 0;
-          cooldownTimer = tanqueShieldRegenTime;
-          abilityDurationTimer = 1.0; 
+        hasShield = false;
+        game.playerDamaged(wasAbsorbed: true);
+        if (_configuration.audioEnabled) FlameAudio.play('Hit.wav');
+        if (characterId == CharacterId.chema) {
+          final reduction = game.passiveParameter(
+            'shield_penalty_reduction',
+            'basis_points',
+          );
+          game.scoreSystem.score -=
+              500 * (1 - reduction.clamp(0, 2000) / 10000);
+          final regeneration = game.passiveParameter(
+            'shield_regeneration',
+            'basis_points',
+          );
+          cooldownTimer =
+              tanqueShieldRegenTime *
+              (1 - regeneration.clamp(0, 1000) / 10000) /
+              _configuration.stats.speedMultiplier;
+          abilityDurationTimer = 1.0;
           isIntangible = true;
         }
-        if (characterType == CharacterType.vitalista) {
-          abilityDurationTimer = 2.0; 
-          isIntangible = true; 
+        if (characterId == CharacterId.parker) {
+          abilityDurationTimer = 2.0;
+          isIntangible = true;
         }
-        return; 
+        return;
       }
       hit();
     }
   }
 
-  @override
   void hit() {
-      current = DinoState.hit;
-      FlameAudio.play('Hit.wav');
-      gameRef.gameOver();
+    current = DinoState.hit;
+    if (_configuration.audioEnabled) FlameAudio.play('Hit.wav');
+    game.receiveUnabsorbedHit();
   }
-  
-  @override
+
+  void beginDamageInvulnerability(Duration duration) {
+    _damageInvulnerabilityTimer = duration.inMilliseconds / 1000;
+    abilityDurationTimer = _damageInvulnerabilityTimer;
+    isIntangible = true;
+  }
+
+  void applyRecovery(Duration duration, int basisPoints) {
+    if (duration <= Duration.zero || basisPoints <= 0) return;
+    _recoveryTimer = duration.inMilliseconds / 1000;
+    _recoveryBasisPoints = basisPoints.clamp(0, 2000);
+  }
+
+  void reduceCooldownBasisPoints(int basisPoints) {
+    cooldownTimer *= 1 - basisPoints.clamp(0, 2000) / 10000;
+  }
+
+  void launchVertical(double impulseMultiplier) {
+    _yVelocity = jumpForce * impulseMultiplier.clamp(0.1, 1);
+    _isJumping = true;
+    current = DinoState.jumping;
+  }
+
+  bool consumeEnergyForExclusiveSkill() {
+    if (!isSuperCharged && energy < maxEnergy) return false;
+    energy = 0;
+    isSuperCharged = false;
+    isDischarging = false;
+    game.resetSpeed();
+    final graceMs = game.passiveParameter('discharge_grace', 'duration_ms');
+    if (graceMs > 0) {
+      beginDamageInvulnerability(Duration(milliseconds: graceMs));
+    }
+    return true;
+  }
+
   void reset() {
-    position = Vector2(50, gameRef.size.y - DinoRunGame.virtualGroundHeight);
+    position = Vector2(50, game.size.y - DinoRunGame.virtualGroundHeight);
     _yVelocity = 0;
     _isJumping = false;
     current = DinoState.running;

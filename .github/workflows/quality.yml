@@ -1,0 +1,58 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart run build_runner build
+      - run: git diff --exit-code -- lib/core/persistence/app_database.g.dart
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test tool
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter build web --release --base-href "/Janosos_Game/"
+
+  database-and-functions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: supabase start
+      - run: supabase db reset --local
+      - run: supabase test db
+      - run: supabase db lint --local --schema private,public --level warning --fail-on warning
+      - run: deno fmt --check supabase/functions supabase/tests/e2e tool
+      - run: deno lint supabase/functions supabase/tests/e2e tool
+      - run: deno check supabase/functions/**/*.ts supabase/tests/e2e/*.ts tool/*.ts
+
+  windows-local-journey:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter test integration_test/local_app_journey_test.dart -d windows

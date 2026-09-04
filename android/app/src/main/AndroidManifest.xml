@@ -21,9 +21,23 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Supabase Flutter uses app_links, so Flutter's built-in handler
+                 must not consume the OAuth callback first. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="io.janosos.game"
+                    android:host="auth"
+                    android:pathPrefix="/callback" />
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

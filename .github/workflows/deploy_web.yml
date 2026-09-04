@@ -4,11 +4,23 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
 
       - uses: subosito/flutter-action@v2
         with:
@@ -16,13 +28,37 @@ jobs:
       
       - run: flutter pub get
 
-      # Build for web with correct base href for GitHub Pages (repo name)
-      # CHANGE "Janosos_Game" if the repository name is different!
-      - run: flutter build web --release --base-href "/Janosos_Game/"
+      - name: Validate public runtime configuration
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          AUTH_REDIRECT_URI: ${{ vars.AUTH_REDIRECT_URI }}
+        run: |
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_PUBLISHABLE_KEY"
+          test -n "$AUTH_REDIRECT_URI"
 
-      # Deploy to gh-pages branch
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Build production web bundle
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          AUTH_REDIRECT_URI: ${{ vars.AUTH_REDIRECT_URI }}
+          GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+          GOOGLE_APPLE_CLIENT_ID: ${{ vars.GOOGLE_APPLE_CLIENT_ID }}
+        run: >-
+          flutter build web --release --base-href "/Janosos_Game/"
+          --dart-define=APP_BACKEND=supabase
+          --dart-define=SUPABASE_URL="$SUPABASE_URL"
+          --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY"
+          --dart-define=AUTH_REDIRECT_URI="$AUTH_REDIRECT_URI"
+          --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
+          --dart-define=GOOGLE_APPLE_CLIENT_ID="$GOOGLE_APPLE_CLIENT_ID"
+          --dart-define=CONTENT_VERSION=v6-preview-1
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          path: build/web
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -48,3 +48,12 @@ app.*.map.json
 /build/
 *.apk
 
+# Local Supabase Edge Function secrets
+/supabase/.env.local
+/supabase/.temp/
+
+# Native release signing material
+/android/key.properties
+*.jks
+*.keystore
+

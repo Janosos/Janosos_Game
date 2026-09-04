@@ -1,0 +1,37 @@
+project_id = "janosos-game"
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.start-campaign]
+verify_jwt = true
+
+[functions.start-stage]
+verify_jwt = true
+
+[functions.finish-stage]
+verify_jwt = true
+
+[functions.fail-campaign]
+verify_jwt = true
+
+[functions.complete-campaign]
+verify_jwt = true
+
+[functions.purchase-upgrade]
+verify_jwt = true
+
+[functions.purchase-skill]
+verify_jwt = true
+
+[functions.purchase-skin]
+verify_jwt = true
+
+[functions.equip-loadout]
+verify_jwt = true
+
+[functions.start-boss-rush]
+verify_jwt = true
+
+[functions.finish-boss-rush]
+verify_jwt = true
