@@ -153,7 +153,7 @@ class HomeScreen extends ConsumerWidget {
         // MODOS DE JUEGO PRINCIPALES: ENDLESS CLÁSICO Y CAMPAÑA CON JEFES
         LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 750;
+            final isWide = constraints.maxWidth >= 820;
 
             final endlessCard = RetroArcadeCard(
               borderColor: RetroColors.cyan,
@@ -177,13 +177,17 @@ class HomeScreen extends ConsumerWidget {
                             size: 24,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'MODO ENDLESS',
-                            style: GoogleFonts.pressStart2p(
-                              fontSize: isMobile ? 11 : 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1.0,
+                          Flexible(
+                            child: Text(
+                              'MODO ENDLESS',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.pressStart2p(
+                                fontSize: isMobile ? 11 : 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ),
                         ],
@@ -253,13 +257,17 @@ class HomeScreen extends ConsumerWidget {
                             size: 24,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'MODO CAMPAÑA',
-                            style: GoogleFonts.pressStart2p(
-                              fontSize: isMobile ? 11 : 13,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 1.0,
+                          Flexible(
+                            child: Text(
+                              'MODO CAMPAÑA',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.pressStart2p(
+                                fontSize: isMobile ? 11 : 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ),
                         ],
@@ -398,8 +406,15 @@ class _HomeAction extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                PixelIconAsset(assetName: pixelAsset, size: 32),
-                RetroBadge(text: badgeText, color: badgeColor, fontSize: 7),
+                PixelIconAsset(assetName: pixelAsset, size: 28),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: RetroBadge(
+                    text: badgeText,
+                    color: badgeColor,
+                    fontSize: 7,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 14),

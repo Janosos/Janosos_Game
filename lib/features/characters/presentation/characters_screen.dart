@@ -249,6 +249,9 @@ class _CharacterRunningSpriteState extends State<CharacterRunningSprite> {
         'assets/images/${widget.assetName}',
         fit: BoxFit.contain,
         filterQuality: FilterQuality.none,
+        errorBuilder: (_, _, _) => const Center(
+          child: Icon(Icons.person, size: 48, color: RetroColors.cyan),
+        ),
       );
     }
 

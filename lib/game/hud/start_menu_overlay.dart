@@ -77,6 +77,15 @@ class _StartMenuOverlayState extends State<StartMenuOverlay>
                 width: MediaQuery.of(context).size.width * 0.8,
                 height: 150,
                 fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Text(
+                  '★ JANOSOS ARCADE ★',
+                  style: TextStyle(
+                    color: Color(0xFF29FFE4),
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                  ),
+                ),
               ),
               const SizedBox(height: 50),
               GestureDetector(
@@ -99,6 +108,24 @@ class _StartMenuOverlayState extends State<StartMenuOverlay>
                     'assets/images/start_button_retro.png',
                     width: 200,
                     fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF29FFE4),
+                        border: Border.all(color: Colors.black, width: 2),
+                      ),
+                      child: const Text(
+                        'PRESS START',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

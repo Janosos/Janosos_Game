@@ -19,18 +19,22 @@ class RetroColors {
   static const Color textMuted = Color(0xFF7A9BB8);
 }
 
-/// Helper para cargar los nuevos iconos de interfaz 8-bit con pixelado nítido
+/// Helper para cargar los nuevos iconos de interfaz 8-bit con pixelado nítido y respaldo automático
 class PixelIconAsset extends StatelessWidget {
   const PixelIconAsset({
     super.key,
     required this.assetName,
     this.size = 28,
     this.semanticLabel,
+    this.fallbackIcon,
+    this.fallbackColor,
   });
 
   final String assetName;
   final double size;
   final String? semanticLabel;
+  final IconData? fallbackIcon;
+  final Color? fallbackColor;
 
   static const String coin = 'assets/images/ui_coin_pixel.png';
   static const String trophy = 'assets/images/ui_trophy_pixel.png';
@@ -38,16 +42,44 @@ class PixelIconAsset extends StatelessWidget {
   static const String heart = 'assets/images/ui_pixel_heart.png';
   static const String panelBg = 'assets/images/ui_retro_panel_bg.png';
 
+  IconData _defaultIcon() {
+    return switch (assetName) {
+      coin => Icons.monetization_on,
+      trophy => Icons.emoji_events,
+      gamepad => Icons.sports_esports,
+      heart => Icons.favorite,
+      _ => Icons.videogame_asset,
+    };
+  }
+
+  Color _defaultColor() {
+    return switch (assetName) {
+      coin => RetroColors.gold,
+      trophy => RetroColors.gold,
+      gamepad => RetroColors.cyan,
+      heart => RetroColors.magenta,
+      _ => RetroColors.cyan,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      assetName,
+    final effectiveColor = fallbackColor ?? _defaultColor();
+    final effectiveIcon = fallbackIcon ?? _defaultIcon();
+
+    return SizedBox(
       width: size,
       height: size,
-      fit: BoxFit.contain,
-      filterQuality:
-          FilterQuality.none, // Mantener nitidez de píxeles sin difuminar
-      semanticLabel: semanticLabel,
+      child: Image.asset(
+        assetName,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.none,
+        semanticLabel: semanticLabel,
+        errorBuilder: (_, _, _) =>
+            Icon(effectiveIcon, size: size * 0.85, color: effectiveColor),
+      ),
     );
   }
 }
