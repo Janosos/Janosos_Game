@@ -386,7 +386,7 @@ class LevelRuntime {
 
   BossAttackCue _nextAttack() {
     final mixed = (seed ^ ((_attackIndex + 1) * 0x45d9f3b)) & 0x7fffffff;
-    final fromRight = mixed.isEven;
+    const fromRight = true;
     final pattern = definition.attackPattern;
     final patternIndex = (_attackIndex + bossPhase + mixed) % pattern.length;
     _attackIndex += 1;

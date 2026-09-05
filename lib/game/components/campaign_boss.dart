@@ -21,6 +21,11 @@ class CampaignBoss extends PositionComponent
   final LevelDefinition definition;
   Sprite? _bossSprite;
   double _elapsed = 0;
+  double _damageFlashTimer = 0;
+
+  void flashDamage() {
+    _damageFlashTimer = 0.28;
+  }
 
   Color get _accent => _bossAccent(definition.level);
 
@@ -58,6 +63,9 @@ class CampaignBoss extends PositionComponent
   void update(double dt) {
     super.update(dt);
     _elapsed += dt;
+    if (_damageFlashTimer > 0) {
+      _damageFlashTimer -= dt;
+    }
     final hover = math.sin(_elapsed * 3.5) * 6.0;
     position.y = game.size.y - DinoRunGame.virtualGroundHeight + hover;
   }
@@ -75,11 +83,28 @@ class CampaignBoss extends PositionComponent
         shadowRect,
         Paint()..color = Colors.black.withValues(alpha: 0.40),
       );
-      _bossSprite!.render(
-        canvas,
-        size: size,
-        overridePaint: Paint()..filterQuality = FilterQuality.none,
-      );
+      if (_damageFlashTimer > 0) {
+        final recoil = math.sin(_damageFlashTimer * 35) * 7.0;
+        canvas.save();
+        canvas.translate(recoil, 0);
+        _bossSprite!.render(
+          canvas,
+          size: size,
+          overridePaint: Paint()
+            ..colorFilter = const ColorFilter.mode(
+              Color(0xFFFF3333),
+              BlendMode.srcATop,
+            )
+            ..filterQuality = FilterQuality.none,
+        );
+        canvas.restore();
+      } else {
+        _bossSprite!.render(
+          canvas,
+          size: size,
+          overridePaint: Paint()..filterQuality = FilterQuality.none,
+        );
+      }
     } else {
       final body = Path()
         ..moveTo(14, height)
@@ -176,12 +201,18 @@ class CampaignBossHazard extends PositionComponent
         ((game.runConfiguration.seed + game.bossAttackOrdinal * 97) % 61) / 100;
     switch (_profile.motion) {
       case _HazardMotion.stationary:
-        position = Vector2(game.size.x * (0.18 + _laneSeed), _ground - height);
+        position = Vector2(
+          game.size.x * (0.35 + _laneSeed * 0.35),
+          _ground - height,
+        );
       case _HazardMotion.falling:
-        position = Vector2(game.size.x * (0.18 + _laneSeed), -height);
+        position = Vector2(
+          game.size.x * (0.30 + _laneSeed * 0.40),
+          -height,
+        );
       case _HazardMotion.charge || _HazardMotion.wave:
         position = Vector2(
-          cue.fromRight ? game.size.x + width : -width,
+          game.size.x + width,
           _ground - height,
         );
     }
@@ -206,13 +237,9 @@ class CampaignBossHazard extends PositionComponent
       case _HazardMotion.falling:
         y += _profile.speed * (1 + level * 0.025) * dt;
       case _HazardMotion.charge:
-        x +=
-            (cue.fromRight ? -1 : 1) *
-            _profile.speed *
-            (1 + game.bossPhase * 0.08) *
-            dt;
+        x -= _profile.speed * (1 + game.bossPhase * 0.08) * dt;
       case _HazardMotion.wave:
-        x += (cue.fromRight ? -1 : 1) * _profile.speed * dt;
+        x -= _profile.speed * dt;
         y =
             _ground -
             height -

@@ -68,6 +68,7 @@ class DinoRunGame extends FlameGame
   int get bossHealthRemaining => _levelRuntime?.bossHealthRemaining ?? 0;
   double get bossHealthFraction => _levelRuntime?.bossHealthFraction ?? 0;
   int get bossPhase => _levelRuntime?.bossPhase ?? 0;
+  bool get canUseBossAction => _levelRuntime?.canUseBossAction ?? false;
   LevelDefinition? get currentLevelDefinition => _levelRuntime?.definition;
   int get bossesDefeated => _bossRushProgress?.bossesDefeated ?? 0;
   int bossAttackOrdinal = 0;
@@ -597,6 +598,13 @@ class DinoRunGame extends FlameGame
       ignoreCooldown: ignoresCooldown,
     );
     if (damage == 0) return;
+    try {
+      if (_configuration.audioEnabled) {
+        FlameAudio.play('Hit.wav');
+      }
+    } catch (_) {}
+    _boss?.flashDamage();
+    _bossActionButton?.triggerPress();
     _eventSink(
       BossDamagedEvent(
         bossId: runtime.definition.bossId,
@@ -771,6 +779,14 @@ class DinoRunGame extends FlameGame
       return;
     }
 
+    final bossButton = _bossActionButton;
+    if (bossButton != null &&
+        bossButton.containsPoint(event.canvasPosition)) {
+      useBossAction();
+      event.handled = true;
+      return;
+    }
+
     if (overlays.isActive('GameOverMenu')) {
       resetGame();
     } else if (_runActive) {
@@ -788,9 +804,12 @@ class DinoRunGame extends FlameGame
     KeyEvent event,
     Set<LogicalKeyboardKey> keysPressed,
   ) {
-    final isSpace = keysPressed.contains(LogicalKeyboardKey.space);
-    final isActive = keysPressed.contains(LogicalKeyboardKey.keyA);
-    final isBossAction = keysPressed.contains(LogicalKeyboardKey.keyE);
+    final isSpace = keysPressed.contains(LogicalKeyboardKey.space) ||
+        (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.space);
+    final isActive = keysPressed.contains(LogicalKeyboardKey.keyA) ||
+        (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyA);
+    final isBossAction = keysPressed.contains(LogicalKeyboardKey.keyE) ||
+        (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyE);
 
     if (event is KeyDownEvent && isSpace) {
       if (overlays.isActive('GameOverMenu')) {

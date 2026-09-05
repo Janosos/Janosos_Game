@@ -9,9 +9,8 @@ class BossActionButton extends PositionComponent
   BossActionButton()
     : super(size: Vector2.all(84), anchor: Anchor.bottomRight, priority: 120);
 
-  final Paint _fill = Paint()..color = const Color(0xFFE86A17);
+  final Paint _fill = Paint();
   final Paint _border = Paint()
-    ..color = Colors.white
     ..style = PaintingStyle.stroke
     ..strokeWidth = 4;
   late final TextPaint _label = TextPaint(
@@ -22,6 +21,19 @@ class BossActionButton extends PositionComponent
       shadows: [Shadow(color: Colors.black, blurRadius: 3)],
     ),
   );
+  late final TextPaint _cooldownLabel = TextPaint(
+    style: TextStyle(
+      color: Colors.white.withValues(alpha: 0.5),
+      fontSize: 13,
+      fontWeight: FontWeight.bold,
+    ),
+  );
+
+  double _pressTimer = 0;
+
+  void triggerPress() {
+    _pressTimer = 0.15;
+  }
 
   @override
   Future<void> onLoad() async {
@@ -35,22 +47,73 @@ class BossActionButton extends PositionComponent
   }
 
   @override
+  bool containsPoint(Vector2 point) {
+    final left = position.x - width;
+    final top = position.y - height;
+    final right = position.x;
+    final bottom = position.y;
+    return point.x >= left - 8 &&
+        point.x <= right + 8 &&
+        point.y >= top - 8 &&
+        point.y <= bottom + 8;
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (_pressTimer > 0) {
+      _pressTimer -= dt;
+    }
+  }
+
+  @override
   void render(Canvas canvas) {
     super.render(canvas);
+    final canAct = game.canUseBossAction;
+
+    if (canAct) {
+      _fill.color = const Color(0xFFE86A17);
+      _border.color = Colors.white;
+    } else {
+      _fill.color = const Color(0xFF4A3425);
+      _border.color = Colors.grey.withValues(alpha: 0.6);
+    }
+
     final center = Offset(width / 2, height / 2);
-    canvas.drawCircle(center, width / 2, _fill);
-    canvas.drawCircle(center, width / 2 - 2, _border);
-    _label.render(
-      canvas,
-      'GOLPE\nJEFE · E',
-      Vector2(width / 2, height / 2),
-      anchor: Anchor.center,
-    );
+    final radius = _pressTimer > 0 ? (width / 2) * 0.92 : width / 2;
+
+    canvas.drawCircle(center, radius, _fill);
+    canvas.drawCircle(center, radius - 2, _border);
+
+    if (canAct) {
+      canvas.drawCircle(
+        center,
+        radius + 2,
+        Paint()
+          ..color = const Color(0xFFFFD54F).withValues(alpha: 0.6)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+      _label.render(
+        canvas,
+        'GOLPE\nJEFE · E',
+        Vector2(width / 2, height / 2),
+        anchor: Anchor.center,
+      );
+    } else {
+      _cooldownLabel.render(
+        canvas,
+        'ESPERA...',
+        Vector2(width / 2, height / 2),
+        anchor: Anchor.center,
+      );
+    }
   }
 
   @override
   void onTapDown(TapDownEvent event) {
     game.useBossAction();
+    triggerPress();
     event.handled = true;
   }
 }
