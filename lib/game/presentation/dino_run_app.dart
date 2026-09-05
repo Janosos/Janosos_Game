@@ -159,8 +159,11 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                       ? 'Victoria contra $bossName'
                       : 'Partida terminada',
                   child: Container(
-                    padding: const EdgeInsets.all(20),
-                    constraints: const BoxConstraints(maxWidth: 560),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    constraints: BoxConstraints(
+                      maxWidth: 560,
+                      maxHeight: MediaQuery.sizeOf(context).height * 0.90,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.88),
                       borderRadius: BorderRadius.circular(10),
@@ -171,28 +174,32 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                         width: 3,
                       ),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          returnsToProgression
-                              ? (isVictory
-                                    ? '¡VICTORIA!'
-                                    : isAbandoned
-                                    ? 'CAMPAÑA ABANDONADA'
-                                    : 'AGOTASTE TUS VIDAS')
-                              : (isNewHighScore
-                                    ? '★ ¡NUEVO RÉCORD! ★'
-                                    : 'FIN DEL RECORRIDO'),
-                          style: TextStyle(
-                            color: isVictory || isNewHighScore
-                                ? Colors.amber
-                                : Colors.redAccent,
-                            fontSize: 34,
-                            fontWeight: FontWeight.bold,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              returnsToProgression
+                                  ? (isVictory
+                                        ? '¡VICTORIA!'
+                                        : isAbandoned
+                                        ? 'CAMPAÑA ABANDONADA'
+                                        : 'AGOTASTE TUS VIDAS')
+                                  : (isNewHighScore
+                                        ? '★ ¡NUEVO RÉCORD! ★'
+                                        : 'FIN DEL RECORRIDO'),
+                              style: TextStyle(
+                                color: isVictory || isNewHighScore
+                                    ? Colors.amber
+                                    : Colors.redAccent,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
-                        ),
                         const SizedBox(height: 12),
                         Text(
                           isCampaign
@@ -253,8 +260,9 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
-              );
-            },
+              ),
+            );
+          },
             'BossTutorial': (BuildContext context, DinoRunGame game) {
               return _BossHelpOverlay(game: game, isIntroduction: true);
             },

@@ -17,25 +17,31 @@ class HomeScreen extends ConsumerWidget {
     final preferences = ref.watch(sharedPreferencesProvider);
     final highScore = preferences.getInt('high_score') ?? 0;
     final user = auth.session.user;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isMobile = screenWidth < 600;
+    final media = MediaQuery.sizeOf(context);
+    final screenWidth = media.width;
+    final screenHeight = media.height;
+    final isShort = screenHeight < 520;
+    final isMobile = screenWidth < 600 && !isShort;
 
     return ListView(
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.symmetric(
+        horizontal: isShort ? 16 : (isMobile ? 16 : 24),
+        vertical: isShort ? 10 : 20,
+      ),
       children: [
         // Banner retro arcade de título
         Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: isMobile ? 8 : 12),
+            padding: EdgeInsets.symmetric(vertical: isShort ? 4 : 10),
             child: Image.asset(
               'assets/images/title_retro.png',
-              height: isMobile ? 54 : 72,
+              height: isShort ? 44 : (isMobile ? 54 : 72),
               fit: BoxFit.contain,
               filterQuality: FilterQuality.none,
               errorBuilder: (_, _, _) => Text(
                 '★ JANOSOS ARCADE ★',
                 style: GoogleFonts.pressStart2p(
-                  fontSize: isMobile ? 15 : 20,
+                  fontSize: isShort ? 13 : (isMobile ? 15 : 20),
                   color: RetroColors.cyan,
                   letterSpacing: 2,
                 ),
@@ -43,7 +49,7 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: isShort ? 4 : 8),
 
         // Saludo con tipografía retro
         Row(
@@ -153,13 +159,13 @@ class HomeScreen extends ConsumerWidget {
         // MODOS DE JUEGO PRINCIPALES: ENDLESS CLÁSICO Y CAMPAÑA CON JEFES
         LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 820;
+            final isWide = constraints.maxWidth >= 550;
 
             final endlessCard = RetroArcadeCard(
               borderColor: RetroColors.cyan,
               accentHeaderColor: RetroColors.cyan,
               glow: true,
-              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              padding: EdgeInsets.all(isShort ? 14 : (isMobile ? 16 : 20)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -239,7 +245,7 @@ class HomeScreen extends ConsumerWidget {
               borderColor: RetroColors.gold,
               accentHeaderColor: RetroColors.gold,
               glow: true,
-              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              padding: EdgeInsets.all(isShort ? 14 : (isMobile ? 16 : 20)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -345,7 +351,7 @@ class HomeScreen extends ConsumerWidget {
               subtitle: '10 mundos y jefes arcade.',
               badgeText: 'CAMPAÑA',
               badgeColor: RetroColors.gold,
-              isFullWidth: isMobile,
+              isFullWidth: screenWidth < 500,
               onTap: () => context.go('/campaign'),
             ),
             _HomeAction(
@@ -354,7 +360,7 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Récords y puntuaciones globales.',
               badgeText: 'RANKING',
               badgeColor: RetroColors.cyan,
-              isFullWidth: isMobile,
+              isFullWidth: screenWidth < 500,
               onTap: () => context.go('/leaderboard'),
             ),
             _HomeAction(
@@ -363,7 +369,7 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Habilidades exclusivas y catálogo.',
               badgeText: 'ROSTER',
               badgeColor: RetroColors.magenta,
-              isFullWidth: isMobile,
+              isFullWidth: screenWidth < 500,
               onTap: () => context.go('/characters'),
             ),
           ],

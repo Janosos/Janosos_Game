@@ -1,8 +1,9 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flame/widgets.dart';
 import 'package:flame/components.dart';
-import 'package:flame/sprite.dart'; // Added import
+import 'package:flame/sprite.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../dino_run_game.dart';
@@ -198,18 +199,21 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
           // Determine layout mode based on aspect ratio or width
           final bool isPortrait = constraints.maxHeight > constraints.maxWidth;
           final bool isSmallScreen = constraints.maxWidth < 600;
+          final bool isShortScreen = constraints.maxHeight < 520;
 
           return Container(
             // Dynamic width/height constraints
-            width: isSmallScreen ? constraints.maxWidth * 0.95 : 900,
-            height: isPortrait ? constraints.maxHeight * 0.95 : 600,
+            width: math.min(constraints.maxWidth * 0.95, 900),
+            height: isPortrait
+                ? constraints.maxHeight * 0.95
+                : math.min(constraints.maxHeight * 0.94, 600),
             constraints: BoxConstraints(
               maxWidth: 900,
               maxHeight: isPortrait ? double.infinity : 600,
             ),
             padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 15 : 30,
-              vertical: isSmallScreen ? 20 : 30,
+              horizontal: isSmallScreen ? 12 : 24,
+              vertical: isShortScreen ? 10 : (isSmallScreen ? 16 : 24),
             ),
             decoration: BoxDecoration(
               color: frameBgColor,
@@ -261,12 +265,12 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                       : _buildLandscapeLayout(),
                 ),
 
-                SizedBox(height: isSmallScreen ? 10 : 20),
+                SizedBox(height: isShortScreen ? 6 : (isSmallScreen ? 10 : 20)),
 
                 // Button
                 SizedBox(
                   width: double.infinity,
-                  height: isSmallScreen ? 48 : 60,
+                  height: isShortScreen ? 38 : (isSmallScreen ? 46 : 60),
                   child: ElevatedButton(
                     onPressed: selectedCharacter != null
                         ? () {
@@ -299,7 +303,7 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                       child: Text(
                         'CONFIRMAR SELECCIÓN',
                         style: GoogleFonts.pressStart2p(
-                          fontSize: isSmallScreen ? 12 : 14,
+                          fontSize: isShortScreen ? 10 : (isSmallScreen ? 12 : 14),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -374,23 +378,28 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
   }
 
   Widget _buildPreviewBox() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0x4D000000),
-        border: Border.all(color: const Color(0xFF333333), width: 2),
-      ),
-      padding: const EdgeInsets.all(20),
-      child: selectedCharacter != null
-          ? _buildCharacterImage(selectedCharacter!, animated: true)
-          : Center(
-              child: Text(
-                "?",
-                style: GoogleFonts.pressStart2p(
-                  color: Colors.white24,
-                  fontSize: 40,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isShort = constraints.maxHeight < 140;
+        return Container(
+          decoration: BoxDecoration(
+            color: const Color(0x4D000000),
+            border: Border.all(color: const Color(0xFF333333), width: 2),
+          ),
+          padding: EdgeInsets.all(isShort ? 8 : 16),
+          child: selectedCharacter != null
+              ? _buildCharacterImage(selectedCharacter!, animated: true)
+              : Center(
+                  child: Text(
+                    "?",
+                    style: GoogleFonts.pressStart2p(
+                      color: Colors.white24,
+                      fontSize: isShort ? 26 : 40,
+                    ),
+                  ),
                 ),
-              ),
-            ),
+        );
+      },
     );
   }
 

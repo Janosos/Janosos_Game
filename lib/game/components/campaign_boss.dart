@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
 import '../dino_run_game.dart';
@@ -19,7 +20,8 @@ class CampaignBoss extends PositionComponent
     : super(size: Vector2(184, 184), anchor: Anchor.bottomRight, priority: 15);
 
   final LevelDefinition definition;
-  Sprite? _bossSprite;
+  SpriteAnimation? _bossAnimation;
+  SpriteAnimationTicker? _bossAnimationTicker;
   double _elapsed = 0;
   double _damageFlashTimer = 0;
 
@@ -45,7 +47,36 @@ class CampaignBoss extends PositionComponent
   Future<void> onLoad() async {
     final asset = _bossAsset(definition.level);
     try {
-      _bossSprite = await game.loadSprite(asset);
+      final spriteSheet = await game.images.load(asset);
+      final double fw = spriteSheet.width / 2;
+      final double fh = spriteSheet.height / 2;
+
+      final frame0 = Sprite(
+        spriteSheet,
+        srcPosition: Vector2(0, 0),
+        srcSize: Vector2(fw, fh),
+      );
+      final frame1 = Sprite(
+        spriteSheet,
+        srcPosition: Vector2(fw, 0),
+        srcSize: Vector2(fw, fh),
+      );
+      final frame2 = Sprite(
+        spriteSheet,
+        srcPosition: Vector2(0, fh),
+        srcSize: Vector2(fw, fh),
+      );
+      final frame3 = Sprite(
+        spriteSheet,
+        srcPosition: Vector2(fw, fh),
+        srcSize: Vector2(fw, fh),
+      );
+
+      _bossAnimation = SpriteAnimation.spriteList(
+        [frame0, frame1, frame2, frame3],
+        stepTime: 0.15,
+      );
+      _bossAnimationTicker = _bossAnimation?.createTicker();
     } catch (_) {}
     position = Vector2(
       game.size.x - 24,
@@ -66,6 +97,7 @@ class CampaignBoss extends PositionComponent
     if (_damageFlashTimer > 0) {
       _damageFlashTimer -= dt;
     }
+    _bossAnimationTicker?.update(dt);
     final hover = math.sin(_elapsed * 3.5) * 6.0;
     position.y = game.size.y - DinoRunGame.virtualGroundHeight + hover;
   }
@@ -73,7 +105,8 @@ class CampaignBoss extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    if (_bossSprite != null) {
+    final sprite = _bossAnimationTicker?.getSprite();
+    if (sprite != null) {
       final shadowRect = Rect.fromCenter(
         center: Offset(width * 0.5, height - 4),
         width: width * 0.70,
@@ -87,7 +120,7 @@ class CampaignBoss extends PositionComponent
         final recoil = math.sin(_damageFlashTimer * 35) * 7.0;
         canvas.save();
         canvas.translate(recoil, 0);
-        _bossSprite!.render(
+        sprite.render(
           canvas,
           size: size,
           overridePaint: Paint()
@@ -99,7 +132,7 @@ class CampaignBoss extends PositionComponent
         );
         canvas.restore();
       } else {
-        _bossSprite!.render(
+        sprite.render(
           canvas,
           size: size,
           overridePaint: Paint()..filterQuality = FilterQuality.none,
