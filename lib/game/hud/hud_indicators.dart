@@ -9,17 +9,71 @@ class HudIndicators extends PositionComponent
     with HasGameReference<DinoRunGame> {
   late Sprite heartSprite;
   late Sprite shieldSprite;
+  late Sprite lightningSprite;
   late TextPaint timerPaint;
 
-  HudIndicators() : super(position: Vector2(20, 60), priority: 100);
+  late final TextPaint _bossTitlePaint = TextPaint(
+    style: const TextStyle(
+      color: Color(0xFFFFD54F),
+      fontSize: 13,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 1.4,
+      shadows: [
+        Shadow(blurRadius: 3, color: Colors.black, offset: Offset(2, 2)),
+        Shadow(blurRadius: 1, color: Color(0xFFFF6F00), offset: Offset(0, 1)),
+      ],
+    ),
+  );
 
-  late Sprite lightningSprite; // New icon
+  late final TextPaint _bossHpPaint = TextPaint(
+    style: const TextStyle(
+      color: Colors.white,
+      fontSize: 11,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 0.8,
+      shadows: [
+        Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
+      ],
+    ),
+  );
+
+  late final TextPaint _activePhasePaint = TextPaint(
+    style: const TextStyle(
+      color: Color(0xFFFF5252),
+      fontSize: 10,
+      fontWeight: FontWeight.w900,
+      shadows: [
+        Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
+      ],
+    ),
+  );
+
+  late final TextPaint _passedPhasePaint = TextPaint(
+    style: const TextStyle(
+      color: Color(0xFFFFD54F),
+      fontSize: 10,
+      fontWeight: FontWeight.bold,
+      shadows: [
+        Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
+      ],
+    ),
+  );
+
+  late final TextPaint _lockedPhasePaint = TextPaint(
+    style: TextStyle(
+      color: Colors.white.withValues(alpha: 0.35),
+      fontSize: 10,
+      fontWeight: FontWeight.normal,
+    ),
+  );
+
+  HudIndicators() : super(position: Vector2.zero(), priority: 100);
 
   @override
   Future<void> onLoad() async {
     heartSprite = await game.loadSprite('heart_indicator.png');
     shieldSprite = await game.loadSprite('tank_shield_icon.png');
-    lightningSprite = await game.loadSprite('lightning_icon.png'); // Load asset
+    lightningSprite = await game.loadSprite('lightning_icon.png');
     timerPaint = TextPaint(
       style: const TextStyle(
         color: Colors.cyanAccent,
@@ -32,36 +86,135 @@ class HudIndicators extends PositionComponent
     );
   }
 
+  void _renderBossHealthBar(Canvas canvas) {
+    final definition = game.currentLevelDefinition;
+    if (definition == null) return;
+
+    final bossName = definition.bossName.toUpperCase();
+    final healthFraction = game.bossHealthFraction.clamp(0.0, 1.0);
+    final remainingHp = game.bossHealthRemaining;
+    final maxHp = definition.bossHealth;
+    final phase = game.bossPhase;
+
+    final screenWidth = game.size.x;
+    final barWidth = (screenWidth * 0.52).clamp(290.0, 500.0);
+    const barHeight = 22.0;
+    final startX = (screenWidth - barWidth) / 2;
+    const startY = 16.0;
+
+    // 1. Boss Name with Retro Arcade Accents
+    final titleText = game.runConfiguration.experience == RunExperience.bossRush
+        ? '★ BOSS ${game.bossesDefeated + 1}/10 · $bossName ★'
+        : '★ $bossName ★';
+    _bossTitlePaint.render(
+      canvas,
+      titleText,
+      Vector2(startX + barWidth / 2, startY - 2),
+      anchor: Anchor.bottomCenter,
+    );
+
+    // 2. Outer Retro 8-bit Frame
+    final outerRect = Rect.fromLTWH(startX - 4, startY - 4, barWidth + 8, barHeight + 8);
+    canvas.drawRect(outerRect, Paint()..color = Colors.black);
+
+    final frameRect = Rect.fromLTWH(startX - 2, startY - 2, barWidth + 4, barHeight + 4);
+    canvas.drawRect(frameRect, Paint()..color = const Color(0xFFE5A93B));
+
+    canvas.drawLine(
+      Offset(startX - 2, startY - 2),
+      Offset(startX + barWidth + 2, startY - 2),
+      Paint()..color = const Color(0xFFFFE082)..strokeWidth = 2,
+    );
+    canvas.drawLine(
+      Offset(startX - 2, startY + barHeight + 2),
+      Offset(startX + barWidth + 2, startY + barHeight + 2),
+      Paint()..color = const Color(0xFF6D4C41)..strokeWidth = 2,
+    );
+
+    // 3. Dark Inset Background
+    final innerRect = Rect.fromLTWH(startX, startY, barWidth, barHeight);
+    canvas.drawRect(innerRect, Paint()..color = const Color(0xFF14070A));
+
+    // 4. Segmented 8-bit Health Fill
+    final fillWidth = barWidth * healthFraction;
+    if (fillWidth > 0) {
+      final fillRect = Rect.fromLTWH(startX, startY, fillWidth, barHeight);
+      final Color topColor;
+      final Color bottomColor;
+      if (healthFraction > 0.5) {
+        topColor = const Color(0xFFFF5252);
+        bottomColor = const Color(0xFFD50000);
+      } else if (healthFraction > 0.25) {
+        topColor = const Color(0xFFFFB300);
+        bottomColor = const Color(0xFFFF6F00);
+      } else {
+        topColor = const Color(0xFFFF1744);
+        bottomColor = const Color(0xFF880E4F);
+      }
+      final fillGradient = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [topColor, bottomColor],
+      ).createShader(fillRect);
+      canvas.drawRect(fillRect, Paint()..shader = fillGradient);
+
+      canvas.drawLine(
+        Offset(startX, startY + 2),
+        Offset(startX + fillWidth, startY + 2),
+        Paint()..color = Colors.white.withValues(alpha: 0.45)..strokeWidth = 2,
+      );
+
+      final notchPaint = Paint()..color = const Color(0xFF0D0204)..strokeWidth = 2;
+      for (var x = startX + 14; x < startX + fillWidth - 2; x += 14) {
+        canvas.drawLine(Offset(x, startY), Offset(x, startY + barHeight), notchPaint);
+      }
+    }
+
+    // 5. HP Numeric Text
+    _bossHpPaint.render(
+      canvas,
+      'HP: $remainingHp / $maxHp',
+      Vector2(startX + barWidth / 2, startY + barHeight / 2),
+      anchor: Anchor.center,
+    );
+
+    // 6. Phase Indicator Badges
+    const phaseY = startY + barHeight + 5;
+    final phaseSpacing = barWidth / 3;
+    for (var p = 1; p <= 3; p++) {
+      final active = p <= phase;
+      final current = p == phase;
+      final badgeX = startX + (p - 1) * phaseSpacing + phaseSpacing / 2;
+      final phaseText = 'FASE $p';
+      final phasePaint = current
+          ? _activePhasePaint
+          : (active ? _passedPhasePaint : _lockedPhasePaint);
+      phasePaint.render(
+        canvas,
+        current ? '▶ $phaseText ◀' : phaseText,
+        Vector2(badgeX, phaseY),
+        anchor: Anchor.topCenter,
+      );
+    }
+  }
+
   @override
   void render(Canvas canvas) {
     super.render(canvas);
 
     final dino = game.dino;
+    final playerBase = Vector2(20, 60);
 
     if (game.runConfiguration.experience != RunExperience.endlessRunner) {
       for (var index = 0; index < game.livesRemaining; index++) {
         heartSprite.render(
           canvas,
-          position: Vector2(index * 35, 0),
+          position: Vector2(playerBase.x + index * 35, playerBase.y),
           size: Vector2(32, 32),
         );
       }
       if (game.levelPhase == LevelPhase.bossCombat) {
-        final start = Vector2(0, 42);
-        final background = Paint()..color = Colors.black54;
-        final fill = Paint()..color = const Color(0xFFFFB000);
-        canvas.drawRect(Rect.fromLTWH(start.x, start.y, 180, 18), background);
-        canvas.drawRect(
-          Rect.fromLTWH(start.x, start.y, 180 * game.bossHealthFraction, 18),
-          fill,
-        );
-        timerPaint.render(
-          canvas,
-          game.runConfiguration.experience == RunExperience.bossRush
-              ? 'BOSS ${game.bossesDefeated + 1}/10 · FASE ${game.bossPhase}'
-              : 'JEFE · FASE ${game.bossPhase}',
-          Vector2(0, 64),
-        );
+        _renderBossHealthBar(canvas);
       }
       return;
     }
@@ -71,19 +224,18 @@ class HudIndicators extends PositionComponent
       if (dino.hasShield) {
         heartSprite.render(
           canvas,
-          position: Vector2(0, 0),
+          position: Vector2(playerBase.x, playerBase.y),
           size: Vector2(32, 32),
         );
         heartSprite.render(
           canvas,
-          position: Vector2(35, 0),
+          position: Vector2(playerBase.x + 35, playerBase.y),
           size: Vector2(32, 32),
         );
       } else {
-        // 1 heart left
         heartSprite.render(
           canvas,
-          position: Vector2(0, 0),
+          position: Vector2(playerBase.x, playerBase.y),
           size: Vector2(32, 32),
         );
       }
@@ -93,20 +245,19 @@ class HudIndicators extends PositionComponent
       if (dino.hasShield) {
         shieldSprite.render(
           canvas,
-          position: Vector2(0, 0),
+          position: Vector2(playerBase.x, playerBase.y),
           size: Vector2(32, 32),
         );
-        timerPaint.render(canvas, 'READY', Vector2(40, 5));
+        timerPaint.render(canvas, 'READY', Vector2(playerBase.x + 40, playerBase.y + 5));
       } else {
-        // Show timer
-        String timeLeft = dino.cooldownTimer.toStringAsFixed(1);
+        final timeLeft = dino.cooldownTimer.toStringAsFixed(1);
         shieldSprite.render(
           canvas,
-          position: Vector2(0, 0),
+          position: Vector2(playerBase.x, playerBase.y),
           size: Vector2(32, 32),
           overridePaint: Paint()..color = Colors.grey.withValues(alpha: 0.5),
         );
-        timerPaint.render(canvas, timeLeft, Vector2(40, 5));
+        timerPaint.render(canvas, timeLeft, Vector2(playerBase.x + 40, playerBase.y + 5));
       }
     }
     // Pistolero or Fantasma: Show cooldown
@@ -116,15 +267,14 @@ class HudIndicators extends PositionComponent
         timerPaint.render(
           canvas,
           dino.cooldownTimer.toStringAsFixed(1),
-          Vector2(0, 0),
+          Vector2(playerBase.x, playerBase.y),
         );
       } else {
-        timerPaint.render(canvas, 'READY', Vector2(0, 0));
+        timerPaint.render(canvas, 'READY', Vector2(playerBase.x, playerBase.y));
       }
     }
     // Nanic: Show Energy Bar
     else if (dino.characterId == CharacterId.nanic) {
-      // Draw Bar Background
       final Paint bgPaint = Paint()..color = Colors.grey.withValues(alpha: 0.5);
       final Paint fillPaint = Paint()..color = Colors.yellow;
       final Paint borderPaint = Paint()
@@ -132,39 +282,31 @@ class HudIndicators extends PositionComponent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
 
-      final barWidth = 100.0;
-      final barHeight = 20.0;
+      const barWidth = 100.0;
+      const barHeight = 20.0;
       final fillWidth = (dino.energy / dino.maxEnergy) * barWidth;
 
       final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, barWidth, barHeight),
+        Rect.fromLTWH(playerBase.x, playerBase.y, barWidth, barHeight),
         const Radius.circular(10),
       );
       final fillRRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, fillWidth, barHeight),
+        Rect.fromLTWH(playerBase.x, playerBase.y, fillWidth, barHeight),
         const Radius.circular(10),
       );
 
-      // Draw Background
       canvas.drawRRect(rrect, bgPaint);
-
-      // Draw Fill
       canvas.drawRRect(fillRRect, fillPaint);
-
-      // Draw Border
       canvas.drawRRect(rrect, borderPaint);
 
-      // Draw Lightning Icon to the right (Larger)
       lightningSprite.render(
         canvas,
-        position: Vector2(barWidth + 5, -12),
+        position: Vector2(playerBase.x + barWidth + 5, playerBase.y - 12),
         size: Vector2(48, 48),
       );
 
-      // Draw text
       if (dino.isSuperCharged) {
-        // Move text below the bar (positive Y)
-        timerPaint.render(canvas, 'MAX POWER!', Vector2(0, barHeight + 5));
+        timerPaint.render(canvas, 'MAX POWER!', Vector2(playerBase.x, playerBase.y + barHeight + 5));
       }
     }
   }

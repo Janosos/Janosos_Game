@@ -123,6 +123,29 @@ class DinoRunGame extends FlameGame
       'nanic_clean.png',
       'bullet.png',
       'orb.png',
+      'boss_horseman_pixel.png',
+      'boss_queen_pixel.png',
+      'boss_hyde_pixel.png',
+      'boss_phantom_pixel.png',
+      'boss_snow_queen_pixel.png',
+      'boss_dracula_pixel.png',
+      'boss_witch_pixel.png',
+      'boss_frankenstein_pixel.png',
+      'boss_davy_jones_pixel.png',
+      'boss_moriarty_pixel.png',
+      'hazard_spectral_pixel.png',
+      'hazard_card_pixel.png',
+      'hazard_heart_pixel.png',
+      'hazard_chemical_pixel.png',
+      'hazard_shockwave_pixel.png',
+      'hazard_darkness_pixel.png',
+      'hazard_ice_shard_pixel.png',
+      'hazard_bat_pixel.png',
+      'hazard_cyclone_pixel.png',
+      'hazard_lightning_pixel.png',
+      'hazard_tide_pixel.png',
+      'hazard_clockwork_pixel.png',
+      'hazard_echo_pixel.png',
     ]);
 
     await FlameAudio.audioCache.loadAll([
@@ -158,7 +181,8 @@ class DinoRunGame extends FlameGame
             attackCadenceMultiplier: configuration.stats.speedMultiplier,
           )
         : null;
-    if (configuration.experience == RunExperience.bossRush) {
+    if (configuration.experience == RunExperience.bossRush ||
+        configuration.experience == RunExperience.campaignStage) {
       _levelRuntime!.skipRunner();
     }
     bossAttackOrdinal = 0;
@@ -220,9 +244,10 @@ class DinoRunGame extends FlameGame
 
     _runActive = true;
     _eventSink(RunStartedEvent(configuration));
-    if (configuration.experience == RunExperience.bossRush) {
+    if (configuration.experience == RunExperience.bossRush ||
+        configuration.experience == RunExperience.campaignStage) {
       _obstacleManager.pauseSpawning();
-      _showBossIntro(_levelRuntime!);
+      _showBossIntro(_levelRuntime!, autoStart: true);
     } else {
       resumeEngine();
     }
@@ -634,18 +659,29 @@ class DinoRunGame extends FlameGame
       ),
     );
     if (current != LevelPhase.bossIntro) return;
-    _showBossIntro(runtime);
+    _showBossIntro(runtime, autoStart: true);
   }
 
-  void _showBossIntro(LevelRuntime runtime) {
+  void _showBossIntro(LevelRuntime runtime, {bool autoStart = false}) {
     _obstacleManager.pauseSpawning();
     _boss = CampaignBoss(definition: runtime.definition);
     add(_boss!);
     _bossActionButton = BossActionButton();
     camera.viewport.add(_bossActionButton!);
-    pauseEngine();
-    _beginPause();
-    overlays.add('BossTutorial');
+    if (autoStart) {
+      runtime.beginBossCombat();
+      _eventSink(
+        BossPhaseChangedEvent(
+          bossId: runtime.definition.bossId,
+          phase: runtime.bossPhase,
+        ),
+      );
+      resumeEngine();
+    } else {
+      pauseEngine();
+      _beginPause();
+      overlays.add('BossTutorial');
+    }
   }
 
   void _advanceBossRush() {
@@ -661,7 +697,7 @@ class DinoRunGame extends FlameGame
     )..skipRunner();
     _levelRuntime = runtime;
     _scoreSystem.score += 1000 * progress.bossesDefeated;
-    _showBossIntro(runtime);
+    _showBossIntro(runtime, autoStart: true);
   }
 
   void pauseForInterruption() {

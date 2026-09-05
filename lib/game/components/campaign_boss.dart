@@ -16,25 +16,34 @@ import 'dino.dart';
 class CampaignBoss extends PositionComponent
     with HasGameReference<DinoRunGame> {
   CampaignBoss({required this.definition})
-    : super(size: Vector2(156, 136), anchor: Anchor.bottomRight, priority: 15);
+    : super(size: Vector2(184, 184), anchor: Anchor.bottomRight, priority: 15);
 
   final LevelDefinition definition;
+  Sprite? _bossSprite;
+  double _elapsed = 0;
 
   Color get _accent => _bossAccent(definition.level);
 
   late final TextPaint _namePaint = TextPaint(
     style: const TextStyle(
-      color: Colors.white,
-      fontSize: 13,
-      fontWeight: FontWeight.bold,
-      shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+      color: Color(0xFFFFD54F),
+      fontSize: 14,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 1.2,
+      shadows: [
+        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(2, 2)),
+      ],
     ),
   );
 
   @override
   Future<void> onLoad() async {
+    final asset = _bossAsset(definition.level);
+    try {
+      _bossSprite = await game.loadSprite(asset);
+    } catch (_) {}
     position = Vector2(
-      game.size.x - 28,
+      game.size.x - 24,
       game.size.y - DinoRunGame.virtualGroundHeight,
     );
   }
@@ -42,41 +51,66 @@ class CampaignBoss extends PositionComponent
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    position = Vector2(size.x - 28, size.y - DinoRunGame.virtualGroundHeight);
+    position = Vector2(size.x - 24, size.y - DinoRunGame.virtualGroundHeight);
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _elapsed += dt;
+    final hover = math.sin(_elapsed * 3.5) * 6.0;
+    position.y = game.size.y - DinoRunGame.virtualGroundHeight + hover;
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    final body = Path()
-      ..moveTo(14, height)
-      ..lineTo(width * 0.35, 34)
-      ..quadraticBezierTo(width * 0.55, 10, width * 0.76, 34)
-      ..lineTo(width - 6, height)
-      ..close();
-    final fill = Paint()..color = const Color(0xFF171827);
-    final outline = Paint()
-      ..color = _accent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-    canvas.drawPath(body, fill);
-    canvas.drawPath(body, outline);
-    canvas.drawCircle(Offset(width * 0.56, 27), 18, Paint()..color = _accent);
-    canvas.drawCircle(
-      Offset(width * 0.51, 25),
-      3,
-      Paint()..color = Colors.white,
-    );
-    canvas.drawCircle(
-      Offset(width * 0.61, 25),
-      3,
-      Paint()..color = Colors.white,
-    );
+    if (_bossSprite != null) {
+      final shadowRect = Rect.fromCenter(
+        center: Offset(width * 0.5, height - 4),
+        width: width * 0.70,
+        height: 14,
+      );
+      canvas.drawOval(
+        shadowRect,
+        Paint()..color = Colors.black.withValues(alpha: 0.40),
+      );
+      _bossSprite!.render(
+        canvas,
+        size: size,
+        overridePaint: Paint()..filterQuality = FilterQuality.none,
+      );
+    } else {
+      final body = Path()
+        ..moveTo(14, height)
+        ..lineTo(width * 0.35, 34)
+        ..quadraticBezierTo(width * 0.55, 10, width * 0.76, 34)
+        ..lineTo(width - 6, height)
+        ..close();
+      final fill = Paint()..color = const Color(0xFF171827);
+      final outline = Paint()
+        ..color = _accent
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4;
+      canvas.drawPath(body, fill);
+      canvas.drawPath(body, outline);
+      canvas.drawCircle(Offset(width * 0.56, 27), 18, Paint()..color = _accent);
+      canvas.drawCircle(
+        Offset(width * 0.51, 25),
+        3,
+        Paint()..color = Colors.white,
+      );
+      canvas.drawCircle(
+        Offset(width * 0.61, 25),
+        3,
+        Paint()..color = Colors.white,
+      );
+    }
     _namePaint.render(
       canvas,
       definition.bossName.toUpperCase(),
-      Vector2(width - 2, -22),
-      anchor: Anchor.bottomRight,
+      Vector2(width / 2, -12),
+      anchor: Anchor.bottomCenter,
     );
   }
 
@@ -115,6 +149,7 @@ class CampaignBossHazard extends PositionComponent
   final BossAttackCue cue;
   final int level;
   final _AttackProfile _profile;
+  Sprite? _hazardSprite;
   double _elapsed = 0;
   bool _armed = false;
   late double _ground;
@@ -132,6 +167,10 @@ class CampaignBossHazard extends PositionComponent
 
   @override
   Future<void> onLoad() async {
+    final asset = _hazardAsset(cue.kind);
+    try {
+      _hazardSprite = await game.loadSprite(asset);
+    } catch (_) {}
     _ground = game.size.y - DinoRunGame.virtualGroundHeight;
     _laneSeed =
         ((game.runConfiguration.seed + game.bossAttackOrdinal * 97) % 61) / 100;
@@ -193,29 +232,74 @@ class CampaignBossHazard extends PositionComponent
   void render(Canvas canvas) {
     super.render(canvas);
     final warning = isWarning;
-    final fill = Paint()
-      ..color = warning
-          ? const Color(0xFFFFB000).withValues(alpha: 0.34)
-          : _profile.color.withValues(alpha: 0.76);
-    final border = Paint()
-      ..color = warning ? const Color(0xFFFFB000) : Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = warning ? 5 : 3;
-    final rect = Rect.fromLTWH(0, 0, width, height);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
-      fill,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, const Radius.circular(10)),
-      border,
-    );
-    _warningPaint.render(
-      canvas,
-      warning ? '⚠ ${_profile.label}' : _profile.label,
-      Vector2(width / 2, height / 2),
-      anchor: Anchor.center,
-    );
+    if (warning) {
+      final fill = Paint()
+        ..color = const Color(0xFFFFB000).withValues(alpha: 0.35);
+      final border = Paint()
+        ..color = const Color(0xFFFFB000)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3;
+      final rect = Rect.fromLTWH(0, 0, width, height);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(8)),
+        fill,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(8)),
+        border,
+      );
+      _warningPaint.render(
+        canvas,
+        '⚠ ${_profile.label}',
+        Vector2(width / 2, height / 2),
+        anchor: Anchor.center,
+      );
+      return;
+    }
+
+    if (_hazardSprite != null) {
+      if (_profile.motion == _HazardMotion.charge ||
+          cue.kind == BossAttackKind.cardVolley ||
+          cue.kind == BossAttackKind.clockworkBurst) {
+        canvas.save();
+        canvas.translate(width / 2, height / 2);
+        canvas.rotate(_elapsed * 8);
+        _hazardSprite!.render(
+          canvas,
+          position: -Vector2(width / 2, height / 2),
+          size: size,
+          overridePaint: Paint()..filterQuality = FilterQuality.none,
+        );
+        canvas.restore();
+      } else {
+        _hazardSprite!.render(
+          canvas,
+          size: size,
+          overridePaint: Paint()..filterQuality = FilterQuality.none,
+        );
+      }
+    } else {
+      final fill = Paint()..color = _profile.color.withValues(alpha: 0.76);
+      final border = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3;
+      final rect = Rect.fromLTWH(0, 0, width, height);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+        fill,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(10)),
+        border,
+      );
+      _warningPaint.render(
+        canvas,
+        _profile.label,
+        Vector2(width / 2, height / 2),
+        anchor: Anchor.center,
+      );
+    }
   }
 
   @override
@@ -230,6 +314,44 @@ class CampaignBossHazard extends PositionComponent
     }
   }
 }
+
+String _bossAsset(int level) => switch (level) {
+  1 => 'boss_horseman_pixel.png',
+  2 => 'boss_queen_pixel.png',
+  3 => 'boss_hyde_pixel.png',
+  4 => 'boss_phantom_pixel.png',
+  5 => 'boss_snow_queen_pixel.png',
+  6 => 'boss_dracula_pixel.png',
+  7 => 'boss_witch_pixel.png',
+  8 => 'boss_frankenstein_pixel.png',
+  9 => 'boss_davy_jones_pixel.png',
+  10 => 'boss_moriarty_pixel.png',
+  _ => 'boss_horseman_pixel.png',
+};
+
+String _hazardAsset(BossAttackKind kind) => switch (kind) {
+  BossAttackKind.warningCharge ||
+  BossAttackKind.sideCharge ||
+  BossAttackKind.armoredCharge => 'hazard_spectral_pixel.png',
+  BossAttackKind.spectralHazard => 'hazard_spectral_pixel.png',
+  BossAttackKind.cardVolley => 'hazard_card_pixel.png',
+  BossAttackKind.heartPlatform => 'hazard_heart_pixel.png',
+  BossAttackKind.shockwave => 'hazard_shockwave_pixel.png',
+  BossAttackKind.chemicalRush => 'hazard_chemical_pixel.png',
+  BossAttackKind.echoPulse => 'hazard_echo_pixel.png',
+  BossAttackKind.darknessBlade => 'hazard_darkness_pixel.png',
+  BossAttackKind.iceShard => 'hazard_ice_shard_pixel.png',
+  BossAttackKind.frozenFloor => 'hazard_ice_shard_pixel.png',
+  BossAttackKind.batSwarm => 'hazard_bat_pixel.png',
+  BossAttackKind.mistStep => 'hazard_bat_pixel.png',
+  BossAttackKind.cyclone => 'hazard_cyclone_pixel.png',
+  BossAttackKind.toxicZone => 'hazard_chemical_pixel.png',
+  BossAttackKind.lightningColumn => 'hazard_lightning_pixel.png',
+  BossAttackKind.tideWave => 'hazard_tide_pixel.png',
+  BossAttackKind.chainSweep => 'hazard_tide_pixel.png',
+  BossAttackKind.decoyTrap => 'hazard_clockwork_pixel.png',
+  BossAttackKind.clockworkBurst => 'hazard_clockwork_pixel.png',
+};
 
 Color _bossAccent(int level) => <Color>[
   const Color(0xFFFF7A00),
