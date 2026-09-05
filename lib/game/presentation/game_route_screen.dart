@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -158,6 +160,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
               BossRushEligibility.practice =>
                 'BOSS RUSH DE PRÁCTICA · SIN RECOMPENSAS',
             },
+            topMargin: 64,
           ),
         ],
       ),
@@ -320,13 +323,39 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
   }
 }
 
-class _CampaignPreflightBanner extends StatelessWidget {
+class _CampaignPreflightBanner extends StatefulWidget {
   const _CampaignPreflightBanner({required this.session});
 
   final CampaignStageSession session;
 
   @override
+  State<_CampaignPreflightBanner> createState() =>
+      _CampaignPreflightBannerState();
+}
+
+class _CampaignPreflightBannerState extends State<_CampaignPreflightBanner> {
+  bool _visible = true;
+  Timer? _dismissTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dismissTimer = Timer(const Duration(milliseconds: 3800), () {
+      if (mounted) {
+        setState(() => _visible = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dismissTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final session = widget.session;
     final color = switch (session.eligibility) {
       CampaignEligibility.verifiedOnline => const Color(0xFF0B6B47),
       CampaignEligibility.eligibleOffline => const Color(0xFF765600),
@@ -340,23 +369,44 @@ class _CampaignPreflightBanner extends StatelessWidget {
     return SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
-        child: Semantics(
-          liveRegion: true,
-          label: 'Preflight de campaña: ${session.eligibility.label}. $detail',
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(64, 10, 64, 0),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Text(
-              'NIVEL ${session.configuration.level}/10 · ${session.eligibility.label.toUpperCase()}\n$detail',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+        child: AnimatedOpacity(
+          opacity: _visible ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 400),
+          child: IgnorePointer(
+            ignoring: !_visible,
+            child: GestureDetector(
+              onTap: () {
+                if (_visible) setState(() => _visible = false);
+              },
+              child: Semantics(
+                liveRegion: true,
+                label:
+                    'Preflight de campaña: ${session.eligibility.label}. $detail',
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(48, 64, 48, 0),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.94),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black54,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    'NIVEL ${session.configuration.level}/10 · ${session.eligibility.label.toUpperCase()}\n$detail',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -366,25 +416,58 @@ class _CampaignPreflightBanner extends StatelessWidget {
   }
 }
 
-class _RunBanner extends StatelessWidget {
-  const _RunBanner({required this.label});
+class _RunBanner extends StatefulWidget {
+  const _RunBanner({required this.label, this.topMargin = 10});
 
   final String label;
+  final double topMargin;
+
+  @override
+  State<_RunBanner> createState() => _RunBannerState();
+}
+
+class _RunBannerState extends State<_RunBanner> {
+  bool _visible = true;
+  Timer? _dismissTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _dismissTimer = Timer(const Duration(milliseconds: 3800), () {
+      if (mounted) {
+        setState(() => _visible = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _dismissTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
-        child: IgnorePointer(
-          child: Container(
-            margin: const EdgeInsets.only(top: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.78),
-              borderRadius: BorderRadius.circular(24),
+        child: AnimatedOpacity(
+          opacity: _visible ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 400),
+          child: IgnorePointer(
+            ignoring: !_visible,
+            child: Container(
+              margin: EdgeInsets.only(top: widget.topMargin),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Text(
+                widget.label,
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
-            child: Text(label, style: const TextStyle(color: Colors.white)),
           ),
         ),
       ),

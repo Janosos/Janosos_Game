@@ -257,7 +257,12 @@ class CampaignBossHazard extends PositionComponent
     _elapsed += dt;
     if (!_armed && !isWarning) {
       _armed = true;
-      add(RectangleHitbox());
+      add(
+        RectangleHitbox(
+          position: Vector2(width * 0.12, height * 0.12),
+          size: Vector2(width * 0.76, height * 0.76),
+        ),
+      );
     }
     if (isWarning) return;
 
@@ -273,17 +278,26 @@ class CampaignBossHazard extends PositionComponent
         x -= _profile.speed * (1 + game.bossPhase * 0.08) * dt;
       case _HazardMotion.wave:
         x -= _profile.speed * dt;
+        final waveOffset = cue.kind == BossAttackKind.spectralHazard
+            ? (math.sin(activeElapsed * 4.5) + 1.0) * 36
+            : math.sin(activeElapsed * 6) * 30;
         y =
             _ground -
             height -
-            (game.runConfiguration.reduceMotion
-                ? 0
-                : math.sin(activeElapsed * 7) * 34);
+            (game.runConfiguration.reduceMotion ? 0 : waveOffset);
     }
-    if (activeElapsed > _profile.activeSeconds ||
-        x < -width * 2 ||
-        x > game.size.x + width * 2 ||
-        y > _ground + height) {
+
+    final bool shouldDespawn;
+    switch (_profile.motion) {
+      case _HazardMotion.charge || _HazardMotion.wave:
+        // Continues across the entire terrain until exiting off the left edge of the screen!
+        shouldDespawn = x < -width * 2;
+      case _HazardMotion.falling:
+        shouldDespawn = y > game.size.y + height;
+      case _HazardMotion.stationary:
+        shouldDespawn = activeElapsed > _profile.activeSeconds;
+    }
+    if (shouldDespawn || activeElapsed > 15.0) {
       removeFromParent();
     }
   }
@@ -318,7 +332,20 @@ class CampaignBossHazard extends PositionComponent
     }
 
     if (_hazardSprite != null) {
-      if (_profile.motion == _HazardMotion.charge ||
+      if (cue.kind == BossAttackKind.spectralHazard) {
+        // Floating ghostly apparition: subtle ethereal hover tilt
+        canvas.save();
+        canvas.translate(width / 2, height / 2);
+        final tilt = math.sin(_elapsed * 5) * 0.08;
+        canvas.rotate(tilt);
+        _hazardSprite!.render(
+          canvas,
+          position: -Vector2(width / 2, height / 2),
+          size: size,
+          overridePaint: Paint()..filterQuality = FilterQuality.none,
+        );
+        canvas.restore();
+      } else if (_profile.motion == _HazardMotion.charge ||
           cue.kind == BossAttackKind.cardVolley ||
           cue.kind == BossAttackKind.clockworkBurst) {
         canvas.save();
@@ -393,7 +420,7 @@ String _hazardAsset(BossAttackKind kind) => switch (kind) {
   BossAttackKind.warningCharge ||
   BossAttackKind.sideCharge ||
   BossAttackKind.armoredCharge => 'hazard_spectral_pixel.png',
-  BossAttackKind.spectralHazard => 'hazard_spectral_pixel.png',
+  BossAttackKind.spectralHazard => 'hazard_ghost_pixel.png',
   BossAttackKind.cardVolley => 'hazard_card_pixel.png',
   BossAttackKind.heartPlatform => 'hazard_heart_pixel.png',
   BossAttackKind.shockwave => 'hazard_shockwave_pixel.png',
@@ -427,9 +454,9 @@ Color _bossAccent(int level) => <Color>[
 ][(level - 1).clamp(0, 9)];
 
 _AttackProfile _profileFor(BossAttackKind kind) => switch (kind) {
-  BossAttackKind.warningCharge => _charge('CARGA', const Color(0xFFFF7A00)),
+  BossAttackKind.warningCharge => _charge('CALAVERA', const Color(0xFFFF7A00)),
   BossAttackKind.sideCharge => _charge('EMBESTIDA', const Color(0xFFEB4D4B)),
-  BossAttackKind.spectralHazard => _zone('ESPECTRO', const Color(0xFF00F0FF)),
+  BossAttackKind.spectralHazard => _wave('OLEADA ESPECTRAL', const Color(0xFF00F0FF)),
   BossAttackKind.cardVolley => _fall('CARTAS', const Color(0xFFE53371)),
   BossAttackKind.heartPlatform => _wave('CORAZÓN', const Color(0xFFFF5B99)),
   BossAttackKind.shockwave => _wave('ONDA', const Color(0xFFFFD166)),
@@ -453,35 +480,35 @@ _AttackProfile _profileFor(BossAttackKind kind) => switch (kind) {
 _AttackProfile _charge(String label, Color color) => _AttackProfile(
   label: label,
   color: color,
-  size: Vector2(112, 68),
+  size: Vector2(78, 78),
   motion: _HazardMotion.charge,
   speed: 470,
-  activeSeconds: 2.3,
+  activeSeconds: 5.0,
 );
 
 _AttackProfile _zone(String label, Color color) => _AttackProfile(
   label: label,
   color: color,
-  size: Vector2(76, 138),
-  motion: _HazardMotion.stationary,
-  speed: 0,
-  activeSeconds: 1.35,
+  size: Vector2(76, 76),
+  motion: _HazardMotion.charge,
+  speed: 380,
+  activeSeconds: 5.0,
 );
 
 _AttackProfile _fall(String label, Color color) => _AttackProfile(
   label: label,
   color: color,
-  size: Vector2(68, 94),
+  size: Vector2(74, 74),
   motion: _HazardMotion.falling,
   speed: 430,
-  activeSeconds: 2.1,
+  activeSeconds: 3.5,
 );
 
 _AttackProfile _wave(String label, Color color) => _AttackProfile(
   label: label,
   color: color,
-  size: Vector2(104, 74),
+  size: Vector2(80, 80),
   motion: _HazardMotion.wave,
-  speed: 390,
-  activeSeconds: 2.6,
+  speed: 410,
+  activeSeconds: 5.0,
 );

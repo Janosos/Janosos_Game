@@ -135,6 +135,7 @@ class DinoRunGame extends FlameGame
       'boss_davy_jones_pixel.png',
       'boss_moriarty_pixel.png',
       'hazard_spectral_pixel.png',
+      'hazard_ghost_pixel.png',
       'hazard_card_pixel.png',
       'hazard_heart_pixel.png',
       'hazard_chemical_pixel.png',
