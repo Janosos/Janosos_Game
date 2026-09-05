@@ -164,9 +164,7 @@ ThemeData buildJanososTheme() {
         minimumSize: const Size(48, 48),
         foregroundColor: cyan,
         side: const BorderSide(color: cyan, width: 2),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero,
-        ),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         textStyle: GoogleFonts.pressStart2p(
           fontSize: 10,
           fontWeight: FontWeight.bold,

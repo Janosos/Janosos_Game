@@ -81,7 +81,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             height: 68,
             fit: BoxFit.contain,
             filterQuality: FilterQuality.none,
-            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
         ),
         const SizedBox(height: 12),
@@ -142,11 +142,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               );
             }
             return Column(
-              children: [
-                localCard,
-                const SizedBox(height: 20),
-                cloudCard,
-              ],
+              children: [localCard, const SizedBox(height: 20), cloudCard],
             );
           },
         ),
@@ -159,8 +155,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     AuthViewState state,
     Color accentColor,
   ) {
-    final isContinuing = state.isBusy &&
-        state.operation == AuthOperation.continuingAsGuest;
+    final isContinuing =
+        state.isBusy && state.operation == AuthOperation.continuingAsGuest;
 
     return RetroArcadeCard(
       borderColor: accentColor,
@@ -422,164 +418,160 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       ),
                     ),
                   ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _mode == _AuthFormMode.signIn
-                          ? 'Continúa tu progreso en la nube'
-                          : 'Crea tu cuenta de jugador',
-                      textAlign: TextAlign.center,
+                  const SizedBox(height: 8),
+                  Text(
+                    _mode == _AuthFormMode.signIn
+                        ? 'Continúa tu progreso'
+                        : 'Crea tu cuenta de jugador',
+                    textAlign: TextAlign.center,
+                  ),
+                  if (environment.usesLocalBackend) ...[
+                    const SizedBox(height: 16),
+                    const _StatusBanner(
+                      icon: Icons.developer_mode,
+                      text:
+                          'Modo local: cuentas y sesión se guardan solo en este dispositivo.',
                     ),
-                    if (environment.usesLocalBackend) ...[
-                      const SizedBox(height: 16),
-                      const _StatusBanner(
-                        icon: Icons.developer_mode,
-                        text:
-                            'Modo local: cuentas y sesión se guardan solo en este dispositivo.',
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    if (_mode == _AuthFormMode.register) ...[
-                      TextFormField(
-                        controller: _displayNameController,
-                        enabled: !state.isBusy,
-                        textInputAction: TextInputAction.next,
-                        maxLength: 24,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre visible',
-                          prefixIcon: Icon(Icons.person_outline),
-                        ),
-                        validator: (value) {
-                          final length = value?.trim().length ?? 0;
-                          return length >= 2
-                              ? null
-                              : 'Ingresa al menos 2 caracteres.';
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                  ],
+                  const SizedBox(height: 24),
+                  if (_mode == _AuthFormMode.register) ...[
                     TextFormField(
-                      controller: _emailController,
+                      controller: _displayNameController,
                       enabled: !state.isBusy,
-                      keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      autofillHints: const [AutofillHints.email],
+                      maxLength: 24,
                       decoration: const InputDecoration(
-                        labelText: 'Correo electrónico',
-                        prefixIcon: Icon(Icons.email_outlined),
+                        labelText: 'Nombre visible',
+                        prefixIcon: Icon(Icons.person_outline),
                       ),
                       validator: (value) {
-                        final email = value?.trim() ?? '';
-                        return email.contains('@')
+                        final length = value?.trim().length ?? 0;
+                        return length >= 2
                             ? null
-                            : 'Ingresa un correo válido.';
+                            : 'Ingresa al menos 2 caracteres.';
                       },
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _passwordController,
-                      enabled: !state.isBusy,
-                      obscureText: _obscurePassword,
-                      textInputAction: TextInputAction.done,
-                      autofillHints: [
-                        _mode == _AuthFormMode.signIn
-                            ? AutofillHints.password
-                            : AutofillHints.newPassword,
-                      ],
-                      onFieldSubmitted: (_) => _submit(),
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        helperText: _mode == _AuthFormMode.register
-                            ? 'Mínimo 8 caracteres'
-                            : null,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          tooltip: _obscurePassword
-                              ? 'Mostrar contraseña'
-                              : 'Ocultar contraseña',
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
+                  ],
+                  TextFormField(
+                    controller: _emailController,
+                    enabled: !state.isBusy,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: const InputDecoration(
+                      labelText: 'Correo electrónico',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    validator: (value) {
+                      final email = value?.trim() ?? '';
+                      return email.contains('@')
+                          ? null
+                          : 'Ingresa un correo válido.';
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _passwordController,
+                    enabled: !state.isBusy,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: [
+                      _mode == _AuthFormMode.signIn
+                          ? AutofillHints.password
+                          : AutofillHints.newPassword,
+                    ],
+                    onFieldSubmitted: (_) => _submit(),
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña',
+                      helperText: _mode == _AuthFormMode.register
+                          ? 'Mínimo 8 caracteres'
+                          : null,
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        tooltip: _obscurePassword
+                            ? 'Mostrar contraseña'
+                            : 'Ocultar contraseña',
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                         ),
                       ),
-                      validator: (value) => (value?.length ?? 0) >= 8
-                          ? null
-                          : 'Usa al menos 8 caracteres.',
                     ),
-                    if (state.error != null) ...[
-                      const SizedBox(height: 16),
-                      _StatusBanner(
-                        icon: Icons.error_outline,
-                        text: state.error!,
-                        isError: true,
-                      ),
-                    ],
-                    if (state.notice != null) ...[
-                      const SizedBox(height: 16),
-                      _StatusBanner(
-                        icon: Icons.check_circle_outline,
-                        text: state.notice!,
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: state.isBusy ? null : _submit,
-                      child: state.isBusy
-                          ? const SizedBox.square(
-                              dimension: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              _mode == _AuthFormMode.signIn
-                                  ? 'INICIAR SESIÓN'
-                                  : 'CREAR CUENTA',
-                            ),
-                    ),
-                    if (_mode == _AuthFormMode.signIn)
-                      TextButton(
-                        onPressed: state.isBusy
-                            ? null
-                            : _requestPasswordReset,
-                        child: const Text('Olvidé mi contraseña'),
-                      ),
-                    const Divider(height: 32),
-                    OutlinedButton.icon(
-                      onPressed: state.isBusy
-                          ? null
-                          : () => _openProvider(AuthProviderId.google),
-                      icon: const Icon(Icons.account_circle_outlined),
-                      label: const Text('Continuar con Google'),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: state.isBusy
-                          ? null
-                          : () => _openProvider(AuthProviderId.apple),
-                      icon: const Icon(Icons.apple),
-                      label: const Text('Continuar con Apple'),
-                    ),
+                    validator: (value) => (value?.length ?? 0) >= 8
+                        ? null
+                        : 'Usa al menos 8 caracteres.',
+                  ),
+                  if (state.error != null) ...[
                     const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: state.isBusy ? null : _toggleMode,
-                      child: Text(
-                        _mode == _AuthFormMode.signIn
-                            ? '¿No tienes cuenta? Regístrate'
-                            : 'Ya tengo una cuenta',
-                      ),
+                    _StatusBanner(
+                      icon: Icons.error_outline,
+                      text: state.error!,
+                      isError: true,
                     ),
                   ],
-                ),
+                  if (state.notice != null) ...[
+                    const SizedBox(height: 16),
+                    _StatusBanner(
+                      icon: Icons.check_circle_outline,
+                      text: state.notice!,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: state.isBusy ? null : _submit,
+                    child: state.isBusy
+                        ? const SizedBox.square(
+                            dimension: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(
+                            _mode == _AuthFormMode.signIn
+                                ? 'INICIAR SESIÓN'
+                                : 'CREAR CUENTA',
+                          ),
+                  ),
+                  if (_mode == _AuthFormMode.signIn)
+                    TextButton(
+                      onPressed: state.isBusy ? null : _requestPasswordReset,
+                      child: const Text('Olvidé mi contraseña'),
+                    ),
+                  const Divider(height: 32),
+                  OutlinedButton.icon(
+                    onPressed: state.isBusy
+                        ? null
+                        : () => _openProvider(AuthProviderId.google),
+                    icon: const Icon(Icons.account_circle_outlined),
+                    label: const Text('Continuar con Google'),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: state.isBusy
+                        ? null
+                        : () => _openProvider(AuthProviderId.apple),
+                    icon: const Icon(Icons.apple),
+                    label: const Text('Continuar con Apple'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: state.isBusy ? null : _toggleMode,
+                    child: Text(
+                      _mode == _AuthFormMode.signIn
+                          ? '¿No tienes cuenta? Regístrate'
+                          : 'Ya tengo una cuenta',
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+        ),
       ],
     );
   }

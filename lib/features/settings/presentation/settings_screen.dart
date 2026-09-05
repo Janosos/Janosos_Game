@@ -45,8 +45,8 @@ class SettingsScreen extends ConsumerWidget {
                   trailing: user?.isGuest == true
                       ? const Chip(label: Text('INVITADO'))
                       : environment.usesLocalBackend
-                          ? const Chip(label: Text('LOCAL'))
-                          : const Chip(label: Text('CLOUD')),
+                      ? const Chip(label: Text('LOCAL'))
+                      : const Chip(label: Text('CLOUD')),
                 ),
                 if (auth.error != null)
                   _MessageBox(message: auth.error!, isError: true),
@@ -61,7 +61,9 @@ class SettingsScreen extends ConsumerWidget {
                   FilledButton.icon(
                     onPressed: auth.isBusy
                         ? null
-                        : () => ref.read(authControllerProvider.notifier).signOut(),
+                        : () => ref
+                              .read(authControllerProvider.notifier)
+                              .signOut(),
                     icon: const Icon(Icons.cloud_upload_outlined),
                     label: const Text('CONECTAR O CREAR CUENTA'),
                   ),
@@ -141,7 +143,9 @@ class SettingsScreen extends ConsumerWidget {
                       ? null
                       : () =>
                             ref.read(authControllerProvider.notifier).signOut(),
-                  icon: Icon(user?.isGuest == true ? Icons.exit_to_app : Icons.logout),
+                  icon: Icon(
+                    user?.isGuest == true ? Icons.exit_to_app : Icons.logout,
+                  ),
                   label: Text(
                     user?.isGuest == true
                         ? 'Salir al menú principal'

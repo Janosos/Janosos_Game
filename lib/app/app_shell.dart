@@ -41,10 +41,7 @@ class JanososAppShell extends StatelessWidget {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const PixelIconAsset(
-              assetName: PixelIconAsset.gamepad,
-              size: 24,
-            ),
+            const PixelIconAsset(assetName: PixelIconAsset.gamepad, size: 24),
             const SizedBox(width: 10),
             Text(
               'JANOSOS V6',
@@ -54,10 +51,7 @@ class JanososAppShell extends StatelessWidget {
                 color: cyan,
                 letterSpacing: 2,
                 shadows: [
-                  Shadow(
-                    color: cyan.withValues(alpha: 0.8),
-                    blurRadius: 10,
-                  ),
+                  Shadow(color: cyan.withValues(alpha: 0.8), blurRadius: 10),
                 ],
               ),
             ),
@@ -65,10 +59,7 @@ class JanososAppShell extends StatelessWidget {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(2),
-          child: Container(
-            height: 2,
-            color: const Color(0xFF1E354F),
-          ),
+          child: Container(height: 2, color: const Color(0xFF1E354F)),
         ),
         actions: [
           Container(
@@ -92,8 +83,9 @@ class JanososAppShell extends StatelessWidget {
                   selectedIndex: _selectedIndex,
                   labelType: NavigationRailLabelType.all,
                   selectedIconTheme: const IconThemeData(color: cyan),
-                  unselectedIconTheme:
-                      const IconThemeData(color: Color(0xFF7A9BB8)),
+                  unselectedIconTheme: const IconThemeData(
+                    color: Color(0xFF7A9BB8),
+                  ),
                   selectedLabelTextStyle: GoogleFonts.pressStart2p(
                     fontSize: 8,
                     fontWeight: FontWeight.bold,

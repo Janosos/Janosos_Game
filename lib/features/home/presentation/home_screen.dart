@@ -30,7 +30,7 @@ class HomeScreen extends ConsumerWidget {
               height: isMobile ? 54 : 72,
               fit: BoxFit.contain,
               filterQuality: FilterQuality.none,
-              errorBuilder: (_, __, ___) => Text(
+              errorBuilder: (_, _, _) => Text(
                 '★ JANOSOS ARCADE ★',
                 style: GoogleFonts.pressStart2p(
                   fontSize: isMobile ? 15 : 20,
@@ -69,8 +69,8 @@ class HomeScreen extends ConsumerWidget {
                     user?.isGuest == true
                         ? 'PARTIDA LOCAL • ESTE DISPOSITIVO'
                         : environment.usesLocalBackend
-                            ? 'MODO LOCAL DE DESARROLLO'
-                            : 'CUENTA CONECTADA • NUBE ACTIVA',
+                        ? 'MODO LOCAL DE DESARROLLO'
+                        : 'CUENTA CONECTADA • NUBE ACTIVA',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.vt323(

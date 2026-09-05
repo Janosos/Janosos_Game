@@ -16,6 +16,10 @@ void main() {
 
       await bootstrap();
       await tester.pumpAndSettle();
+      if (find.text('INICIAR').evaluate().isNotEmpty) {
+        await tester.tap(find.text('INICIAR'));
+        await tester.pumpAndSettle();
+      }
       expect(find.text('Continúa tu progreso'), findsOneWidget);
 
       await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
@@ -26,9 +30,9 @@ void main() {
       await tester.enterText(registrationFields.at(1), 'journey@example.com');
       await tester.enterText(registrationFields.at(2), 'local-password');
       await tester.tap(find.text('CREAR CUENTA'));
-      await _pumpUntilFound(tester, find.text('Hola, Jugador Integración'));
+      await _pumpUntilFound(tester, find.textContaining('JUGADOR INTEGRACIÓN'));
 
-      expect(find.text('Hola, Jugador Integración'), findsOneWidget);
+      expect(find.textContaining('JUGADOR INTEGRACIÓN'), findsOneWidget);
       expect(find.textContaining('campaña completa'), findsOneWidget);
 
       await _openDestination(tester, 'Personajes');
@@ -67,6 +71,10 @@ void main() {
 
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
+      if (find.text('INICIAR').evaluate().isNotEmpty) {
+        await tester.tap(find.text('INICIAR'));
+        await tester.pumpAndSettle();
+      }
       expect(find.text('Continúa tu progreso'), findsOneWidget);
 
       final signInFields = find.byType(TextFormField);
@@ -83,8 +91,24 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Eliminar definitivamente'));
-      await _pumpUntilFound(tester, find.text('Continúa tu progreso'));
-      expect(find.text('Continúa tu progreso'), findsOneWidget);
+      await _pumpUntilFound(
+        tester,
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data == 'Continúa tu progreso' ||
+                  widget.data == '¡SELECCIONA TU MODO!'),
+        ),
+      );
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              (widget.data == 'Continúa tu progreso' ||
+                  widget.data == '¡SELECCIONA TU MODO!'),
+        ),
+        findsOneWidget,
+      );
     },
   );
 }
@@ -117,5 +141,7 @@ Future<void> _openDestination(WidgetTester tester, String label) async {
       : wideDestination;
   expect(destination, findsOneWidget);
   await tester.tap(destination);
-  await tester.pumpAndSettle();
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }

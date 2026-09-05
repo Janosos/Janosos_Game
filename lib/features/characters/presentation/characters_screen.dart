@@ -167,10 +167,7 @@ class CharactersScreen extends StatelessWidget {
 }
 
 class CharacterRunningSprite extends StatefulWidget {
-  const CharacterRunningSprite({
-    super.key,
-    required this.assetName,
-  });
+  const CharacterRunningSprite({super.key, required this.assetName});
 
   final String assetName;
 

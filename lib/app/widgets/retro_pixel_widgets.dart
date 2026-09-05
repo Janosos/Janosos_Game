@@ -45,7 +45,8 @@ class PixelIconAsset extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      filterQuality: FilterQuality.none, // Mantener nitidez de píxeles sin difuminar
+      filterQuality:
+          FilterQuality.none, // Mantener nitidez de píxeles sin difuminar
       semanticLabel: semanticLabel,
     );
   }
@@ -207,8 +208,9 @@ class _RetroArcadeButtonState extends State<RetroArcadeButton> {
           ),
           padding: widget.padding,
           child: Row(
-            mainAxisSize:
-                widget.isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisSize: widget.isFullWidth
+                ? MainAxisSize.max
+                : MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (widget.pixelIcon != null) ...[
@@ -265,20 +267,13 @@ class RetroBadge extends StatelessWidget {
         color: backgroundColor ?? color.withValues(alpha: 0.15),
         border: Border.all(color: color, width: 1.5),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black,
-            offset: Offset(2, 2),
-            blurRadius: 0,
-          ),
+          BoxShadow(color: Colors.black, offset: Offset(2, 2), blurRadius: 0),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            icon!,
-            const SizedBox(width: 6),
-          ],
+          if (icon != null) ...[icon!, const SizedBox(width: 6)],
           Text(
             text.toUpperCase(),
             style: GoogleFonts.pressStart2p(
@@ -342,10 +337,7 @@ class RetroArcadeMarquee extends StatelessWidget {
                   color: color,
                   letterSpacing: 2,
                   shadows: [
-                    Shadow(
-                      color: color.withValues(alpha: 0.8),
-                      blurRadius: 10,
-                    ),
+                    Shadow(color: color.withValues(alpha: 0.8), blurRadius: 10),
                   ],
                 ),
               ),

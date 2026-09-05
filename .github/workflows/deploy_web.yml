@@ -34,9 +34,10 @@ jobs:
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
           AUTH_REDIRECT_URI: ${{ vars.AUTH_REDIRECT_URI }}
         run: |
-          test -n "$SUPABASE_URL"
-          test -n "$SUPABASE_PUBLISHABLE_KEY"
-          test -n "$AUTH_REDIRECT_URI"
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ] || [ -z "$AUTH_REDIRECT_URI" ]; then
+            echo "::error::Faltan variables de repositorio requeridas en GitHub Settings > Secrets and variables > Actions > Variables (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, AUTH_REDIRECT_URI)."
+            exit 1
+          fi
 
       - name: Build production web bundle
         env:

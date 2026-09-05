@@ -82,7 +82,10 @@ class _LeaderboardContent extends ConsumerWidget {
             unselectedLabelColor: RetroColors.textMuted,
             tabs: const [
               Tab(
-                icon: PixelIconAsset(assetName: PixelIconAsset.trophy, size: 20),
+                icon: PixelIconAsset(
+                  assetName: PixelIconAsset.trophy,
+                  size: 20,
+                ),
                 text: 'Top global',
               ),
               Tab(
@@ -265,8 +268,8 @@ class _LeaderboardCard extends StatelessWidget {
     final borderColor = isTop1
         ? RetroColors.gold
         : isTop3
-            ? RetroColors.cyan
-            : const Color(0xFF1E354F);
+        ? RetroColors.cyan
+        : const Color(0xFF1E354F);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

@@ -253,11 +253,7 @@ class _BossRushCard extends StatelessWidget {
           if (constraints.maxWidth < 620) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                description,
-                const SizedBox(height: 12),
-                button,
-              ],
+              children: [description, const SizedBox(height: 12), button],
             );
           }
           return Row(
@@ -281,7 +277,9 @@ class _CampaignNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RetroArcadeCard(
-      borderColor: progress == null ? const Color(0xFF1E354F) : RetroColors.gold,
+      borderColor: progress == null
+          ? const Color(0xFF1E354F)
+          : RetroColors.gold,
       backgroundColor: const Color(0xFF0F1722),
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -330,8 +328,8 @@ class _LevelCard extends StatelessWidget {
     final borderColor = completed
         ? RetroColors.green.withValues(alpha: 0.6)
         : available
-            ? RetroColors.cyan
-            : const Color(0xFF1E354F);
+        ? RetroColors.cyan
+        : const Color(0xFF1E354F);
 
     return RetroArcadeCard(
       borderColor: borderColor,
@@ -348,8 +346,8 @@ class _LevelCard extends StatelessWidget {
                 color: completed
                     ? RetroColors.green
                     : available
-                        ? RetroColors.cyan
-                        : Colors.white54,
+                    ? RetroColors.cyan
+                    : Colors.white54,
                 fontSize: 8,
               ),
               const SizedBox(width: 10),
@@ -369,13 +367,13 @@ class _LevelCard extends StatelessWidget {
                 completed
                     ? Icons.check_circle
                     : available
-                        ? Icons.lock_open
-                        : Icons.lock,
+                    ? Icons.lock_open
+                    : Icons.lock,
                 color: completed
                     ? RetroColors.green
                     : available
-                        ? RetroColors.cyan
-                        : Colors.white38,
+                    ? RetroColors.cyan
+                    : Colors.white38,
                 size: 18,
               ),
             ],
@@ -394,10 +392,7 @@ class _LevelCard extends StatelessWidget {
             level.boss,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.pressStart2p(
-              fontSize: 10,
-              color: Colors.white,
-            ),
+            style: GoogleFonts.pressStart2p(fontSize: 10, color: Colors.white),
           ),
           const SizedBox(height: 8),
           Expanded(
@@ -415,10 +410,7 @@ class _LevelCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const PixelIconAsset(
-                assetName: PixelIconAsset.coin,
-                size: 16,
-              ),
+              const PixelIconAsset(assetName: PixelIconAsset.coin, size: 16),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -440,19 +432,19 @@ class _LevelCard extends StatelessWidget {
               text: completed
                   ? 'COMPLETADO'
                   : available
-                      ? 'JUGAR NIVEL ${level.level}'
-                      : 'BLOQUEADO',
+                  ? 'JUGAR NIVEL ${level.level}'
+                  : 'BLOQUEADO',
               fontSize: 8,
               primaryColor: completed
                   ? RetroColors.green
                   : available
-                      ? RetroColors.cyan
-                      : Colors.grey.shade800,
+                  ? RetroColors.cyan
+                  : Colors.grey.shade800,
               textColor: completed || available ? Colors.black : Colors.white38,
               onPressed: available
                   ? () => context.go(
-                        '/game?experience=campaign&character=${selectedCharacter.serialized}&level=${level.level}',
-                      )
+                      '/game?experience=campaign&character=${selectedCharacter.serialized}&level=${level.level}',
+                    )
                   : null,
             ),
           ),

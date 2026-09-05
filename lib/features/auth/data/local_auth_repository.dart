@@ -153,7 +153,9 @@ class LocalAuthRepository implements AuthRepository {
       _accounts.add(guestAccount);
       await _persistAccounts();
     }
-    await _setSession(AuthSessionSnapshot.authenticated(guestAccount.toProfile()));
+    await _setSession(
+      AuthSessionSnapshot.authenticated(guestAccount.toProfile()),
+    );
   }
 
   @override
