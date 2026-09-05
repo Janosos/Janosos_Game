@@ -42,12 +42,11 @@ class Obstacle extends SpriteAnimationComponent
       game.size.y - DinoRunGame.virtualGroundHeight,
     );
 
-    // Forgiving hitbox (smaller than sprite and shifted right)
+    // Forgiving hitbox matching the visible animal torso and body
     add(
       RectangleHitbox(
-        // Much tighter hitbox to avoid invisible walls
-        position: Vector2(24, 16),
-        size: Vector2(24, 20),
+        position: Vector2(18, 16),
+        size: Vector2(34, 26),
       ),
     );
   }

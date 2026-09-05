@@ -81,6 +81,22 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     _updateHitbox();
   }
 
+  // Horizontal movement
+  double horizontalInput = 0.0;
+  static const double baseHorizontalSpeed = 280.0;
+
+  void moveLeft() {
+    horizontalInput = -1.0;
+  }
+
+  void moveRight() {
+    horizontalInput = 1.0;
+  }
+
+  void stopMoving() {
+    horizontalInput = 0.0;
+  }
+
   void _updateHitbox() {
     final hitboxesToRemove = children.whereType<RectangleHitbox>().toList();
     for (final h in hitboxesToRemove) {
@@ -91,11 +107,13 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     Vector2 hitboxPosition;
 
     if (characterId == CharacterId.nanic) {
-      hitboxSize = Vector2(28, 48);
-      hitboxPosition = Vector2(10, 20);
+      hitboxSize = Vector2(22, 38);
+      hitboxPosition = Vector2(13, 22);
     } else {
-      hitboxSize = Vector2(48, 58);
-      hitboxPosition = Vector2(20, 20);
+      // Snug hitbox matching the character's core torso and legs
+      // (prevents ghost damage when jumping near obstacles)
+      hitboxSize = Vector2(28, 44);
+      hitboxPosition = Vector2(30, 24);
     }
 
     add(RectangleHitbox(position: hitboxPosition, size: hitboxSize));
@@ -110,6 +128,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     isIntangible = false;
     isGliding = false;
     hasDoubleJumped = false;
+    horizontalInput = 0;
 
     // Nanic Reset
     energy = 0;
@@ -271,6 +290,15 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
         auraComponent!.angle += dt * 10;
       } else if (auraComponent != null) {
         auraComponent!.opacity = 0.0;
+      }
+
+      if (horizontalInput != 0 && current != DinoState.hit) {
+        final speed =
+            baseHorizontalSpeed * _configuration.stats.speedMultiplier;
+        x += horizontalInput * speed * dt;
+        const minX = 35.0;
+        final maxX = (game.size.x * 0.65).clamp(240.0, 750.0);
+        x = x.clamp(minX, maxX);
       }
 
       _yVelocity += gravity * dt;

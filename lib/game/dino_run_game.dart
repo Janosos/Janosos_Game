@@ -22,6 +22,7 @@ import 'domain/level_runtime.dart';
 import 'domain/run_configuration.dart';
 import 'domain/run_result.dart';
 import 'hud/ability_button.dart';
+import 'hud/directional_pad.dart';
 import 'hud/hud_indicators.dart';
 import 'hud/score.dart';
 import 'runtime/gameplay_event_sink.dart';
@@ -42,6 +43,7 @@ class DinoRunGame extends FlameGame
   late ObstacleManager _obstacleManager;
   late ScoreSystem _scoreSystem;
   AbilityButton? _abilityButton;
+  DirectionalPad? _directionalPad;
   HudIndicators? _hudIndicators;
   BossActionButton? _bossActionButton;
   CampaignBoss? _boss;
@@ -217,6 +219,13 @@ class DinoRunGame extends FlameGame
       camera.viewport.add(_abilityButton!);
     }
 
+    if (_directionalPad != null) {
+      camera.viewport.remove(_directionalPad!);
+      _directionalPad = null;
+    }
+    _directionalPad = DirectionalPad();
+    camera.viewport.add(_directionalPad!);
+
     _dino.reset();
     _obstacleManager.reset(seed: configuration.seed);
     _removeBossEncounter();
@@ -264,6 +273,11 @@ class DinoRunGame extends FlameGame
       return;
     }
     _runActive = false;
+    _dino.stopMoving();
+    if (_directionalPad != null) {
+      camera.viewport.remove(_directionalPad!);
+      _directionalPad = null;
+    }
 
     try {
       FlameAudio.bgm.stop();
@@ -772,6 +786,11 @@ class DinoRunGame extends FlameGame
       return;
     }
 
+    final dPad = _directionalPad;
+    if (dPad != null && dPad.containsPoint(event.canvasPosition)) {
+      return;
+    }
+
     final abilityButton = _abilityButton;
     if (abilityButton != null &&
         abilityButton.containsPoint(event.canvasPosition)) {
@@ -805,14 +824,28 @@ class DinoRunGame extends FlameGame
     KeyEvent event,
     Set<LogicalKeyboardKey> keysPressed,
   ) {
-    final isSpace = keysPressed.contains(LogicalKeyboardKey.space) ||
-        (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.space);
-    final isActive = keysPressed.contains(LogicalKeyboardKey.keyA) ||
-        (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyA);
-    final isBossAction = keysPressed.contains(LogicalKeyboardKey.keyE) ||
-        (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyE);
+    // 1. Horizontal Movement (A/D or Left/Right arrows)
+    final leftPressed = keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
+        keysPressed.contains(LogicalKeyboardKey.keyA);
+    final rightPressed = keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
+        keysPressed.contains(LogicalKeyboardKey.keyD);
 
-    if (event is KeyDownEvent && isSpace) {
+    if (_runActive) {
+      if (leftPressed && !rightPressed) {
+        _dino.moveLeft();
+      } else if (rightPressed && !leftPressed) {
+        _dino.moveRight();
+      } else {
+        _dino.stopMoving();
+      }
+    }
+
+    // 2. Jump (Space, ArrowUp, KeyW)
+    final isJump = keysPressed.contains(LogicalKeyboardKey.space) ||
+        keysPressed.contains(LogicalKeyboardKey.arrowUp) ||
+        keysPressed.contains(LogicalKeyboardKey.keyW);
+
+    if (event is KeyDownEvent && isJump) {
       if (overlays.isActive('GameOverMenu')) {
         resetGame();
       } else if (_runActive) {
@@ -821,16 +854,27 @@ class DinoRunGame extends FlameGame
       return KeyEventResult.handled;
     }
 
-    if (event is KeyDownEvent && isActive && _runActive) {
+    // 3. Ability (KeyQ, KeyF, KeyJ)
+    final isAbility = keysPressed.contains(LogicalKeyboardKey.keyQ) ||
+        keysPressed.contains(LogicalKeyboardKey.keyF) ||
+        keysPressed.contains(LogicalKeyboardKey.keyJ);
+
+    if (event is KeyDownEvent && isAbility && _runActive) {
       _dino.activateAbility();
       return KeyEventResult.handled;
     }
+
+    // 4. Boss Action (KeyE)
+    final isBossAction = keysPressed.contains(LogicalKeyboardKey.keyE);
     if (event is KeyDownEvent && isBossAction && _runActive) {
       useBossAction();
       return KeyEventResult.handled;
     }
 
-    if (event is KeyUpEvent && event.logicalKey == LogicalKeyboardKey.space) {
+    if (event is KeyUpEvent &&
+        (event.logicalKey == LogicalKeyboardKey.space ||
+            event.logicalKey == LogicalKeyboardKey.arrowUp ||
+            event.logicalKey == LogicalKeyboardKey.keyW)) {
       _dino.stopGlide();
       return KeyEventResult.handled;
     }

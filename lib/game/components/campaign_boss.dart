@@ -239,10 +239,12 @@ class CampaignBossHazard extends PositionComponent
           _ground - height,
         );
       case _HazardMotion.falling:
-        position = Vector2(
-          game.size.x * (0.30 + _laneSeed * 0.40),
-          -height,
-        );
+        // Falling hazards (like Queen of Hearts cards) actively target the player's position
+        // with slight variation, forcing the player to move left/right to dodge!
+        final playerX = game.dino.x;
+        final spread = (_laneSeed - 0.5) * 110.0;
+        final targetX = (playerX + spread).clamp(35.0, game.size.x - width - 40.0);
+        position = Vector2(targetX, -height);
       case _HazardMotion.charge || _HazardMotion.wave:
         position = Vector2(
           game.size.x + width,
@@ -257,12 +259,28 @@ class CampaignBossHazard extends PositionComponent
     _elapsed += dt;
     if (!_armed && !isWarning) {
       _armed = true;
-      add(
-        RectangleHitbox(
-          position: Vector2(width * 0.12, height * 0.12),
-          size: Vector2(width * 0.76, height * 0.76),
-        ),
-      );
+      final isCircular = cue.kind == BossAttackKind.warningCharge ||
+          cue.kind == BossAttackKind.sideCharge ||
+          cue.kind == BossAttackKind.spectralHazard ||
+          cue.kind == BossAttackKind.chemicalRush ||
+          cue.kind == BossAttackKind.cyclone ||
+          cue.kind == BossAttackKind.echoPulse ||
+          cue.kind == BossAttackKind.armoredCharge;
+      if (isCircular) {
+        add(
+          CircleHitbox(
+            radius: width * 0.35,
+            position: Vector2(width * 0.15, height * 0.15),
+          ),
+        );
+      } else {
+        add(
+          RectangleHitbox(
+            position: Vector2(width * 0.18, height * 0.14),
+            size: Vector2(width * 0.64, height * 0.72),
+          ),
+        );
+      }
     }
     if (isWarning) return;
 
