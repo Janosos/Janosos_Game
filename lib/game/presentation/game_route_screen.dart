@@ -241,7 +241,9 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             },
           ),
           _BackButton(onPressed: () => context.go('/home')),
-          const _RunBanner(label: 'MODO ESTÁNDAR · PODER NORMALIZADO'),
+          const _RunBanner(
+            label: 'MODO ENDLESS CLÁSICO · SIN JEFES · MÁXIMA PUNTUACIÓN',
+          ),
         ],
       ),
     );

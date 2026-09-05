@@ -14,6 +14,8 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
     final environment = ref.watch(appEnvironmentProvider);
+    final preferences = ref.watch(sharedPreferencesProvider);
+    final highScore = preferences.getInt('high_score') ?? 0;
     final user = auth.session.user;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final isMobile = screenWidth < 600;
@@ -148,73 +150,181 @@ class HomeScreen extends ConsumerWidget {
 
         const SizedBox(height: 18),
 
-        // Tarjeta principal: JUGAR AHORA / CORREDOR CLÁSICO
-        RetroArcadeCard(
-          borderColor: RetroColors.cyan,
-          accentHeaderColor: RetroColors.cyan,
-          glow: true,
-          padding: EdgeInsets.all(isMobile ? 18 : 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 8,
+        // MODOS DE JUEGO PRINCIPALES: ENDLESS CLÁSICO Y CAMPAÑA CON JEFES
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 750;
+
+            final endlessCard = RetroArcadeCard(
+              borderColor: RetroColors.cyan,
+              accentHeaderColor: RetroColors.cyan,
+              glow: true,
+              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      const PixelIconAsset(
-                        assetName: PixelIconAsset.gamepad,
-                        size: 24,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const PixelIconAsset(
+                            assetName: PixelIconAsset.gamepad,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'MODO ENDLESS',
+                            style: GoogleFonts.pressStart2p(
+                              fontSize: isMobile ? 11 : 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'CORREDOR CLÁSICO',
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: isMobile ? 11 : 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1.0,
-                        ),
+                      const RetroBadge(
+                        text: 'SIN JEFES',
+                        color: RetroColors.cyan,
+                        fontSize: 8,
                       ),
                     ],
                   ),
-                  const RetroBadge(
-                    text: '10 NIVELES',
+                  const SizedBox(height: 10),
+                  Text(
+                    'Carrera infinita clásica. Esquiva obstáculos a velocidad creciente sin jefes y acumula tu puntuación máxima.',
+                    style: GoogleFonts.vt323(
+                      fontSize: isMobile ? 17 : 19,
+                      color: RetroColors.textBright,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  RetroBadge(
+                    text: 'RÉCORD: $highScore PTS',
                     color: RetroColors.gold,
                     fontSize: 8,
+                    icon: const Icon(
+                      Icons.star,
+                      size: 12,
+                      color: RetroColors.gold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  RetroArcadeButton(
+                    text: 'INSERT COIN / JUGAR ENDLESS',
+                    pixelIcon: const PixelIconAsset(
+                      assetName: PixelIconAsset.coin,
+                      size: 20,
+                    ),
+                    primaryColor: RetroColors.cyan,
+                    fontSize: isMobile ? 8 : 10,
+                    isFullWidth: true,
+                    onPressed: () => context.go('/game?experience=standard'),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                'Corre con reglas normalizadas o enfréntate a los jefes de la campaña completa.',
-                style: GoogleFonts.vt323(
-                  fontSize: isMobile ? 18 : 20,
-                  color: RetroColors.textBright,
-                  height: 1.2,
-                ),
+            );
+
+            final campaignCard = RetroArcadeCard(
+              borderColor: RetroColors.gold,
+              accentHeaderColor: RetroColors.gold,
+              glow: true,
+              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const PixelIconAsset(
+                            assetName: PixelIconAsset.trophy,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'MODO CAMPAÑA',
+                            style: GoogleFonts.pressStart2p(
+                              fontSize: isMobile ? 11 : 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const RetroBadge(
+                        text: 'CON JEFES',
+                        color: RetroColors.gold,
+                        fontSize: 8,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Enfréntate a los 10 jefes de la campaña completa: barras de salud, ataques especiales, combate y recompensas.',
+                    style: GoogleFonts.vt323(
+                      fontSize: isMobile ? 17 : 19,
+                      color: RetroColors.textBright,
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const RetroBadge(
+                    text: '10 MUNDOS ARCADE',
+                    color: RetroColors.magenta,
+                    fontSize: 8,
+                    icon: Icon(
+                      Icons.whatshot,
+                      size: 12,
+                      color: RetroColors.magenta,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  RetroArcadeButton(
+                    text: 'ENTRAR A CAMPAÑA',
+                    pixelIcon: const PixelIconAsset(
+                      assetName: PixelIconAsset.trophy,
+                      size: 20,
+                    ),
+                    primaryColor: RetroColors.gold,
+                    fontSize: isMobile ? 8 : 10,
+                    isFullWidth: true,
+                    onPressed: () => context.go('/campaign'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              RetroArcadeButton(
-                text: 'INSERT COIN / JUGAR AHORA',
-                pixelIcon: const PixelIconAsset(
-                  assetName: PixelIconAsset.coin,
-                  size: 20,
-                ),
-                primaryColor: RetroColors.cyan,
-                fontSize: isMobile ? 9 : 11,
-                isFullWidth: true,
-                onPressed: () => context.go('/game?experience=standard'),
-              ),
-            ],
-          ),
+            );
+
+            if (isWide) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: endlessCard),
+                  const SizedBox(width: 16),
+                  Expanded(child: campaignCard),
+                ],
+              );
+            }
+
+            return Column(
+              children: [endlessCard, const SizedBox(height: 16), campaignCard],
+            );
+          },
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
         // Acciones secundarias en cuadrícula arcade responsiva
         Wrap(

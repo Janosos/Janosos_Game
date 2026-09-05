@@ -146,6 +146,11 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                   game.runConfiguration.experience == RunExperience.bossRush;
               final returnsToProgression = isCampaign || isBossRush;
               final bossName = game.currentLevelDefinition?.bossName ?? 'jefe';
+              final score = result?.score ?? 0;
+              final isNewHighScore =
+                  !returnsToProgression &&
+                  score >= _persistedHighScore &&
+                  score > 0;
               return Center(
                 child: Semantics(
                   namesRoute: true,
@@ -160,7 +165,9 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                       color: Colors.black.withValues(alpha: 0.88),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isVictory ? Colors.amber : Colors.redAccent,
+                        color: isVictory || isNewHighScore
+                            ? Colors.amber
+                            : Colors.redAccent,
                         width: 3,
                       ),
                     ),
@@ -168,14 +175,20 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          isVictory
-                              ? '¡VICTORIA!'
-                              : isAbandoned
-                              ? 'CAMPAÑA ABANDONADA'
-                              : 'AGOTASTE TUS VIDAS',
+                          returnsToProgression
+                              ? (isVictory
+                                    ? '¡VICTORIA!'
+                                    : isAbandoned
+                                    ? 'CAMPAÑA ABANDONADA'
+                                    : 'AGOTASTE TUS VIDAS')
+                              : (isNewHighScore
+                                    ? '★ ¡NUEVO RÉCORD! ★'
+                                    : 'FIN DEL RECORRIDO'),
                           style: TextStyle(
-                            color: isVictory ? Colors.amber : Colors.redAccent,
-                            fontSize: 38,
+                            color: isVictory || isNewHighScore
+                                ? Colors.amber
+                                : Colors.redAccent,
+                            fontSize: 34,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
@@ -196,7 +209,9 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                                     : 'Derrotaste ${result?.levelReached ?? 0}/10 '
                                           'jefes. La cadena termina, pero todo '
                                           'tu progreso permanente se conserva.'
-                              : 'Puntuación: ${result?.score ?? 0}',
+                              : isNewHighScore
+                              ? 'MODO ENDLESS CLÁSICO\n¡PUNTUACIÓN MÁXIMA: $score PTS!\nHas superado tu récord anterior.'
+                              : 'MODO ENDLESS CLÁSICO\nPuntuación: $score PTS · Récord: $_persistedHighScore PTS',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
@@ -230,7 +245,7 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                           child: Text(
                             returnsToProgression
                                 ? 'VOLVER A PROGRESIÓN'
-                                : 'REINICIAR',
+                                : 'JUGAR DE NUEVO',
                             style: const TextStyle(fontSize: 20),
                           ),
                         ),
