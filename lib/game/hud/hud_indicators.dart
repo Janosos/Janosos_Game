@@ -11,6 +11,9 @@ class HudIndicators extends PositionComponent
   late Sprite shieldSprite;
   late Sprite lightningSprite;
   late TextPaint timerPaint;
+  late TextPaint timerPaintCompact;
+  late TextPaint timerPaintReady;
+  late TextPaint timerPaintReadyCompact;
 
   late final TextPaint _bossTitlePaint = TextPaint(
     style: const TextStyle(
@@ -77,7 +80,37 @@ class HudIndicators extends PositionComponent
     timerPaint = TextPaint(
       style: const TextStyle(
         color: Colors.cyanAccent,
-        fontSize: 20,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        shadows: [
+          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
+        ],
+      ),
+    );
+    timerPaintCompact = TextPaint(
+      style: const TextStyle(
+        color: Colors.cyanAccent,
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        shadows: [
+          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
+        ],
+      ),
+    );
+    timerPaintReady = TextPaint(
+      style: const TextStyle(
+        color: Color(0xFF69F0AE),
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        shadows: [
+          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
+        ],
+      ),
+    );
+    timerPaintReadyCompact = TextPaint(
+      style: const TextStyle(
+        color: Color(0xFF69F0AE),
+        fontSize: 12,
         fontWeight: FontWeight.bold,
         shadows: [
           Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
@@ -216,7 +249,9 @@ class HudIndicators extends PositionComponent
     final heartSize = isCompact ? Vector2(22, 22) : Vector2(30, 30);
     final heartSpacing = isCompact ? 25.0 : 34.0;
 
-    if (game.runConfiguration.experience != RunExperience.endlessRunner) {
+    final hasHeartsRow =
+        game.runConfiguration.experience != RunExperience.endlessRunner;
+    if (hasHeartsRow) {
       for (var index = 0; index < game.livesRemaining; index++) {
         heartSprite.render(
           canvas,
@@ -227,11 +262,18 @@ class HudIndicators extends PositionComponent
       if (game.levelPhase == LevelPhase.bossCombat) {
         _renderBossHealthBar(canvas);
       }
-      return;
     }
 
-    // Vitalista: Show hearts
-    if (dino.characterId == CharacterId.parker) {
+    final abilityBase = Vector2(
+      playerBase.x,
+      hasHeartsRow ? playerBase.y + (isCompact ? 24.0 : 34.0) : playerBase.y,
+    );
+
+    final tPaint = isCompact ? timerPaintCompact : timerPaint;
+    final tReadyPaint = isCompact ? timerPaintReadyCompact : timerPaintReady;
+
+    // Vitalista: Show hearts (if in endless runner)
+    if (!hasHeartsRow && dino.characterId == CharacterId.parker) {
       if (dino.hasShield) {
         heartSprite.render(
           canvas,
@@ -251,37 +293,73 @@ class HudIndicators extends PositionComponent
         );
       }
     }
-    // Tanque: Show Shield + Timer
+    // Tanque (Chema): Show Shield + Cooldown Timer
     else if (dino.characterId == CharacterId.chema) {
+      final shieldSize = isCompact ? Vector2(22, 22) : Vector2(30, 30);
+      final textOffset = isCompact ? 28.0 : 36.0;
+      final textY = isCompact ? abilityBase.y + 3 : abilityBase.y + 5;
       if (dino.hasShield) {
         shieldSprite.render(
           canvas,
-          position: Vector2(playerBase.x, playerBase.y),
-          size: Vector2(32, 32),
+          position: abilityBase,
+          size: shieldSize,
         );
-        timerPaint.render(canvas, 'READY', Vector2(playerBase.x + 40, playerBase.y + 5));
+        tReadyPaint.render(
+          canvas,
+          'ESCUDO: READY',
+          Vector2(abilityBase.x + textOffset, textY),
+        );
       } else {
         final timeLeft = dino.cooldownTimer.toStringAsFixed(1);
         shieldSprite.render(
           canvas,
-          position: Vector2(playerBase.x, playerBase.y),
-          size: Vector2(32, 32),
+          position: abilityBase,
+          size: shieldSize,
           overridePaint: Paint()..color = Colors.grey.withValues(alpha: 0.5),
         );
-        timerPaint.render(canvas, timeLeft, Vector2(playerBase.x + 40, playerBase.y + 5));
+        tPaint.render(
+          canvas,
+          'ESCUDO: ${timeLeft}s',
+          Vector2(abilityBase.x + textOffset, textY),
+        );
       }
     }
-    // Pistolero or Fantasma: Show cooldown
-    else if (dino.characterId == CharacterId.jano ||
-        dino.characterId == CharacterId.conra) {
+    // Pistolero (Jano): Show Gun Cooldown
+    else if (dino.characterId == CharacterId.jano) {
       if (dino.cooldownTimer > 0) {
-        timerPaint.render(
+        tPaint.render(
           canvas,
-          dino.cooldownTimer.toStringAsFixed(1),
-          Vector2(playerBase.x, playerBase.y),
+          'DISPARO: ${dino.cooldownTimer.toStringAsFixed(1)}s',
+          abilityBase,
         );
       } else {
-        timerPaint.render(canvas, 'READY', Vector2(playerBase.x, playerBase.y));
+        tReadyPaint.render(
+          canvas,
+          'DISPARO: READY',
+          abilityBase,
+        );
+      }
+    }
+    // Fantasma (Conra): Show Intangibility or Cooldown
+    else if (dino.characterId == CharacterId.conra) {
+      if (dino.isIntangible) {
+        tReadyPaint.render(
+          canvas,
+          'ACTIVO: ${dino.abilityDurationTimer.toStringAsFixed(1)}s',
+          abilityBase,
+        );
+      } else if (dino.cooldownTimer > 0) {
+        tPaint.render(
+          canvas,
+          'FANTASMA: ${dino.cooldownTimer.toStringAsFixed(1)}s',
+          abilityBase,
+        );
+      } else {
+        tReadyPaint.render(
+          canvas,
+          'FANTASMA: READY',
+          abilityBase,
+        );
       }
     }
     // Nanic: Show Energy Bar
@@ -293,31 +371,52 @@ class HudIndicators extends PositionComponent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
 
-      const barWidth = 100.0;
-      const barHeight = 20.0;
+      final barWidth = isCompact ? 80.0 : 100.0;
+      final barHeight = isCompact ? 16.0 : 20.0;
       final fillWidth = (dino.energy / dino.maxEnergy) * barWidth;
 
       final rrect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(playerBase.x, playerBase.y, barWidth, barHeight),
-        const Radius.circular(10),
+        Rect.fromLTWH(abilityBase.x, abilityBase.y, barWidth, barHeight),
+        const Radius.circular(8),
       );
       final fillRRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(playerBase.x, playerBase.y, fillWidth, barHeight),
-        const Radius.circular(10),
+        Rect.fromLTWH(abilityBase.x, abilityBase.y, fillWidth, barHeight),
+        const Radius.circular(8),
       );
 
       canvas.drawRRect(rrect, bgPaint);
       canvas.drawRRect(fillRRect, fillPaint);
       canvas.drawRRect(rrect, borderPaint);
 
+      final iconSize = isCompact ? 32.0 : 44.0;
       lightningSprite.render(
         canvas,
-        position: Vector2(playerBase.x + barWidth + 5, playerBase.y - 12),
-        size: Vector2(48, 48),
+        position: Vector2(abilityBase.x + barWidth + 4, abilityBase.y - (isCompact ? 8 : 12)),
+        size: Vector2(iconSize, iconSize),
       );
 
       if (dino.isSuperCharged) {
-        timerPaint.render(canvas, 'MAX POWER!', Vector2(playerBase.x, playerBase.y + barHeight + 5));
+        tReadyPaint.render(
+          canvas,
+          'MAX POWER!',
+          Vector2(abilityBase.x, abilityBase.y + barHeight + 3),
+        );
+      }
+    }
+    // Other active skills
+    else if (dino.activeSkillId != null) {
+      if (dino.cooldownTimer > 0) {
+        tPaint.render(
+          canvas,
+          'HABILIDAD: ${dino.cooldownTimer.toStringAsFixed(1)}s',
+          abilityBase,
+        );
+      } else {
+        tReadyPaint.render(
+          canvas,
+          'HABILIDAD: READY',
+          abilityBase,
+        );
       }
     }
   }

@@ -38,7 +38,7 @@ const characterDefinitions = <CharacterId, CharacterDefinition>{
     displayName: 'Jano',
     description:
         'Disparo Destructor: Dispara un proyectil recto que destruye '
-        'obstáculos. (Cooldown: 10s)',
+        'obstáculos y daña a jefes. (Cooldown: 10s)',
     assetName: 'jano_clean.png',
     coreTraits: <CharacterCoreTrait>{},
     defaultActive: ActiveAbilityId.pistolShot,

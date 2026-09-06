@@ -51,6 +51,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
   bool _firstOrbBonusUsed = false;
   bool get isDamageInvulnerable => _damageInvulnerabilityTimer > 0;
   bool get isAirborne => _isJumping;
+  String? get activeSkillId => _configuration.loadout.activeSkillId;
 
   // Cooldowns
   final double pistoleroCooldown = 10.0;

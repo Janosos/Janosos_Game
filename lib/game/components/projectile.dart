@@ -1,6 +1,7 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import '../dino_run_game.dart';
+import 'campaign_boss.dart';
 import 'obstacle.dart';
 
 class Projectile extends SpriteComponent
@@ -39,6 +40,15 @@ class Projectile extends SpriteComponent
       removeFromParent();
       game.projectileHit();
       // Optional: Add score or explosion effect
+    } else if (other is CampaignBoss) {
+      other.flashDamage();
+      removeFromParent();
+      game.projectileHit();
+      game.damageBossFromAbility(multiplier: 3.0);
+    } else if (other is CampaignBossHazard) {
+      other.removeFromParent();
+      removeFromParent();
+      game.projectileHit();
     }
   }
 }

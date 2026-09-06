@@ -15,7 +15,7 @@ import 'dino.dart';
 /// character art. Identity and gameplay come from the level definition and
 /// the attack profile below.
 class CampaignBoss extends PositionComponent
-    with HasGameReference<DinoRunGame> {
+    with HasGameReference<DinoRunGame>, CollisionCallbacks {
   CampaignBoss({required this.definition})
     : super(size: Vector2(184, 184), anchor: Anchor.bottomRight, priority: 15);
 
@@ -45,6 +45,12 @@ class CampaignBoss extends PositionComponent
 
   @override
   Future<void> onLoad() async {
+    add(
+      RectangleHitbox(
+        position: Vector2(15, 10),
+        size: Vector2(154, 164),
+      ),
+    );
     final asset = _bossAsset(definition.level);
     try {
       final spriteSheet = await game.images.load(asset);

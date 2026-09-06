@@ -305,6 +305,8 @@ class LevelRuntime {
   bool get canUseBossAction =>
       phase == LevelPhase.bossCombat &&
       _bossActionCooldownRemaining <= Duration.zero;
+  double get bossActionCooldownRemainingSeconds =>
+      _bossActionCooldownRemaining.inMicroseconds / 1000000.0;
   double get bossHealthFraction =>
       (bossHealthRemaining / definition.bossHealth).clamp(0, 1);
   int get bossPhase => switch (bossHealthFraction) {
@@ -368,15 +370,17 @@ class LevelRuntime {
         (!ignoreCooldown && !canUseBossAction)) {
       return 0;
     }
-    _bossActionCooldownRemaining = Duration(
-      microseconds:
-          (definition.bossActionCooldown.inMicroseconds /
-                  attackCadenceMultiplier.clamp(1, 1.1))
-              .round(),
-    );
+    if (!ignoreCooldown) {
+      _bossActionCooldownRemaining = Duration(
+        microseconds:
+            (definition.bossActionCooldown.inMicroseconds /
+                    attackCadenceMultiplier.clamp(1, 1.1))
+                .round(),
+      );
+    }
     final boundedMultiplier = (damageMultiplier * bonusMultiplier).clamp(
       0.5,
-      2,
+      4.0,
     );
     final damage = (100 * boundedMultiplier).round();
     bossHealthRemaining = math.max(0, bossHealthRemaining - damage);

@@ -4,6 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
@@ -134,7 +135,7 @@ class DinoRunGame extends FlameGame
     _scoreSystem.priority = 100;
     add(_scoreSystem);
 
-    await images.loadAll([
+    const imageAssets = [
       'ability_button.png',
       'heart_indicator.png',
       'tank_shield_icon.png',
@@ -177,16 +178,30 @@ class DinoRunGame extends FlameGame
       'hazard_tide_pixel.png',
       'hazard_clockwork_pixel.png',
       'hazard_echo_pixel.png',
-    ]);
+    ];
+    for (final img in imageAssets) {
+      try {
+        await images.load(img);
+      } catch (e) {
+        debugPrint('Preload notice: asset "$img" deferred: $e');
+      }
+    }
 
-    await FlameAudio.audioCache.loadAll([
+    const audioAssets = [
       'Jump.wav',
       'Select.wav',
       'Shoot.wav',
       'Invisibility.wav',
       'Hit.wav',
       'LoopSong.wav',
-    ]);
+    ];
+    for (final sfx in audioAssets) {
+      try {
+        await FlameAudio.audioCache.load(sfx);
+      } catch (e) {
+        debugPrint('Preload notice: audio "$sfx" deferred: $e');
+      }
+    }
 
     pauseEngine();
     overlays.add('StartMenu');
@@ -630,6 +645,13 @@ class DinoRunGame extends FlameGame
   }
 
   void useBossAction() => _useBossAction();
+
+  void damageBossFromAbility({double multiplier = 3.0}) {
+    _useBossAction(bonusMultiplier: multiplier, ignoresCooldown: true);
+  }
+
+  double get bossActionCooldownRemaining =>
+      _levelRuntime?.bossActionCooldownRemainingSeconds ?? 0.0;
 
   void _useBossAction({
     double bonusMultiplier = 1,
