@@ -1,10 +1,43 @@
-# Janosos Game V6
+# Janosos Game V6.1
 
-Runner 2D retro construido con Flutter y Flame. V6 añade cuentas persistentes,
-leaderboards separados por personaje, progresión y tienda por personaje, una
-campaña de diez niveles con jefe final en cada nivel y Boss Rush.
+Runner 2D retro construido con Flutter y Flame. V6.1 mejora la experiencia de
+combate contra jefes, la responsividad en móviles y los controles táctiles.
 
 ![Janosos Game](assets/images/title_retro.png)
+
+## Novedades en V6.1
+
+### Gameplay
+- **Jano daña jefes**: El disparo destructor de Jano ahora impacta directamente
+  a los jefes (300 puntos de daño) e intercepta sus proyectiles.
+- **Contadores de cooldown restaurados**: Todas las habilidades muestran su
+  temporizador en tiempo real (DISPARO, FANTASMA, ESCUDO, ENERGÍA) tanto en el
+  HUD como en los botones de habilidad y golpe al jefe.
+- **Hitboxes precisos**: Los jefes, proyectiles y obstáculos usan hitboxes
+  ajustados al cuerpo visible, eliminando daño fantasma.
+- **Movimiento lateral**: Mecánica de movimiento izquierda/derecha con teclas
+  A/D o flechas, y D-Pad táctil retro en dispositivos móviles.
+- **Ataques dirigidos**: Las cartas y proyectiles de los jefes apuntan a la
+  posición del jugador, forzándolo a esquivar activamente.
+- **Desbloqueo permanente de jefes**: Al derrotar un jefe, queda desbloqueado
+  para siempre con opción de volver a jugarlo.
+
+### Responsividad y Controles
+- **Landscape optimizado para móviles**: Barras superior/inferior reducidas en
+  pantallas delgadas, calle dinámica (~25% de la altura en vez de 50%), y
+  amplio espacio vertical para el combate.
+- **D-Pad táctil retro**: Flechas direccionales que aparecen automáticamente
+  solo en navegadores móviles y tablets (detección por User-Agent y touch).
+- **Compatibilidad GitHub Pages**: Funciona tanto en navegadores de PC (sin
+  flechas, usa teclado) como en navegadores móviles (con flechas táctiles).
+- **Barra de vida del jefe sin recorte**: El título del jefe (★ JINETE SIN
+  CABEZA ★) siempre visible con margen seguro desde el borde superior.
+
+### Estabilidad
+- **Precarga resiliente de assets**: Cada imagen y audio se carga
+  individualmente con manejo de errores, evitando caídas por assets faltantes.
+- **Sprites de jefes mejorados**: Limpieza de transparencia, 4 poses dinámicas
+  de movimiento por jefe, y orientación constante hacia el jugador.
 
 ## Juego
 
@@ -28,7 +61,7 @@ campaña de diez niveles con jefe final en cada nivel y Boss Rush.
 
 Los nombres literarios y cinematográficos usados como referencia corresponden
 a personajes de dominio público seleccionados para el diseño. Todo el arte de
-jefes incluido en V6 es programático y original; la revisión legal de nombres,
+jefes incluido es programático y original; la revisión legal de nombres,
 territorios y materiales de marketing sigue siendo un gate de publicación.
 
 ## Inicio rápido local
