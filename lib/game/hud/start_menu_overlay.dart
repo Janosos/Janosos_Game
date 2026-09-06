@@ -67,69 +67,101 @@ class _StartMenuOverlayState extends State<StartMenuOverlay>
         // 2. Dark Overlay for better legibility
         Container(color: Colors.black.withValues(alpha: 0.3)),
 
-        // 3. Content
-        Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'assets/images/title_retro.png',
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: 150,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Text(
-                  '★ JANOSOS ARCADE ★',
-                  style: TextStyle(
-                    color: Color(0xFF29FFE4),
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 50),
-              GestureDetector(
-                onTap: () async {
-                  if (widget.game.runConfiguration.audioEnabled) {
-                    FlameAudio.play('Select.wav');
-                  }
-                  if (widget.game.runConfiguration.experience !=
-                      RunExperience.endlessRunner) {
-                    await widget.game.startGame(widget.game.runConfiguration);
-                    return;
-                  }
-                  widget.game.overlays.remove('StartMenu');
-                  widget.game.overlays.add('CharacterSelection');
-                  // Do not stop controller here; widget will be disposed.
-                },
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Image.asset(
-                    'assets/images/start_button_retro.png',
-                    width: 200,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF29FFE4),
-                        border: Border.all(color: Colors.black, width: 2),
-                      ),
-                      child: const Text(
-                        'PRESS START',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+        // 3. Content (responsive to thin landscape Android screens)
+        SafeArea(
+          child: Center(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompactHeight = constraints.maxHeight < 460;
+                final isUltraThin = constraints.maxHeight < 360;
+
+                final titleHeight = isUltraThin
+                    ? 68.0
+                    : (isCompactHeight ? 90.0 : 140.0);
+                final spacing = isUltraThin
+                    ? 10.0
+                    : (isCompactHeight ? 16.0 : 36.0);
+                final buttonWidth = isUltraThin
+                    ? 150.0
+                    : (isCompactHeight ? 175.0 : 210.0);
+
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/title_retro.png',
+                          width: MediaQuery.of(context).size.width * 0.75,
+                          height: titleHeight,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Text(
+                            '★ JANOSOS ARCADE ★',
+                            style: TextStyle(
+                              color: Color(0xFF29FFE4),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
+                          ),
                         ),
-                      ),
+                        SizedBox(height: spacing),
+                        GestureDetector(
+                          onTap: () async {
+                            if (widget.game.runConfiguration.audioEnabled) {
+                              FlameAudio.play('Select.wav');
+                            }
+                            if (widget.game.runConfiguration.experience !=
+                                RunExperience.endlessRunner) {
+                              await widget.game.startGame(
+                                widget.game.runConfiguration,
+                              );
+                              return;
+                            }
+                            widget.game.overlays.remove('StartMenu');
+                            widget.game.overlays.add('CharacterSelection');
+                          },
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Image.asset(
+                              'assets/images/start_button_retro.png',
+                              width: buttonWidth,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, _, _) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF29FFE4),
+                                  border: Border.all(
+                                    color: Colors.black,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Text(
+                                  'PRESS START',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
         ),
       ],

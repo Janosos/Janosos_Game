@@ -4,7 +4,6 @@ import 'package:flame/events.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
@@ -28,6 +27,8 @@ import 'hud/hud_indicators.dart';
 import 'hud/score.dart';
 import 'runtime/gameplay_event_sink.dart';
 
+import '../core/platform/device_input_detector.dart';
+
 class DinoRunGame extends FlameGame
     with TapCallbacks, KeyboardEvents, HasCollisionDetection {
   DinoRunGame({
@@ -44,8 +45,7 @@ class DinoRunGame extends FlameGame
 
   bool get isMobileOrTablet {
     if (_isMobileOrTabletOverride != null) return _isMobileOrTabletOverride;
-    return defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
+    return isMobileOrTabletDevice();
   }
 
   late DinoComponent _dino;

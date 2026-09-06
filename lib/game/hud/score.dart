@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../dino_run_game.dart';
 import '../domain/character_id.dart';
 
+import '../domain/level_runtime.dart';
+
 class ScoreSystem extends TextComponent with HasGameReference<DinoRunGame> {
   ScoreSystem({int initialHighScore = 0}) : _highScore = initialHighScore;
 
@@ -11,20 +13,32 @@ class ScoreSystem extends TextComponent with HasGameReference<DinoRunGame> {
   int _highScore;
   int _lastEmittedScore = 0;
 
-  @override
-  Future<void> onLoad() async {
-    position = Vector2(20, 20);
+  void _updateLayout(Vector2 size) {
+    final isCompact = size.y < 500;
+    position = Vector2(isCompact ? 48 : 56, isCompact ? 8 : 16);
     textRenderer = TextPaint(
-      style: const TextStyle(
+      style: TextStyle(
         color: Colors.white,
-        fontSize: 24,
+        fontSize: isCompact ? 14 : 22,
         fontFamily: 'Courier',
         fontWeight: FontWeight.bold,
-        shadows: [
-          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(2, 2)),
+        shadows: const [
+          Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1.5, 1.5)),
         ],
       ),
     );
+  }
+
+  @override
+  Future<void> onLoad() async {
+    _updateLayout(game.size);
+    updateText();
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _updateLayout(size);
     updateText();
   }
 
@@ -52,7 +66,13 @@ class ScoreSystem extends TextComponent with HasGameReference<DinoRunGame> {
   void updateText() {
     final scoreText = _score.toInt().toString().padLeft(5, '0');
     final highScoreText = _highScore.toString().padLeft(5, '0');
-    text = 'HI $highScoreText  $scoreText';
+    final isCombat = isMounted && game.levelPhase == LevelPhase.bossCombat;
+    final isCompact = isMounted && game.size.y < 500;
+    if (isCombat || isCompact) {
+      text = 'HI $highScoreText\nSC $scoreText';
+    } else {
+      text = 'HI $highScoreText  $scoreText';
+    }
   }
 
   int completeRun() {

@@ -409,30 +409,43 @@ class _CampaignPreflightBannerState extends State<_CampaignPreflightBanner> {
                 liveRegion: true,
                 label:
                     'Preflight de campaña: ${session.eligibility.label}. $detail',
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(48, 64, 48, 0),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.94),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black54,
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isCompact = MediaQuery.of(context).size.height < 500;
+                    return Container(
+                      margin: EdgeInsets.fromLTRB(
+                        isCompact ? 54 : 48,
+                        isCompact ? 8 : 64,
+                        isCompact ? 54 : 48,
+                        0,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    'NIVEL ${session.configuration.level}/10 · ${session.eligibility.label.toUpperCase()}\n$detail',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 10 : 14,
+                        vertical: isCompact ? 4 : 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(isCompact ? 12 : 18),
+                        border: Border.all(color: Colors.white, width: isCompact ? 1.5 : 2),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black54,
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        'NIVEL ${session.configuration.level}/10 · ${session.eligibility.label.toUpperCase()}\n$detail',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: isCompact ? 11 : 13,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -475,6 +488,7 @@ class _RunBannerState extends State<_RunBanner> {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.of(context).size.height < 500;
     return SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
@@ -484,15 +498,23 @@ class _RunBannerState extends State<_RunBanner> {
           child: IgnorePointer(
             ignoring: !_visible,
             child: Container(
-              margin: EdgeInsets.only(top: widget.topMargin),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              margin: EdgeInsets.only(
+                top: isCompact && widget.topMargin > 16 ? 8 : widget.topMargin,
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 10 : 14,
+                vertical: isCompact ? 4 : 8,
+              ),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.78),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(isCompact ? 14 : 24),
               ),
               child: Text(
                 widget.label,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isCompact ? 11 : 13,
+                ),
               ),
             ),
           ),
@@ -509,13 +531,20 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.of(context).size.height < 500;
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: IconButton.filledTonal(
-          tooltip: 'Volver al inicio',
-          onPressed: onPressed,
-          icon: const Icon(Icons.arrow_back),
+        padding: EdgeInsets.all(isCompact ? 4 : 8),
+        child: SizedBox(
+          width: isCompact ? 38 : 48,
+          height: isCompact ? 38 : 48,
+          child: IconButton.filledTonal(
+            padding: EdgeInsets.zero,
+            iconSize: isCompact ? 18 : 24,
+            tooltip: 'Volver al inicio',
+            onPressed: onPressed,
+            icon: const Icon(Icons.arrow_back),
+          ),
         ),
       ),
     );

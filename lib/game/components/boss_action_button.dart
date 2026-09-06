@@ -21,10 +21,25 @@ class BossActionButton extends PositionComponent
       shadows: [Shadow(color: Colors.black, blurRadius: 3)],
     ),
   );
+  late final TextPaint _labelCompact = TextPaint(
+    style: const TextStyle(
+      color: Colors.white,
+      fontSize: 11,
+      fontWeight: FontWeight.w900,
+      shadows: [Shadow(color: Colors.black, blurRadius: 3)],
+    ),
+  );
   late final TextPaint _cooldownLabel = TextPaint(
     style: TextStyle(
       color: Colors.white.withValues(alpha: 0.5),
       fontSize: 13,
+      fontWeight: FontWeight.bold,
+    ),
+  );
+  late final TextPaint _cooldownLabelCompact = TextPaint(
+    style: TextStyle(
+      color: Colors.white.withValues(alpha: 0.5),
+      fontSize: 10,
       fontWeight: FontWeight.bold,
     ),
   );
@@ -35,15 +50,24 @@ class BossActionButton extends PositionComponent
     _pressTimer = 0.15;
   }
 
+  void _updateLayout(Vector2 size) {
+    final isCompact = size.y < 500;
+    this.size = isCompact ? Vector2.all(62) : Vector2.all(84);
+    position = Vector2(
+      size.x - (isCompact ? 14 : 20),
+      size.y - (isCompact ? 86 : 112),
+    );
+  }
+
   @override
   Future<void> onLoad() async {
-    position = Vector2(game.size.x - 20, game.size.y - 112);
+    _updateLayout(game.size);
   }
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    position = Vector2(size.x - 20, size.y - 112);
+    _updateLayout(size);
   }
 
   @override
@@ -94,14 +118,16 @@ class BossActionButton extends PositionComponent
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );
-      _label.render(
+      final isCompact = game.size.y < 500;
+      (isCompact ? _labelCompact : _label).render(
         canvas,
         'GOLPE\nJEFE · E',
         Vector2(width / 2, height / 2),
         anchor: Anchor.center,
       );
     } else {
-      _cooldownLabel.render(
+      final isCompact = game.size.y < 500;
+      (isCompact ? _cooldownLabelCompact : _cooldownLabel).render(
         canvas,
         'ESPERA...',
         Vector2(width / 2, height / 2),

@@ -164,12 +164,14 @@ class CampaignBoss extends PositionComponent
         Paint()..color = Colors.white,
       );
     }
-    _namePaint.render(
-      canvas,
-      definition.bossName.toUpperCase(),
-      Vector2(width / 2, -12),
-      anchor: Anchor.bottomCenter,
-    );
+    if (game.levelPhase != LevelPhase.bossCombat) {
+      _namePaint.render(
+        canvas,
+        definition.bossName.toUpperCase(),
+        Vector2(width / 2, -12),
+        anchor: Anchor.bottomCenter,
+      );
+    }
   }
 
   void handleAttack(BossAttackCue cue) {

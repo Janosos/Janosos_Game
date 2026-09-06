@@ -97,10 +97,13 @@ class HudIndicators extends PositionComponent
     final phase = game.bossPhase;
 
     final screenWidth = game.size.x;
-    final barWidth = (screenWidth * 0.52).clamp(290.0, 500.0);
-    const barHeight = 22.0;
+    final isCompact = game.size.y < 500;
+    final barWidth = isCompact
+        ? (screenWidth * 0.44).clamp(190.0, 360.0)
+        : (screenWidth * 0.52).clamp(290.0, 500.0);
+    final barHeight = isCompact ? 16.0 : 22.0;
     final startX = (screenWidth - barWidth) / 2;
-    const startY = 16.0;
+    final startY = isCompact ? 10.0 : 16.0;
 
     // 1. Boss Name with Retro Arcade Accents
     final titleText = game.runConfiguration.experience == RunExperience.bossRush
@@ -179,7 +182,7 @@ class HudIndicators extends PositionComponent
     );
 
     // 6. Phase Indicator Badges
-    const phaseY = startY + barHeight + 5;
+    final phaseY = startY + barHeight + (isCompact ? 2 : 5);
     final phaseSpacing = barWidth / 3;
     for (var p = 1; p <= 3; p++) {
       final active = p <= phase;
@@ -203,14 +206,20 @@ class HudIndicators extends PositionComponent
     super.render(canvas);
 
     final dino = game.dino;
-    final playerBase = Vector2(20, 60);
+    final isCompact = game.size.y < 500;
+    final playerBase = Vector2(
+      isCompact ? 48 : 56,
+      isCompact ? 38 : 56,
+    );
+    final heartSize = isCompact ? Vector2(22, 22) : Vector2(30, 30);
+    final heartSpacing = isCompact ? 25.0 : 34.0;
 
     if (game.runConfiguration.experience != RunExperience.endlessRunner) {
       for (var index = 0; index < game.livesRemaining; index++) {
         heartSprite.render(
           canvas,
-          position: Vector2(playerBase.x + index * 35, playerBase.y),
-          size: Vector2(32, 32),
+          position: Vector2(playerBase.x + index * heartSpacing, playerBase.y),
+          size: heartSize,
         );
       }
       if (game.levelPhase == LevelPhase.bossCombat) {
@@ -225,18 +234,18 @@ class HudIndicators extends PositionComponent
         heartSprite.render(
           canvas,
           position: Vector2(playerBase.x, playerBase.y),
-          size: Vector2(32, 32),
+          size: heartSize,
         );
         heartSprite.render(
           canvas,
-          position: Vector2(playerBase.x + 35, playerBase.y),
-          size: Vector2(32, 32),
+          position: Vector2(playerBase.x + heartSpacing, playerBase.y),
+          size: heartSize,
         );
       } else {
         heartSprite.render(
           canvas,
           position: Vector2(playerBase.x, playerBase.y),
-          size: Vector2(32, 32),
+          size: heartSize,
         );
       }
     }

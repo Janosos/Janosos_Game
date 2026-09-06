@@ -23,9 +23,15 @@ class DirectionalPad extends PositionComponent
   late final Sprite _rightNormal;
   late final Sprite _rightPressedSprite;
 
+  void _updateLayout(Vector2 size) {
+    final isCompact = size.y < 500;
+    this.size = isCompact ? Vector2(116, 52) : Vector2(136, 60);
+    position = Vector2(isCompact ? 12 : 16, size.y - (isCompact ? 10 : 16));
+  }
+
   @override
   Future<void> onLoad() async {
-    position = Vector2(16, game.size.y - 16);
+    _updateLayout(game.size);
 
     final leftImg = await game.images.load('dpad_arrow_left.png');
     final leftPressedImg = await game.images.load(
@@ -46,7 +52,7 @@ class DirectionalPad extends PositionComponent
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    position = Vector2(16, size.y - 16);
+    _updateLayout(size);
   }
 
   @override
@@ -64,11 +70,13 @@ class DirectionalPad extends PositionComponent
   @override
   void onTapDown(TapDownEvent event) {
     final localX = event.localPosition.x;
-    if (localX <= 64) {
+    final btnSize = height;
+    final rightBtnX = width - btnSize;
+    if (localX <= btnSize + 4) {
       _leftPressed = true;
       _rightPressed = false;
       game.dino.moveLeft();
-    } else if (localX >= 72) {
+    } else if (localX >= rightBtnX - 4) {
       _rightPressed = true;
       _leftPressed = false;
       game.dino.moveRight();
@@ -96,14 +104,17 @@ class DirectionalPad extends PositionComponent
     super.render(canvas);
     if (!_spritesLoaded) return;
 
+    final btnSize = height;
+    final rightBtnX = width - btnSize;
+
     final leftSprite = _leftPressed ? _leftPressedSprite : _leftNormal;
-    leftSprite.render(canvas, position: Vector2(0, 0), size: Vector2(60, 60));
+    leftSprite.render(canvas, position: Vector2(0, 0), size: Vector2(btnSize, btnSize));
 
     final rightSprite = _rightPressed ? _rightPressedSprite : _rightNormal;
     rightSprite.render(
       canvas,
-      position: Vector2(76, 0),
-      size: Vector2(60, 60),
+      position: Vector2(rightBtnX, 0),
+      size: Vector2(btnSize, btnSize),
     );
   }
 }
