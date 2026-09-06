@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_models.dart';
 import '../application/game_settings_controller.dart';
@@ -15,174 +17,330 @@ class SettingsScreen extends ConsumerWidget {
     final environment = ref.watch(appEnvironmentProvider);
     final gameSettings = ref.watch(gameSettingsControllerProvider);
     final user = auth.session.user;
-    return ListView(
-      padding: const EdgeInsets.all(24),
-      children: [
-        Text(
-          'Configuración',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 20),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('CUENTA', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person_outline),
-                  ),
-                  title: Text(user?.displayName ?? 'Jugador'),
-                  subtitle: Text(
-                    user?.isGuest == true
-                        ? 'Partida local sin cuenta vinculada'
-                        : user?.email ?? '',
-                  ),
-                  trailing: user?.isGuest == true
-                      ? const Chip(label: Text('INVITADO'))
-                      : environment.usesLocalBackend
-                      ? const Chip(label: Text('LOCAL'))
-                      : const Chip(label: Text('CLOUD')),
-                ),
-                if (auth.error != null)
-                  _MessageBox(message: auth.error!, isError: true),
-                if (auth.notice != null) _MessageBox(message: auth.notice!),
-                const Divider(height: 32),
-                if (user?.isGuest == true) ...[
-                  const Text(
-                    'Partida guardada localmente. Conecta una cuenta para sincronizar:',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: auth.isBusy
-                        ? null
-                        : () => ref
-                              .read(authControllerProvider.notifier)
-                              .signOut(),
-                    icon: const Icon(Icons.cloud_upload_outlined),
-                    label: const Text('CONECTAR O CREAR CUENTA'),
-                  ),
-                ] else
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      if (!environment.usesLocalBackend) ...[
-                        OutlinedButton.icon(
-                          onPressed: auth.isBusy
-                              ? null
-                              : () => _link(ref, AuthProviderId.google),
-                          icon: const Icon(Icons.account_circle_outlined),
-                          label: const Text('Vincular Google'),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: auth.isBusy
-                              ? null
-                              : () => _link(ref, AuthProviderId.apple),
-                          icon: const Icon(Icons.apple),
-                          label: const Text('Vincular Apple'),
-                        ),
-                      ],
-                      OutlinedButton.icon(
-                        onPressed: auth.isBusy
-                            ? null
-                            : () => _changePassword(context, ref),
-                        icon: const Icon(Icons.password_outlined),
-                        label: const Text('Cambiar contraseña'),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Column(
+    final media = MediaQuery.sizeOf(context);
+    final isCompactHeight = media.height < 520;
+    final isWide = media.width >= 700;
+
+    final accountCard = RetroArcadeCard(
+      borderColor: user?.isGuest == true ? RetroColors.gold : RetroColors.cyan,
+      accentHeaderColor:
+          user?.isGuest == true ? RetroColors.gold : RetroColors.cyan,
+      padding: EdgeInsets.all(isCompactHeight ? 12 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SwitchListTile(
-                value: gameSettings.reduceMotion,
-                onChanged: auth.isBusy
-                    ? null
-                    : (enabled) => ref
-                          .read(gameSettingsControllerProvider.notifier)
-                          .setReduceMotion(enabled),
-                secondary: const Icon(Icons.motion_photos_off_outlined),
-                title: const Text('Reducir movimiento'),
-                subtitle: const Text(
-                  'Detiene fondos y animaciones adicionales.',
+              Text(
+                'CUENTA & PERFIL',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: user?.isGuest == true
+                      ? RetroColors.gold
+                      : RetroColors.cyan,
+                  letterSpacing: 1.2,
                 ),
               ),
-              const Divider(height: 1),
-              SwitchListTile(
-                value: gameSettings.musicEnabled,
-                onChanged: auth.isBusy
-                    ? null
-                    : (enabled) => ref
-                          .read(gameSettingsControllerProvider.notifier)
-                          .setMusicEnabled(enabled),
-                secondary: const Icon(Icons.music_note_outlined),
-                title: const Text('Música de fondo'),
-                subtitle: const Text('Banda sonora en bucle de la partida.'),
-              ),
-              const Divider(height: 1),
-              SwitchListTile(
-                value: gameSettings.sfxEnabled,
-                onChanged: auth.isBusy
-                    ? null
-                    : (enabled) => ref
-                          .read(gameSettingsControllerProvider.notifier)
-                          .setSfxEnabled(enabled),
-                secondary: const Icon(Icons.volume_up_outlined),
-                title: const Text('Efectos de sonido'),
-                subtitle: const Text('Sonidos de saltos, disparos y acciones.'),
+              RetroBadge(
+                text: user?.isGuest == true
+                    ? 'INVITADO'
+                    : environment.usesLocalBackend
+                    ? 'LOCAL'
+                    : 'CLOUD ONLINE',
+                color: user?.isGuest == true
+                    ? RetroColors.gold
+                    : environment.usesLocalBackend
+                    ? RetroColors.cyan
+                    : RetroColors.green,
+                fontSize: 8,
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: auth.isBusy
-                      ? null
-                      : () =>
-                            ref.read(authControllerProvider.notifier).signOut(),
-                  icon: Icon(
-                    user?.isGuest == true ? Icons.exit_to_app : Icons.logout,
-                  ),
-                  label: Text(
-                    user?.isGuest == true
-                        ? 'Salir al menú principal'
-                        : 'Cerrar sesión',
+          SizedBox(height: isCompactHeight ? 10 : 16),
+          Row(
+            children: [
+              Container(
+                width: isCompactHeight ? 38 : 44,
+                height: isCompactHeight ? 38 : 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF142236),
+                  border: Border.all(
+                    color: user?.isGuest == true
+                        ? RetroColors.gold
+                        : RetroColors.cyan,
+                    width: 1.5,
                   ),
                 ),
-                if (user?.isGuest != true) ...[
-                  const SizedBox(height: 12),
-                  FilledButton.tonalIcon(
+                child: Icon(
+                  user?.isGuest == true
+                      ? Icons.person_outline
+                      : Icons.verified_user_outlined,
+                  color: user?.isGuest == true
+                      ? RetroColors.gold
+                      : RetroColors.cyan,
+                  size: isCompactHeight ? 20 : 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      (user?.displayName ?? 'JUGADOR INVITADO').toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isCompactHeight ? 9 : 11,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user?.isGuest == true
+                          ? 'Partida local guardada en este dispositivo'
+                          : user?.email ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.vt323(
+                        fontSize: isCompactHeight ? 15 : 17,
+                        color: RetroColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (auth.error != null)
+            _RetroMessageBox(message: auth.error!, isError: true),
+          if (auth.notice != null) _RetroMessageBox(message: auth.notice!),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: Color(0xFF1E354F)),
+          const SizedBox(height: 14),
+          if (user?.isGuest == true) ...[
+            Text(
+              'Tu partida se guarda localmente. Conecta una cuenta para sincronizar con la nube y acceder al ranking:',
+              style: GoogleFonts.vt323(
+                fontSize: 16,
+                color: RetroColors.textBright,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            RetroArcadeButton(
+              text: 'CONECTAR O CREAR CUENTA',
+              icon: Icons.cloud_upload_outlined,
+              primaryColor: RetroColors.gold,
+              fontSize: 8,
+              isFullWidth: true,
+              onPressed: auth.isBusy
+                  ? null
+                  : () => ref.read(authControllerProvider.notifier).signOut(),
+            ),
+          ] else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                if (!environment.usesLocalBackend) ...[
+                  RetroArcadeButton(
+                    text: 'VINCULAR GOOGLE',
+                    icon: Icons.account_circle_outlined,
+                    primaryColor: RetroColors.cyan,
+                    fontSize: 7.5,
                     onPressed: auth.isBusy
                         ? null
-                        : () => _confirmDeletion(context, ref),
-                    icon: const Icon(Icons.delete_forever_outlined),
-                    label: const Text('Eliminar mi cuenta'),
-                    style: FilledButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.error,
-                    ),
+                        : () => _link(ref, AuthProviderId.google),
+                  ),
+                  RetroArcadeButton(
+                    text: 'VINCULAR APPLE',
+                    icon: Icons.apple,
+                    primaryColor: RetroColors.cyan,
+                    fontSize: 7.5,
+                    onPressed: auth.isBusy
+                        ? null
+                        : () => _link(ref, AuthProviderId.apple),
                   ),
                 ],
+                RetroArcadeButton(
+                  text: 'CAMBIAR PASSWORD',
+                  icon: Icons.password_outlined,
+                  primaryColor: const Color(0xFF1E354F),
+                  textColor: Colors.white,
+                  fontSize: 7.5,
+                  onPressed: auth.isBusy
+                      ? null
+                      : () => _changePassword(context, ref),
+                ),
               ],
             ),
+        ],
+      ),
+    );
+
+    final gameSettingsCard = RetroArcadeCard(
+      borderColor: const Color(0xFF1E354F),
+      accentHeaderColor: RetroColors.magenta,
+      padding: EdgeInsets.all(isCompactHeight ? 12 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AJUSTES DE JUEGO',
+            style: GoogleFonts.pressStart2p(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: RetroColors.magenta,
+              letterSpacing: 1.2,
+            ),
           ),
+          SizedBox(height: isCompactHeight ? 10 : 16),
+          _RetroSwitchTile(
+            icon: Icons.motion_photos_off_outlined,
+            title: 'REDUCIR MOVIMIENTO',
+            subtitle: 'Detiene fondos y animaciones adicionales.',
+            value: gameSettings.reduceMotion,
+            isCompact: isCompactHeight,
+            onChanged: auth.isBusy
+                ? null
+                : (enabled) => ref
+                      .read(gameSettingsControllerProvider.notifier)
+                      .setReduceMotion(enabled),
+          ),
+          const Divider(height: 16, color: Color(0xFF1E354F)),
+          _RetroSwitchTile(
+            icon: Icons.music_note_outlined,
+            title: 'MÚSICA DE FONDO',
+            subtitle: 'Banda sonora 8-bit en bucle durante la partida.',
+            value: gameSettings.musicEnabled,
+            isCompact: isCompactHeight,
+            onChanged: auth.isBusy
+                ? null
+                : (enabled) => ref
+                      .read(gameSettingsControllerProvider.notifier)
+                      .setMusicEnabled(enabled),
+          ),
+          const Divider(height: 16, color: Color(0xFF1E354F)),
+          _RetroSwitchTile(
+            icon: Icons.volume_up_outlined,
+            title: 'EFECTOS DE SONIDO',
+            subtitle: 'Sonidos de saltos, disparos, impactos y acciones.',
+            value: gameSettings.sfxEnabled,
+            isCompact: isCompactHeight,
+            onChanged: auth.isBusy
+                ? null
+                : (enabled) => ref
+                      .read(gameSettingsControllerProvider.notifier)
+                      .setSfxEnabled(enabled),
+          ),
+        ],
+      ),
+    );
+
+    final sessionCard = RetroArcadeCard(
+      borderColor: const Color(0xFF1E354F),
+      backgroundColor: const Color(0xFF0F141E),
+      padding: EdgeInsets.all(isCompactHeight ? 12 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          RetroArcadeButton(
+            text: user?.isGuest == true
+                ? 'SALIR AL MENÚ PRINCIPAL'
+                : 'CERRAR SESIÓN',
+            icon: user?.isGuest == true ? Icons.exit_to_app : Icons.logout,
+            primaryColor: const Color(0xFF1E354F),
+            textColor: Colors.white70,
+            fontSize: 8,
+            onPressed: auth.isBusy
+                ? null
+                : () => ref.read(authControllerProvider.notifier).signOut(),
+          ),
+          if (user?.isGuest != true) ...[
+            const SizedBox(height: 10),
+            RetroArcadeButton(
+              text: 'ELIMINAR MI CUENTA',
+              icon: Icons.delete_forever_outlined,
+              primaryColor: RetroColors.magenta.withValues(alpha: 0.25),
+              textColor: RetroColors.magenta,
+              fontSize: 8,
+              onPressed: auth.isBusy
+                  ? null
+                  : () => _confirmDeletion(context, ref),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    return ListView(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompactHeight ? 16 : 24,
+        vertical: isCompactHeight ? 12 : 20,
+      ),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'CONFIGURACIÓN',
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: isCompactHeight ? 12 : 15,
+                      fontWeight: FontWeight.bold,
+                      color: RetroColors.cyan,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Ajustes de partida, audio y gestión de cuenta.',
+                  style: GoogleFonts.vt323(
+                    fontSize: isCompactHeight ? 15 : 17,
+                    color: RetroColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
+        SizedBox(height: isCompactHeight ? 12 : 18),
+        if (isWide)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    accountCard,
+                    const SizedBox(height: 14),
+                    sessionCard,
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: gameSettingsCard),
+            ],
+          )
+        else
+          Column(
+            children: [
+              accountCard,
+              const SizedBox(height: 14),
+              gameSettingsCard,
+              const SizedBox(height: 14),
+              sessionCard,
+            ],
+          ),
       ],
     );
   }
@@ -213,6 +371,70 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+class _RetroSwitchTile extends StatelessWidget {
+  const _RetroSwitchTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+    required this.isCompact,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: isCompact ? 20 : 24,
+          color: value ? RetroColors.cyan : RetroColors.textMuted,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.pressStart2p(
+                  fontSize: isCompact ? 8 : 9,
+                  fontWeight: FontWeight.bold,
+                  color: value ? Colors.white : Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: GoogleFonts.vt323(
+                  fontSize: isCompact ? 14 : 16,
+                  color: RetroColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeTrackColor: RetroColors.cyanDim,
+          activeThumbColor: RetroColors.cyan,
+          inactiveThumbColor: Colors.grey.shade600,
+          inactiveTrackColor: const Color(0xFF132032),
+        ),
+      ],
+    );
+  }
+}
+
 class _ChangePasswordDialog extends StatefulWidget {
   const _ChangePasswordDialog();
 
@@ -232,24 +454,45 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Cambiar contraseña'),
+      backgroundColor: const Color(0xFF0C1420),
+      shape: const RoundedRectangleBorder(
+        side: BorderSide(color: RetroColors.cyan, width: 2),
+        borderRadius: BorderRadius.zero,
+      ),
+      title: Text(
+        'CAMBIAR CONTRASEÑA',
+        style: GoogleFonts.pressStart2p(
+          fontSize: 11,
+          color: RetroColors.cyan,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       content: TextField(
         controller: _controller,
         obscureText: true,
         autofocus: true,
-        decoration: const InputDecoration(
+        style: GoogleFonts.vt323(fontSize: 18, color: Colors.white),
+        decoration: InputDecoration(
           labelText: 'Nueva contraseña',
           helperText: 'Mínimo 8 caracteres',
+          helperStyle: GoogleFonts.vt323(fontSize: 14, color: RetroColors.textMuted),
+          labelStyle: GoogleFonts.vt323(fontSize: 16, color: RetroColors.cyan),
+          border: const OutlineInputBorder(),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child: Text(
+            'CANCELAR',
+            style: GoogleFonts.pressStart2p(fontSize: 8, color: RetroColors.textMuted),
+          ),
         ),
-        FilledButton(
+        RetroArcadeButton(
+          text: 'ACTUALIZAR',
+          primaryColor: RetroColors.cyan,
+          fontSize: 8,
           onPressed: () => Navigator.pop(context, _controller.text),
-          child: const Text('Actualizar'),
         ),
       ],
     );
@@ -275,23 +518,45 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Eliminar cuenta permanentemente'),
+      backgroundColor: const Color(0xFF160A10),
+      shape: const RoundedRectangleBorder(
+        side: BorderSide(color: RetroColors.magenta, width: 2),
+        borderRadius: BorderRadius.zero,
+      ),
+      title: Text(
+        'ELIMINAR CUENTA',
+        style: GoogleFonts.pressStart2p(
+          fontSize: 11,
+          color: RetroColors.magenta,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Se eliminarán la cuenta y los datos sincronizados. Por seguridad, '
-              'debes haber iniciado sesión en los últimos 10 minutos. Escribe '
-              'ELIMINAR para confirmar.',
+            Text(
+              'Se eliminarán la cuenta y los datos sincronizados permanentemente. '
+              'Por seguridad, debes haber iniciado sesión recientemente. '
+              'Escribe ELIMINAR para confirmar.',
+              style: GoogleFonts.vt323(
+                fontSize: 16,
+                color: RetroColors.textBright,
+                height: 1.2,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _controller,
               autofocus: true,
+              style: GoogleFonts.pressStart2p(fontSize: 10, color: Colors.white),
               onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(labelText: 'Confirmación'),
+              decoration: InputDecoration(
+                labelText: 'Escribe ELIMINAR',
+                labelStyle: GoogleFonts.vt323(fontSize: 16, color: RetroColors.magenta),
+                border: const OutlineInputBorder(),
+              ),
             ),
           ],
         ),
@@ -299,39 +564,61 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancelar'),
+          child: Text(
+            'CANCELAR',
+            style: GoogleFonts.pressStart2p(fontSize: 8, color: RetroColors.textMuted),
+          ),
         ),
-        FilledButton(
+        RetroArcadeButton(
+          text: 'ELIMINAR DEFINITIVAMENTE',
+          primaryColor: RetroColors.magenta,
+          fontSize: 8,
           onPressed: _controller.text == 'ELIMINAR'
               ? () => Navigator.pop(context, true)
               : null,
-          child: const Text('Eliminar definitivamente'),
         ),
       ],
     );
   }
 }
 
-class _MessageBox extends StatelessWidget {
-  const _MessageBox({required this.message, this.isError = false});
+class _RetroMessageBox extends StatelessWidget {
+  const _RetroMessageBox({required this.message, this.isError = false});
 
   final String message;
   final bool isError;
 
   @override
   Widget build(BuildContext context) {
-    final color = isError
-        ? Theme.of(context).colorScheme.error
-        : Theme.of(context).colorScheme.primary;
+    final color = isError ? RetroColors.magenta : RetroColors.cyan;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       margin: const EdgeInsets.only(top: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(8),
+        color: isError ? const Color(0xFF1D0C13) : const Color(0xFF0C1929),
+        border: Border.all(color: color, width: 1.5),
       ),
-      child: Text(message),
+      child: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline : Icons.info_outline,
+            color: color,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.vt323(
+                fontSize: 15,
+                color: RetroColors.textBright,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+

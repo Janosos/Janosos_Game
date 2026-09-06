@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../app/widgets/character_sprite_preview.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
 import '../../../game/domain/character_id.dart';
@@ -128,7 +129,7 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
             isCompactHeight ? 14 : 24,
-            isCompactHeight ? 10 : 24,
+            isCompactHeight ? 10 : 20,
             isCompactHeight ? 14 : 24,
             isCompactHeight ? 8 : 12,
           ),
@@ -139,17 +140,24 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                 Semantics(
                   header: true,
                   child: Text(
-                    'Progresión mundial',
-                    style: isCompactHeight
-                        ? Theme.of(context).textTheme.titleLarge
-                        : Theme.of(context).textTheme.headlineMedium,
+                    'PROGRESIÓN MUNDIAL',
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: isCompactHeight ? 12 : 15,
+                      fontWeight: FontWeight.bold,
+                      color: RetroColors.cyan,
+                      letterSpacing: 1.5,
+                    ),
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   'Supera los 10 niveles y derrota a cada jefe para conquistar el arcade.',
-                  style: TextStyle(fontSize: isCompactHeight ? 12 : 14),
+                  style: GoogleFonts.vt323(
+                    fontSize: isCompactHeight ? 15 : 17,
+                    color: RetroColors.textMuted,
+                  ),
                 ),
-                SizedBox(height: isCompactHeight ? 8 : 16),
+                SizedBox(height: isCompactHeight ? 8 : 14),
                 _CampaignNotice(progress: progress),
                 SizedBox(height: isCompactHeight ? 8 : 12),
                 FutureBuilder<bool>(
@@ -162,44 +170,114 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                 ),
                 if (_syncMessage != null) ...[
                   SizedBox(height: isCompactHeight ? 6 : 12),
-                  Semantics(liveRegion: true, child: Text(_syncMessage!)),
+                  Semantics(
+                    liveRegion: true,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0C1929),
+                        border: Border.all(
+                          color: RetroColors.cyan,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        _syncMessage!,
+                        style: GoogleFonts.vt323(
+                          fontSize: 15,
+                          color: RetroColors.cyan,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
-                SizedBox(height: isCompactHeight ? 10 : 18),
+                SizedBox(height: isCompactHeight ? 10 : 16),
                 Semantics(
                   label: 'Personaje seleccionado para la campaña',
-                  child: DropdownButtonFormField<CharacterId>(
-                    initialValue: selectedCharacter,
-                    isDense: isCompactHeight,
-                    decoration: InputDecoration(
-                      labelText: 'Personaje de la campaña',
-                      prefixIcon: const Icon(Icons.person_outline),
-                      border: const OutlineInputBorder(),
-                      contentPadding: isCompactHeight
-                          ? const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            )
-                          : null,
+                  child: RetroArcadeCard(
+                    borderColor: const Color(0xFF1E354F),
+                    backgroundColor: const Color(0xFF0C1420),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: isCompactHeight ? 6 : 10,
                     ),
-                    items: [
-                      for (final character in CharacterId.values)
-                        DropdownMenuItem(
-                          value: character,
-                          child: Text(character.definition.displayName),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.sports_esports_outlined,
+                          size: isCompactHeight ? 18 : 22,
+                          color: RetroColors.cyan,
                         ),
-                    ],
-                    onChanged: progress == null
-                        ? (character) {
-                            if (character != null) {
-                              setState(() {
-                                _selectedCharacter = character;
-                                _bossRushUnlocked = _loadBossRushEntitlement(
-                                  character,
-                                );
-                              });
-                            }
-                          }
-                        : null,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<CharacterId>(
+                              value: selectedCharacter,
+                              dropdownColor: const Color(0xFF0F1724),
+                              isDense: true,
+                              isExpanded: true,
+                              icon: const Icon(
+                                Icons.arrow_drop_down,
+                                color: RetroColors.cyan,
+                              ),
+                              items: [
+                                for (final character in CharacterId.values)
+                                  DropdownMenuItem(
+                                    value: character,
+                                    child: Row(
+                                      children: [
+                                        CharacterIcon(
+                                          assetName:
+                                              character.definition.assetName,
+                                          size: isCompactHeight ? 20 : 24,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            character.definition.displayName
+                                                .toUpperCase(),
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.pressStart2p(
+                                              fontSize:
+                                                  isCompactHeight ? 8 : 9,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                              onChanged: progress == null
+                                  ? (character) {
+                                      if (character != null) {
+                                        setState(() {
+                                          _selectedCharacter = character;
+                                          _bossRushUnlocked =
+                                              _loadBossRushEntitlement(
+                                                character,
+                                              );
+                                        });
+                                      }
+                                    }
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        if (progress != null) ...[
+                          const SizedBox(width: 8),
+                          const RetroBadge(
+                            text: 'EN CURSO',
+                            color: RetroColors.gold,
+                            fontSize: 7,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],

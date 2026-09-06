@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/widgets/character_sprite_preview.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
 import '../../../game/domain/character_id.dart';
@@ -87,17 +88,20 @@ class _LeaderboardContentState extends ConsumerState<_LeaderboardContent>
                     Semantics(
                       header: true,
                       child: Text(
-                        'Leaderboard por personaje',
-                        style: isCompactHeight
-                            ? Theme.of(context).textTheme.titleLarge
-                            : Theme.of(context).textTheme.headlineMedium,
+                        'LEADERBOARD POR PERSONAJE',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isCompactHeight ? 12 : 15,
+                          fontWeight: FontWeight.bold,
+                          color: RetroColors.cyan,
+                          letterSpacing: 1.5,
+                        ),
                       ),
                     ),
-                    SizedBox(height: isCompactHeight ? 2 : 6),
+                    SizedBox(height: isCompactHeight ? 2 : 4),
                     Text(
                       'Compara resultados verificados o revisa tus últimas partidas.',
-                      style: TextStyle(
-                        fontSize: isCompactHeight ? 12 : 14,
+                      style: GoogleFonts.vt323(
+                        fontSize: isCompactHeight ? 15 : 17,
                         color: RetroColors.textMuted,
                       ),
                     ),
@@ -355,14 +359,16 @@ class _Filters extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           SizedBox(
-            width: isCompact ? 190 : 230,
+            width: isCompact ? 200 : 250,
             child: DropdownButtonFormField<CharacterId>(
               key: ValueKey(filter.characterId),
               initialValue: filter.characterId,
               isDense: true,
+              dropdownColor: const Color(0xFF0F1724),
               decoration: InputDecoration(
                 labelText: 'Personaje',
-                prefixIcon: const Icon(Icons.person_outline, size: 18),
+                labelStyle: GoogleFonts.vt323(fontSize: 16, color: RetroColors.cyan),
+                prefixIcon: const Icon(Icons.person_outline, size: 18, color: RetroColors.cyan),
                 border: const OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 10,
@@ -373,9 +379,22 @@ class _Filters extends StatelessWidget {
                 for (final character in CharacterId.values)
                   DropdownMenuItem(
                     value: character,
-                    child: Text(
-                      character.definition.displayName,
-                      style: GoogleFonts.vt323(fontSize: 18),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CharacterIcon(
+                          assetName: character.definition.assetName,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          character.definition.displayName.toUpperCase(),
+                          style: GoogleFonts.pressStart2p(
+                            fontSize: isCompact ? 7.5 : 8.5,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],
@@ -571,14 +590,17 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (entry.validation) {
-      ResultValidation.verified => Colors.green,
-      ResultValidation.pending => Colors.orange,
+      ResultValidation.verified => RetroColors.green,
+      ResultValidation.pending => RetroColors.gold,
       ResultValidation.limited => Colors.amber,
-      ResultValidation.rejected => Colors.red,
+      ResultValidation.rejected => RetroColors.magenta,
     };
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: RetroArcadeCard(
+        borderColor: color.withValues(alpha: 0.7),
+        accentHeaderColor: color,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -586,32 +608,68 @@ class _HistoryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${entry.outcome.label} · Nivel ${entry.levelReached}/10',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    '${entry.outcome.label.toUpperCase()} · NIVEL ${entry.levelReached}/10',
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
-                Chip(
-                  side: BorderSide(color: color),
-                  avatar: Icon(Icons.circle, size: 10, color: color),
-                  label: Text(entry.validation.label),
+                RetroBadge(
+                  text: entry.validation.label,
+                  color: color,
+                  fontSize: 7.5,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              '${entry.totalScore} puntos · ${_formatDuration(entry.durationMs)} · '
-              '${_formatDate(entry.endedAt)}',
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const PixelIconAsset(assetName: PixelIconAsset.coin, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  '${entry.totalScore} PTS',
+                  style: GoogleFonts.pressStart2p(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: RetroColors.gold,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '· ${_formatDuration(entry.durationMs)} · ${_formatDate(entry.endedAt)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.vt323(
+                      fontSize: 16,
+                      color: RetroColors.textMuted,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
               entry.validation.explanation,
-              style: Theme.of(context).textTheme.bodySmall,
+              style: GoogleFonts.vt323(
+                fontSize: 15,
+                color: RetroColors.textBright,
+                height: 1.15,
+              ),
             ),
             if (entry.isLocalOnly) ...[
               const SizedBox(height: 8),
-              const Chip(
-                avatar: Icon(Icons.phone_android_outlined, size: 18),
-                label: Text('Sólo en este dispositivo'),
+              const RetroBadge(
+                text: 'SÓLO EN ESTE DISPOSITIVO',
+                color: RetroColors.cyan,
+                fontSize: 7,
+                icon: Icon(
+                  Icons.phone_android_outlined,
+                  size: 11,
+                  color: RetroColors.cyan,
+                ),
               ),
             ],
           ],
@@ -638,14 +696,30 @@ class _EmptyState extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 520),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 56),
+          padding: const EdgeInsets.symmetric(vertical: 40),
           child: Column(
             children: [
-              Icon(icon, size: 64),
-              const SizedBox(height: 16),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              Icon(icon, size: 52, color: RetroColors.textMuted),
+              const SizedBox(height: 14),
+              Text(
+                title.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text(message, textAlign: TextAlign.center),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.vt323(
+                  fontSize: 16,
+                  color: RetroColors.textMuted,
+                ),
+              ),
             ],
           ),
         ),
@@ -700,14 +774,29 @@ class _LoadFailure extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off_outlined, size: 64),
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: 56,
+              color: RetroColors.magenta,
+            ),
             const SizedBox(height: 16),
-            const Text('No se pudo cargar el leaderboard.'),
+            Text(
+              'NO SE PUDO CARGAR EL LEADERBOARD',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.pressStart2p(
+                fontSize: 9.5,
+                fontWeight: FontWeight.bold,
+                color: RetroColors.magenta,
+                letterSpacing: 1,
+              ),
+            ),
             const SizedBox(height: 16),
-            FilledButton.icon(
+            RetroArcadeButton(
+              text: 'REINTENTAR',
+              icon: Icons.refresh,
+              primaryColor: RetroColors.cyan,
+              fontSize: 8,
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
             ),
           ],
         ),

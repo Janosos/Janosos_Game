@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/widgets/character_sprite_preview.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
 import '../../../game/domain/character_id.dart';
@@ -342,11 +343,9 @@ class _CharacterSelector extends StatelessWidget {
                 value: character,
                 child: Row(
                   children: [
-                    Image.asset(
-                      'assets/images/${character.definition.assetName}',
-                      width: isCompact ? 20 : 24,
-                      height: isCompact ? 20 : 24,
-                      filterQuality: FilterQuality.none,
+                    CharacterIcon(
+                      assetName: character.definition.assetName,
+                      size: isCompact ? 20 : 24,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1162,10 +1161,12 @@ class _PalettesCatalog extends ConsumerWidget {
                             Colors.transparent,
                             BlendMode.dst,
                           ),
-                      child: Image.asset(
-                        'assets/images/${snapshot.characterId.definition.assetName}',
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.none,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: CharacterRunningSprite(
+                          assetName:
+                              snapshot.characterId.definition.assetName,
+                        ),
                       ),
                     ),
                   ),
