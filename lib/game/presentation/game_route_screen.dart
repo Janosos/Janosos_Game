@@ -141,6 +141,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
         children: [
           DinoRunApp(
             initialHighScore: legacyHighScore,
+            audioEnabled: configuration.audioEnabled,
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
               final message = await coordinator.sealAndSynchronize(
@@ -153,6 +154,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             onCampaignExit: () => context.go('/campaign'),
           ),
           _BackButton(onPressed: () => _confirmBossRushExit(context, session)),
+          const _AudioToggleButton(),
           _RunBanner(
             label: switch (session.eligibility) {
               BossRushEligibility.verified =>
@@ -211,6 +213,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
         children: [
           DinoRunApp(
             initialHighScore: legacyHighScore,
+            audioEnabled: gameSettings.audioEnabled,
             onHighScoreChanged: (score) =>
                 preferences.setInt('high_score', score),
             configurationForCharacter: (CharacterId characterId) {
@@ -246,6 +249,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             },
           ),
           _BackButton(onPressed: () => context.go('/home')),
+          const _AudioToggleButton(),
           const _RunBanner(
             label: 'MODO ENDLESS CLÁSICO · SIN JEFES · MÁXIMA PUNTUACIÓN',
           ),
@@ -264,6 +268,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
         children: [
           DinoRunApp(
             initialHighScore: legacyHighScore,
+            audioEnabled: configuration.audioEnabled,
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
               if (result.outcome == RunOutcome.victory) {
@@ -305,6 +310,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             onCampaignExit: () => context.go('/campaign'),
           ),
           _BackButton(onPressed: () => _confirmAbandon(context, session)),
+          const _AudioToggleButton(),
           _CampaignPreflightBanner(session: session),
         ],
       ),
@@ -553,6 +559,48 @@ class _BackButton extends StatelessWidget {
             tooltip: 'Volver al inicio',
             onPressed: onPressed,
             icon: const Icon(Icons.arrow_back),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AudioToggleButton extends ConsumerWidget {
+  const _AudioToggleButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isCompact = MediaQuery.of(context).size.height < 500;
+    final gameSettings = ref.watch(gameSettingsControllerProvider);
+    final isAudioEnabled = gameSettings.audioEnabled;
+
+    return Align(
+      alignment: Alignment.topRight,
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(isCompact ? 4 : 8),
+          child: SizedBox(
+            width: isCompact ? 38 : 48,
+            height: isCompact ? 38 : 48,
+            child: IconButton.filledTonal(
+              padding: EdgeInsets.zero,
+              iconSize: isCompact ? 18 : 24,
+              tooltip: isAudioEnabled
+                  ? 'Desactivar música y audio'
+                  : 'Activar música y audio',
+              onPressed: () {
+                ref
+                    .read(gameSettingsControllerProvider.notifier)
+                    .setAudioEnabled(!isAudioEnabled);
+              },
+              icon: Icon(
+                isAudioEnabled
+                    ? Icons.volume_up_rounded
+                    : Icons.volume_off_rounded,
+                color: isAudioEnabled ? null : Colors.redAccent,
+              ),
+            ),
           ),
         ),
       ),

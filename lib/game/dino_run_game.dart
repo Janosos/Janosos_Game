@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'dart:async';
 
 import 'package:flame/events.dart';
 import 'package:flame_audio/flame_audio.dart';
@@ -27,6 +27,7 @@ import 'hud/directional_pad.dart';
 import 'hud/hud_indicators.dart';
 import 'hud/score.dart';
 import 'runtime/gameplay_event_sink.dart';
+import 'audio/app_audio_manager.dart';
 
 import '../core/platform/device_input_detector.dart';
 
@@ -113,7 +114,7 @@ class DinoRunGame extends FlameGame
 
   @override
   Future<void> onLoad() async {
-    FlameAudio.bgm.initialize();
+    await AppAudioManager.initialize();
 
     _sky = SkyComponent();
     add(_sky);
@@ -187,20 +188,11 @@ class DinoRunGame extends FlameGame
       }
     }
 
-    const audioAssets = [
-      'Jump.wav',
-      'Select.wav',
-      'Shoot.wav',
-      'Invisibility.wav',
-      'Hit.wav',
-      'LoopSong.wav',
-    ];
-    for (final sfx in audioAssets) {
-      try {
-        await FlameAudio.audioCache.load(sfx);
-      } catch (e) {
-        debugPrint('Preload notice: audio "$sfx" deferred: $e');
-      }
+    await AppAudioManager.preloadAssets();
+
+    AppAudioManager.isGameActive = true;
+    if (_configuration.audioEnabled) {
+      unawaited(AppAudioManager.playBgm());
     }
 
     pauseEngine();
@@ -281,20 +273,10 @@ class DinoRunGame extends FlameGame
     speedMultiplier = 1;
     orbTimer = 2;
 
-    try {
-      if (FlameAudio.bgm.isPlaying) {
-        await FlameAudio.bgm.stop();
-      }
-      if (configuration.audioEnabled) {
-        await FlameAudio.bgm.play('LoopSong.wav', volume: 0.5);
-      }
-    } on Object catch (error, stackTrace) {
-      developer.log(
-        'Unable to start background music',
-        name: 'DinoRunGame',
-        error: error,
-        stackTrace: stackTrace,
-      );
+    if (configuration.audioEnabled) {
+      unawaited(AppAudioManager.playBgm());
+    } else {
+      unawaited(AppAudioManager.stopBgm());
     }
 
     _runActive = true;
@@ -323,16 +305,7 @@ class DinoRunGame extends FlameGame
       _directionalPad = null;
     }
 
-    try {
-      FlameAudio.bgm.stop();
-    } on Object catch (error, stackTrace) {
-      developer.log(
-        'Unable to stop background music',
-        name: 'DinoRunGame',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
+    unawaited(AppAudioManager.stopBgm());
 
     _scoreSystem.completeRun();
     final result = RunResult(
@@ -373,7 +346,19 @@ class DinoRunGame extends FlameGame
       camera.viewport.remove(_hudIndicators!);
       _hudIndicators = null;
     }
+    if (_configuration.audioEnabled) {
+      unawaited(AppAudioManager.playBgm());
+    }
     pauseEngine();
+  }
+
+  void setAudioEnabled(bool enabled) {
+    _configuration = _configuration.copyWith(audioEnabled: enabled);
+    if (enabled) {
+      unawaited(AppAudioManager.playBgm());
+    } else {
+      unawaited(AppAudioManager.stopBgm());
+    }
   }
 
   @override
@@ -775,6 +760,7 @@ class DinoRunGame extends FlameGame
   }
 
   void pauseForInterruption() {
+    AppAudioManager.pauseBgm();
     if (!_runActive || paused) return;
     pauseEngine();
     _beginPause();
@@ -782,6 +768,9 @@ class DinoRunGame extends FlameGame
   }
 
   void resumeFromInterruption() {
+    if (_configuration.audioEnabled) {
+      AppAudioManager.resumeBgm(audioEnabled: true);
+    }
     if (!_runActive ||
         overlays.isActive('BossTutorial') ||
         overlays.isActive('BossHelp')) {
@@ -938,7 +927,8 @@ class DinoRunGame extends FlameGame
 
   @override
   void onRemove() {
-    FlameAudio.bgm.dispose();
+    AppAudioManager.isGameActive = false;
+    unawaited(AppAudioManager.stopBgm());
     super.onRemove();
   }
 }

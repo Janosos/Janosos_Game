@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../game/audio/app_audio_manager.dart';
 
 class GameSettings {
   const GameSettings({required this.audioEnabled, required this.reduceMotion});
@@ -37,6 +38,11 @@ class GameSettingsController extends Notifier<GameSettings> {
   Future<void> setAudioEnabled(bool enabled) async {
     state = state.copyWith(audioEnabled: enabled);
     await ref.read(sharedPreferencesProvider).setBool(_audioKey, enabled);
+    if (!enabled) {
+      await AppAudioManager.stopBgm();
+    } else if (AppAudioManager.isGameActive) {
+      await AppAudioManager.playBgm();
+    }
   }
 
   Future<void> setReduceMotion(bool enabled) async {

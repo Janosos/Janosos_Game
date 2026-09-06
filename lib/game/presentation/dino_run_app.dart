@@ -21,6 +21,7 @@ class DinoRunApp extends StatefulWidget {
     this.onRunFinished,
     this.onCampaignExit,
     this.isMobileOrTablet,
+    this.audioEnabled = true,
   });
 
   final int initialHighScore;
@@ -30,6 +31,7 @@ class DinoRunApp extends StatefulWidget {
   final Future<String> Function(RunResult result)? onRunFinished;
   final VoidCallback? onCampaignExit;
   final bool? isMobileOrTablet;
+  final bool audioEnabled;
 
   @override
   State<DinoRunApp> createState() => _DinoRunAppState();
@@ -51,6 +53,14 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
       onEvent: _handleGameplayEvent,
       isMobileOrTablet: widget.isMobileOrTablet,
     );
+  }
+
+  @override
+  void didUpdateWidget(DinoRunApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.audioEnabled != widget.audioEnabled) {
+      _game.setAudioEnabled(widget.audioEnabled);
+    }
   }
 
   @override
