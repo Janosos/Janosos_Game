@@ -14,7 +14,7 @@ if (releaseKeystorePropertiesFile.exists()) {
     releaseKeystoreProperties.load(FileInputStream(releaseKeystorePropertiesFile))
 }
 
-extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
+android {
     namespace = "io.janosos.game"
     // flutter_secure_storage 11 requires API 37 at compile time. Runtime
     // behavior remains on Flutter's stable targetSdk until that target is
