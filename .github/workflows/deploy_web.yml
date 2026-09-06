@@ -36,6 +36,7 @@ jobs:
           if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_PUBLISHABLE_KEY" ]; then
             echo "Configuración Supabase detectada. Compilando con backend Supabase..."
             flutter build web --release --base-href "/Janosos_Game/" \
+              --no-web-resources-cdn \
               --dart-define=APP_BACKEND=supabase \
               --dart-define=SUPABASE_URL="$SUPABASE_URL" \
               --dart-define=SUPABASE_PUBLISHABLE_KEY="$SUPABASE_PUBLISHABLE_KEY" \
@@ -46,6 +47,7 @@ jobs:
           else
             echo "Sin credenciales Supabase en variables. Compilando en modo local/offline..."
             flutter build web --release --base-href "/Janosos_Game/" \
+              --no-web-resources-cdn \
               --dart-define=APP_BACKEND=local \
               --dart-define=CONTENT_VERSION=v6-preview-1
           fi

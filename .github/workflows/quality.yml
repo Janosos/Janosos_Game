@@ -24,7 +24,7 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test integration_test tool
       - run: flutter analyze
       - run: flutter test
-      - run: flutter build web --release --base-href "/Janosos_Game/"
+      - run: flutter build web --release --base-href "/Janosos_Game/" --no-web-resources-cdn
 
   database-and-functions:
     runs-on: ubuntu-latest
