@@ -142,6 +142,8 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
           DinoRunApp(
             initialHighScore: legacyHighScore,
             audioEnabled: configuration.audioEnabled,
+            musicEnabled: configuration.musicEnabled,
+            sfxEnabled: configuration.sfxEnabled,
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
               final message = await coordinator.sealAndSynchronize(
@@ -153,18 +155,14 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             },
             onCampaignExit: () => context.go('/campaign'),
           ),
-          _BackButton(onPressed: () => _confirmBossRushExit(context, session)),
-          const _AudioToggleButton(),
+          _RetroBackButton(onPressed: () => _confirmBossRushExit(context, session)),
+          const _RetroAudioToggleButton(),
           _RunBanner(
             label: switch (session.eligibility) {
-              BossRushEligibility.verified =>
-                'BOSS RUSH VERIFICADO · 10 JEFES · SIN MONEDA',
-              BossRushEligibility.local =>
-                'BOSS RUSH LOCAL · 10 JEFES · XP LOCAL · SIN MONEDA',
-              BossRushEligibility.practice =>
-                'BOSS RUSH DE PRÁCTICA · SIN RECOMPENSAS',
+              BossRushEligibility.practice => 'BOSS RUSH · PRÁCTICA',
+              _ => 'BOSS RUSH · 10 JEFES',
             },
-            topMargin: 64,
+            topMargin: 56,
           ),
         ],
       ),
@@ -180,8 +178,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('¿Terminar Boss Rush?'),
         content: const Text(
-          'La cadena actual terminará sin ranking ni recompensas. No perderás '
-          'moneda, compras, paletas ni recompensas permanentes.',
+          '¿Deseas volver al menú de campaña?',
         ),
         actions: [
           TextButton(
@@ -214,6 +211,8 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
           DinoRunApp(
             initialHighScore: legacyHighScore,
             audioEnabled: gameSettings.audioEnabled,
+            musicEnabled: gameSettings.musicEnabled,
+            sfxEnabled: gameSettings.sfxEnabled,
             onHighScoreChanged: (score) =>
                 preferences.setInt('high_score', score),
             configurationForCharacter: (CharacterId characterId) {
@@ -229,6 +228,8 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 seed: DateTime.now().microsecondsSinceEpoch & 0x7fffffff,
                 legacyHighScore: legacyHighScore,
                 audioEnabled: gameSettings.audioEnabled,
+                musicEnabled: gameSettings.musicEnabled,
+                sfxEnabled: gameSettings.sfxEnabled,
                 reduceMotion: reduceMotion,
               );
             },
@@ -243,15 +244,13 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 await recorder.sealPending(result);
               }
               ref.invalidate(leaderboardControllerProvider);
-              return environment.usesLocalBackend
-                  ? 'Resultado local guardado. Revísalo en tu historial.'
-                  : 'Resultado pendiente guardado. Revísalo en tu historial.';
+              return 'Puntuación guardada';
             },
           ),
-          _BackButton(onPressed: () => context.go('/home')),
-          const _AudioToggleButton(),
+          _RetroBackButton(onPressed: () => context.go('/home')),
+          const _RetroAudioToggleButton(),
           const _RunBanner(
-            label: 'MODO ENDLESS CLÁSICO · SIN JEFES · MÁXIMA PUNTUACIÓN',
+            label: 'MODO CLÁSICO',
           ),
         ],
       ),
@@ -269,6 +268,8 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
           DinoRunApp(
             initialHighScore: legacyHighScore,
             audioEnabled: configuration.audioEnabled,
+            musicEnabled: configuration.musicEnabled,
+            sfxEnabled: configuration.sfxEnabled,
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
               if (result.outcome == RunOutcome.victory) {
@@ -309,8 +310,8 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             },
             onCampaignExit: () => context.go('/campaign'),
           ),
-          _BackButton(onPressed: () => _confirmAbandon(context, session)),
-          const _AudioToggleButton(),
+          _RetroBackButton(onPressed: () => _confirmAbandon(context, session)),
+          const _RetroAudioToggleButton(),
           _CampaignPreflightBanner(session: session),
         ],
       ),
@@ -324,6 +325,8 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
     final settings = ref.watch(gameSettingsControllerProvider);
     return configuration.copyWith(
       audioEnabled: settings.audioEnabled,
+      musicEnabled: settings.musicEnabled,
+      sfxEnabled: settings.sfxEnabled,
       reduceMotion:
           settings.reduceMotion || MediaQuery.disableAnimationsOf(context),
     );
@@ -336,11 +339,9 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('¿Abandonar la campaña?'),
+        title: const Text('¿Abandonar Nivel?'),
         content: Text(
-          'Nivel ${session.configuration.level}/10 · ${session.configuration.stats.maxLives} vidas. '
-          'Perderás ${session.temporaryCurrency} monedas en riesgo. '
-          'Conservarás ${session.bankedCurrency} monedas guardadas, maestría, compras, paletas y recompensas únicas.',
+          'Nivel ${session.configuration.level}/10.\n¿Deseas volver al mapa de campaña?',
         ),
         actions: [
           TextButton(
@@ -451,7 +452,7 @@ class _CampaignPreflightBannerState extends State<_CampaignPreflightBanner> {
                         ],
                       ),
                       child: Text(
-                        'NIVEL ${session.configuration.level}/10 · ${session.eligibility.label.toUpperCase()}\n$detail',
+                        'CAMPAÑA · NIVEL ${session.configuration.level}/10',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
@@ -539,26 +540,50 @@ class _RunBannerState extends State<_RunBanner> {
   }
 }
 
-class _BackButton extends StatelessWidget {
-  const _BackButton({required this.onPressed});
+class _RetroBackButton extends StatelessWidget {
+  const _RetroBackButton({required this.onPressed});
 
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.of(context).size.height < 500;
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.all(isCompact ? 4 : 8),
-        child: SizedBox(
-          width: isCompact ? 38 : 48,
-          height: isCompact ? 38 : 48,
-          child: IconButton.filledTonal(
-            padding: EdgeInsets.zero,
-            iconSize: isCompact ? 18 : 24,
-            tooltip: 'Volver al inicio',
-            onPressed: onPressed,
-            icon: const Icon(Icons.arrow_back),
+    final size = isCompact ? 38.0 : 44.0;
+
+    return Positioned(
+      top: isCompact ? 6 : 10,
+      left: isCompact ? 6 : 10,
+      child: SafeArea(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              width: size,
+              height: size,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141923).withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: const Color(0xFF00E5FF),
+                  width: 2,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                'assets/images/back_button_retro.png',
+                filterQuality: FilterQuality.none,
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
         ),
       ),
@@ -566,39 +591,56 @@ class _BackButton extends StatelessWidget {
   }
 }
 
-class _AudioToggleButton extends ConsumerWidget {
-  const _AudioToggleButton();
+class _RetroAudioToggleButton extends ConsumerWidget {
+  const _RetroAudioToggleButton();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isCompact = MediaQuery.of(context).size.height < 500;
+    final size = isCompact ? 38.0 : 44.0;
     final gameSettings = ref.watch(gameSettingsControllerProvider);
-    final isAudioEnabled = gameSettings.audioEnabled;
+    final isMusicEnabled = gameSettings.musicEnabled;
 
-    return Align(
-      alignment: Alignment.topRight,
+    return Positioned(
+      top: isCompact ? 6 : 10,
+      right: isCompact ? 6 : 10,
       child: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(isCompact ? 4 : 8),
-          child: SizedBox(
-            width: isCompact ? 38 : 48,
-            height: isCompact ? 38 : 48,
-            child: IconButton.filledTonal(
-              padding: EdgeInsets.zero,
-              iconSize: isCompact ? 18 : 24,
-              tooltip: isAudioEnabled
-                  ? 'Desactivar música y audio'
-                  : 'Activar música y audio',
-              onPressed: () {
-                ref
-                    .read(gameSettingsControllerProvider.notifier)
-                    .setAudioEnabled(!isAudioEnabled);
-              },
-              icon: Icon(
-                isAudioEnabled
-                    ? Icons.volume_up_rounded
-                    : Icons.volume_off_rounded,
-                color: isAudioEnabled ? null : Colors.redAccent,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              ref
+                  .read(gameSettingsControllerProvider.notifier)
+                  .setMusicEnabled(!isMusicEnabled);
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              width: size,
+              height: size,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF141923).withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: isMusicEnabled
+                      ? const Color(0xFF00E5FF)
+                      : const Color(0xFFFF5252),
+                  width: 2,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                isMusicEnabled
+                    ? 'assets/images/music_on_retro.png'
+                    : 'assets/images/music_off_retro.png',
+                filterQuality: FilterQuality.none,
+                fit: BoxFit.contain,
               ),
             ),
           ),
@@ -613,19 +655,18 @@ class _PreflightLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(
-        child: Semantics(
-          liveRegion: true,
-          label: 'Preparando etapa de campaña',
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 18),
-              Text('Verificando build, token y recompensas…'),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Color(0xFF00E5FF)),
+            SizedBox(height: 18),
+            Text(
+              'Cargando...',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
     );
@@ -646,15 +687,15 @@ class _PreflightFailure extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.cloud_off_outlined, size: 64),
+              const Icon(Icons.cloud_off_outlined, size: 64, color: Colors.redAccent),
               const SizedBox(height: 16),
               const Text(
-                'No se pudo preparar la etapa.',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                'No se pudo iniciar el nivel',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               const Text(
-                'Reintenta la verificación o vuelve al mapa. Nunca se habilitarán recompensas sin autorización válida.',
+                'Por favor comprueba tu conexión y vuelve a intentarlo.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 18),

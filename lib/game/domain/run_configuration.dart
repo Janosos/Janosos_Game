@@ -109,6 +109,8 @@ class RunConfiguration {
     this.palette = PaletteTransform.identity,
     this.legacyHighScore = 0,
     this.audioEnabled = true,
+    this.musicEnabled = true,
+    this.sfxEnabled = true,
     this.reduceMotion = false,
   });
 
@@ -145,6 +147,8 @@ class RunConfiguration {
   final PaletteTransform palette;
   final int legacyHighScore;
   final bool audioEnabled;
+  final bool musicEnabled;
+  final bool sfxEnabled;
   final bool reduceMotion;
 
   RunConfiguration copyWith({
@@ -152,8 +156,12 @@ class RunConfiguration {
     DateTime? stageExpiresAt,
     RunExperience? experience,
     bool? audioEnabled,
+    bool? musicEnabled,
+    bool? sfxEnabled,
     bool? reduceMotion,
   }) {
+    final nextMusic = musicEnabled ?? this.musicEnabled;
+    final nextSfx = sfxEnabled ?? this.sfxEnabled;
     return RunConfiguration(
       characterId: characterId,
       mode: mode,
@@ -168,7 +176,9 @@ class RunConfiguration {
       pauseBudget: pauseBudget,
       palette: palette,
       legacyHighScore: legacyHighScore,
-      audioEnabled: audioEnabled ?? this.audioEnabled,
+      audioEnabled: audioEnabled ?? (nextMusic || nextSfx),
+      musicEnabled: nextMusic,
+      sfxEnabled: nextSfx,
       reduceMotion: reduceMotion ?? this.reduceMotion,
     );
   }

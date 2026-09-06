@@ -2,7 +2,7 @@
     "name": "Janosos Game",
     "short_name": "Janosos Game",
     "start_url": ".",
-    "display": "standalone",
+    "display": "fullscreen",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
     "description": "Juego oficial de Janosos. Corre y esquiva obstáculos.",

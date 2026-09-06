@@ -25,6 +25,9 @@ Future<void> bootstrap() async {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+  await SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
   try {
     final environment = AppEnvironment.fromDefines();
     final preferences = await SharedPreferences.getInstance();

@@ -145,11 +145,8 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                         : Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
-                SizedBox(height: isCompactHeight ? 4 : 8),
                 Text(
-                  'Supera diez niveles consecutivos. Si agotas todas las vidas, '
-                  'regresas al nivel 1 y pierdes la moneda temporal; tus compras '
-                  'y recompensas permanentes se conservan.',
+                  'Supera los 10 niveles y derrota a cada jefe para conquistar el arcade.',
                   style: TextStyle(fontSize: isCompactHeight ? 12 : 14),
                 ),
                 SizedBox(height: isCompactHeight ? 8 : 16),
@@ -362,8 +359,8 @@ class _CampaignNotice extends StatelessWidget {
           Expanded(
             child: Text(
               progress == null
-                  ? 'Comienza en el nivel 1. Cada victoria desbloquea la siguiente etapa para este personaje.'
-                  : 'Campaña activa · nivel ${progress!.currentLevel}/10 · ${progress!.temporaryCurrency} monedas en riesgo. El personaje queda fijado hasta completar o perder.',
+                  ? 'Comienza en el nivel 1. Cada victoria desbloquea la siguiente etapa.'
+                  : 'Campaña en curso · Nivel ${progress!.currentLevel}/10.',
               style: GoogleFonts.vt323(
                 fontSize: 17,
                 color: RetroColors.textBright,

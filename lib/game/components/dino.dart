@@ -359,7 +359,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       _yVelocity = jumpForce;
       _isJumping = true;
       current = DinoState.jumping;
-      if (_configuration.audioEnabled) FlameAudio.play('Jump.wav');
+      if (_configuration.sfxEnabled) FlameAudio.play('Jump.wav');
     } else {
       if (characterId.definition.hasTrait(CharacterCoreTrait.doubleJump) &&
           !hasDoubleJumped) {
@@ -369,7 +369,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
         );
         _yVelocity = jumpForce * (1 + control.clamp(0, 1000) / 10000);
         hasDoubleJumped = true;
-        if (_configuration.audioEnabled) FlameAudio.play('Jump.wav');
+        if (_configuration.sfxEnabled) FlameAudio.play('Jump.wav');
       } else if (characterId.definition.hasTrait(CharacterCoreTrait.glide)) {
         isGliding = true;
       }
@@ -390,7 +390,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     if (activeAbility == ActiveAbilityId.pistolShot && cooldownTimer <= 0) {
       game.add(Projectile(position: position + Vector2(size.x, -size.y / 2)));
       cooldownTimer = pistoleroCooldown / _configuration.stats.speedMultiplier;
-      if (_configuration.audioEnabled) FlameAudio.play('Shoot.wav');
+      if (_configuration.sfxEnabled) FlameAudio.play('Shoot.wav');
       current = DinoState.shooting;
       abilityDurationTimer = 0.5;
       game.abilityActivated(ActiveAbilityId.pistolShot);
@@ -404,7 +404,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       abilityDurationTimer =
           fantasmaDuration * (1 + durationBonus.clamp(0, 1000) / 10000);
       cooldownTimer = fantasmaCooldown / _configuration.stats.speedMultiplier;
-      if (_configuration.audioEnabled) FlameAudio.play('Invisibility.wav');
+      if (_configuration.sfxEnabled) FlameAudio.play('Invisibility.wav');
       game.abilityActivated(ActiveAbilityId.intangibility);
     } else if (activeAbility == ActiveAbilityId.electricDischarge &&
         isSuperCharged) {
@@ -416,7 +416,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       isSuperCharged = false;
       game.resetSpeed();
 
-      if (_configuration.audioEnabled) FlameAudio.play('Shoot.wav');
+      if (_configuration.sfxEnabled) FlameAudio.play('Shoot.wav');
       game.abilityActivated(ActiveAbilityId.electricDischarge);
     }
   }
@@ -438,7 +438,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
             !_firstOrbBonusUsed;
         energy += doubleCharge ? 40 : 20;
         if (doubleCharge) _firstOrbBonusUsed = true;
-        if (_configuration.audioEnabled) FlameAudio.play('Select.wav');
+        if (_configuration.sfxEnabled) FlameAudio.play('Select.wav');
         if (energy >= maxEnergy) {
           energy = maxEnergy;
           isSuperCharged = true;
@@ -452,7 +452,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       if (isDamageInvulnerable) return;
       if (characterId == CharacterId.nanic && isDischarging) {
         other.removeFromParent();
-        if (_configuration.audioEnabled) FlameAudio.play('Hit.wav');
+        if (_configuration.sfxEnabled) FlameAudio.play('Hit.wav');
         isDischarging = false;
         abilityDurationTimer = 0;
         return;
@@ -463,7 +463,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       if (hasShield) {
         hasShield = false;
         game.playerDamaged(wasAbsorbed: true);
-        if (_configuration.audioEnabled) FlameAudio.play('Hit.wav');
+        if (_configuration.sfxEnabled) FlameAudio.play('Hit.wav');
         if (characterId == CharacterId.chema) {
           final reduction = game.passiveParameter(
             'shield_penalty_reduction',
@@ -494,7 +494,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
 
   void hit() {
     current = DinoState.hit;
-    if (_configuration.audioEnabled) FlameAudio.play('Hit.wav');
+    if (_configuration.sfxEnabled) FlameAudio.play('Hit.wav');
     game.receiveUnabsorbedHit();
   }
 

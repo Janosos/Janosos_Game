@@ -28,9 +28,11 @@
     content="Janosos Game: runner retro con campaña, jefes, progresión por personaje y Boss Rush."
   >
 
-  <!-- iOS meta tags & icons -->
+  <!-- Mobile Fullscreen & Viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Janosos Game">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -39,6 +41,34 @@
 
   <title>Janosos Game</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000000;
+      touch-action: none;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+
+  <script>
+    // Maximize viewport on mobile browsers upon first interaction
+    function enterFullscreenOnMobile() {
+      const docEl = document.documentElement;
+      const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+      if (requestFs && !document.fullscreenElement && !document.webkitFullscreenElement) {
+        requestFs.call(docEl).catch(function() {});
+      }
+    }
+    window.addEventListener('touchstart', enterFullscreenOnMobile, { once: true, passive: true });
+    window.addEventListener('click', enterFullscreenOnMobile, { once: true, passive: true });
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

@@ -113,7 +113,7 @@ class _StartMenuOverlayState extends State<StartMenuOverlay>
                         SizedBox(height: spacing),
                         GestureDetector(
                           onTap: () async {
-                            if (widget.game.runConfiguration.audioEnabled) {
+                            if (widget.game.runConfiguration.sfxEnabled) {
                               FlameAudio.play('Select.wav');
                             }
                             if (widget.game.runConfiguration.experience !=

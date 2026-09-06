@@ -179,6 +179,9 @@ class DinoRunGame extends FlameGame
       'hazard_tide_pixel.png',
       'hazard_clockwork_pixel.png',
       'hazard_echo_pixel.png',
+      'back_button_retro.png',
+      'music_on_retro.png',
+      'music_off_retro.png',
     ];
     for (final img in imageAssets) {
       try {
@@ -191,7 +194,7 @@ class DinoRunGame extends FlameGame
     await AppAudioManager.preloadAssets();
 
     AppAudioManager.isGameActive = true;
-    if (_configuration.audioEnabled) {
+    if (_configuration.musicEnabled) {
       unawaited(AppAudioManager.playBgm());
     }
 
@@ -273,7 +276,7 @@ class DinoRunGame extends FlameGame
     speedMultiplier = 1;
     orbTimer = 2;
 
-    if (configuration.audioEnabled) {
+    if (configuration.musicEnabled) {
       unawaited(AppAudioManager.playBgm());
     } else {
       unawaited(AppAudioManager.stopBgm());
@@ -346,14 +349,31 @@ class DinoRunGame extends FlameGame
       camera.viewport.remove(_hudIndicators!);
       _hudIndicators = null;
     }
-    if (_configuration.audioEnabled) {
+    if (_configuration.musicEnabled) {
       unawaited(AppAudioManager.playBgm());
     }
     pauseEngine();
   }
 
+  void setMusicEnabled(bool enabled) {
+    _configuration = _configuration.copyWith(musicEnabled: enabled);
+    if (enabled) {
+      unawaited(AppAudioManager.playBgm());
+    } else {
+      unawaited(AppAudioManager.stopBgm());
+    }
+  }
+
+  void setSfxEnabled(bool enabled) {
+    _configuration = _configuration.copyWith(sfxEnabled: enabled);
+  }
+
   void setAudioEnabled(bool enabled) {
-    _configuration = _configuration.copyWith(audioEnabled: enabled);
+    _configuration = _configuration.copyWith(
+      audioEnabled: enabled,
+      musicEnabled: enabled,
+      sfxEnabled: enabled,
+    );
     if (enabled) {
       unawaited(AppAudioManager.playBgm());
     } else {
@@ -768,7 +788,7 @@ class DinoRunGame extends FlameGame
   }
 
   void resumeFromInterruption() {
-    if (_configuration.audioEnabled) {
+    if (_configuration.musicEnabled) {
       AppAudioManager.resumeBgm(audioEnabled: true);
     }
     if (!_runActive ||

@@ -59,7 +59,7 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onTap: () {
-              if (widget.game.runConfiguration.audioEnabled) {
+              if (widget.game.runConfiguration.sfxEnabled) {
                 FlameAudio.play('Select.wav');
               }
               setState(() {
@@ -274,7 +274,7 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                   child: ElevatedButton(
                     onPressed: selectedCharacter != null
                         ? () {
-                            if (widget.game.runConfiguration.audioEnabled) {
+                            if (widget.game.runConfiguration.sfxEnabled) {
                               FlameAudio.play('Select.wav');
                             }
                             widget.game.startGame(

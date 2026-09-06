@@ -22,6 +22,8 @@ class DinoRunApp extends StatefulWidget {
     this.onCampaignExit,
     this.isMobileOrTablet,
     this.audioEnabled = true,
+    this.musicEnabled = true,
+    this.sfxEnabled = true,
   });
 
   final int initialHighScore;
@@ -32,6 +34,8 @@ class DinoRunApp extends StatefulWidget {
   final VoidCallback? onCampaignExit;
   final bool? isMobileOrTablet;
   final bool audioEnabled;
+  final bool musicEnabled;
+  final bool sfxEnabled;
 
   @override
   State<DinoRunApp> createState() => _DinoRunAppState();
@@ -58,6 +62,12 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
   @override
   void didUpdateWidget(DinoRunApp oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.musicEnabled != widget.musicEnabled) {
+      _game.setMusicEnabled(widget.musicEnabled);
+    }
+    if (oldWidget.sfxEnabled != widget.sfxEnabled) {
+      _game.setSfxEnabled(widget.sfxEnabled);
+    }
     if (oldWidget.audioEnabled != widget.audioEnabled) {
       _game.setAudioEnabled(widget.audioEnabled);
     }
@@ -220,25 +230,22 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                           Text(
                             isCampaign
                                 ? isVictory
-                                      ? 'Nivel ${result?.levelReached ?? 1}/10 superado. La recompensa única tiene 1% de probabilidad y sólo el servidor confirma el resultado.'
+                                      ? '¡Nivel ${result?.levelReached ?? 1}/10 Superado!\n¡Excelente carrera!'
                                       : isAbandoned
-                                      ? 'La pausa o autorización excedió su límite. La campaña vuelve al nivel 1 y no publica ranking.'
-                                      : 'La campaña vuelve al nivel 1. Conservas maestría, compras, moneda guardada, paletas y recompensas únicas.'
+                                      ? 'Partida finalizada.\n¡Inténtalo de nuevo!'
+                                      : '¡Fin del intento!\nNivel alcanzado: ${result?.levelReached ?? 1}/10'
                                 : isBossRush
                                 ? isVictory
-                                      ? 'Derrotaste los 10 jefes. La puntuación '
-                                            'se publica sólo en Boss Rush; no se '
-                                            'concede moneda de campaña.'
-                                      : 'Derrotaste ${result?.levelReached ?? 0}/10 '
-                                            'jefes. La cadena termina, pero todo '
-                                            'tu progreso permanente se conserva.'
+                                      ? '¡Victoria Total!\n¡Derrotaste a los 10 jefes!'
+                                      : 'Jefes derrotados: ${result?.levelReached ?? 0}/10\n¡Buen intento!'
                                 : isNewHighScore
-                                ? 'MODO ENDLESS CLÁSICO\n¡PUNTUACIÓN MÁXIMA: $score PTS!\nHas superado tu récord anterior.'
-                                : 'MODO ENDLESS CLÁSICO\nPuntuación: $score PTS · Récord: $_persistedHighScore PTS',
+                                ? '¡NUEVO RÉCORD!\n$score PTS'
+                                : 'Puntuación: $score PTS\nRécord: $_persistedHighScore PTS',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 17,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -252,7 +259,7 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                           ],
                           ElevatedButton(
                             onPressed: () {
-                              if (game.runConfiguration.audioEnabled) {
+                              if (game.runConfiguration.sfxEnabled) {
                                 FlameAudio.play('Select.wav');
                               }
                               setState(() {
@@ -438,11 +445,9 @@ enum _ResultSaveStatus { none, saving, saved, failed }
 extension on _ResultSaveStatus {
   String get message => switch (this) {
     _ResultSaveStatus.none => '',
-    _ResultSaveStatus.saving => 'Sellando resultado pendiente…',
-    _ResultSaveStatus.saved =>
-      'Resultado pendiente guardado. Revísalo en tu historial.',
-    _ResultSaveStatus.failed =>
-      'No se pudo guardar el resultado. No se publicará ni dará recompensas.',
+    _ResultSaveStatus.saving => 'Guardando puntuación…',
+    _ResultSaveStatus.saved => '¡Puntuación guardada!',
+    _ResultSaveStatus.failed => 'Sin conexión para guardar puntuación.',
   };
 }
 

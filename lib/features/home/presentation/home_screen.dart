@@ -117,45 +117,29 @@ class HomeScreen extends ConsumerWidget {
         ),
 
         if (user?.isGuest == true) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           RetroArcadeCard(
             borderColor: RetroColors.gold.withValues(alpha: 0.6),
             backgroundColor: const Color(0xFF141A12),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
                 const PixelIconAsset(
                   assetName: PixelIconAsset.gamepad,
-                  size: 28,
+                  size: 24,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PARTIDA GUARDADA EN ESTE EQUIPO',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: RetroColors.gold,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Tus desbloqueos se guardan aquí. Puedes conectar cloud cuando quieras.',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.vt323(
-                          fontSize: 15,
-                          color: Colors.white70,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'MODO LOCAL · PROGRESO GUARDADO',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: RetroColors.gold,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -223,7 +207,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Carrera infinita clásica. Esquiva obstáculos a velocidad creciente sin jefes y acumula tu puntuación máxima.',
+                    'Carrera infinita clásica. Esquiva obstáculos y supera tu récord.',
                     style: GoogleFonts.vt323(
                       fontSize: isMobile ? 17 : 19,
                       color: RetroColors.textBright,
@@ -303,7 +287,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Enfréntate a los 10 jefes de la campaña completa: barras de salud, ataques especiales, combate y recompensas.',
+                    'Enfréntate a los 10 jefes arcade de la campaña completa.',
                     style: GoogleFonts.vt323(
                       fontSize: isMobile ? 17 : 19,
                       color: RetroColors.textBright,

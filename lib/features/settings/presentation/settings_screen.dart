@@ -54,7 +54,7 @@ class SettingsScreen extends ConsumerWidget {
                 const Divider(height: 32),
                 if (user?.isGuest == true) ...[
                   const Text(
-                    'Estás en una sesión de invitado. Para activar el respaldo en la nube y competir en los rankings globales, conecta o crea una cuenta:',
+                    'Partida guardada localmente. Conecta una cuenta para sincronizar:',
                     style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
@@ -115,20 +115,32 @@ class SettingsScreen extends ConsumerWidget {
                 secondary: const Icon(Icons.motion_photos_off_outlined),
                 title: const Text('Reducir movimiento'),
                 subtitle: const Text(
-                  'Detiene fondos decorativos y oscilaciones no esenciales.',
+                  'Detiene fondos y animaciones adicionales.',
                 ),
               ),
               const Divider(height: 1),
               SwitchListTile(
-                value: gameSettings.audioEnabled,
+                value: gameSettings.musicEnabled,
                 onChanged: auth.isBusy
                     ? null
                     : (enabled) => ref
                           .read(gameSettingsControllerProvider.notifier)
-                          .setAudioEnabled(enabled),
+                          .setMusicEnabled(enabled),
+                secondary: const Icon(Icons.music_note_outlined),
+                title: const Text('Música de fondo'),
+                subtitle: const Text('Banda sonora en bucle de la partida.'),
+              ),
+              const Divider(height: 1),
+              SwitchListTile(
+                value: gameSettings.sfxEnabled,
+                onChanged: auth.isBusy
+                    ? null
+                    : (enabled) => ref
+                          .read(gameSettingsControllerProvider.notifier)
+                          .setSfxEnabled(enabled),
                 secondary: const Icon(Icons.volume_up_outlined),
-                title: const Text('Audio'),
-                subtitle: const Text('Música y efectos durante la partida.'),
+                title: const Text('Efectos de sonido'),
+                subtitle: const Text('Sonidos de saltos, disparos y acciones.'),
               ),
             ],
           ),
