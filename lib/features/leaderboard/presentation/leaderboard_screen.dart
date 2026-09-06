@@ -33,86 +33,147 @@ class _LeaderboardContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(leaderboardControllerProvider.notifier);
+    final media = MediaQuery.sizeOf(context);
+    final isCompactHeight = media.height < 520;
+
+    final tabBar = TabBar(
+      indicatorColor: RetroColors.cyan,
+      indicatorWeight: 3,
+      indicatorSize: TabBarIndicatorSize.tab,
+      labelStyle: GoogleFonts.pressStart2p(
+        fontSize: isCompactHeight ? 8 : 9,
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedLabelStyle: GoogleFonts.pressStart2p(
+        fontSize: isCompactHeight ? 8 : 9,
+      ),
+      labelColor: RetroColors.cyan,
+      unselectedLabelColor: RetroColors.textMuted,
+      tabs: [
+        Tab(
+          height: isCompactHeight ? 38 : 46,
+          icon: PixelIconAsset(
+            assetName: PixelIconAsset.trophy,
+            size: isCompactHeight ? 16 : 20,
+          ),
+          text: 'Top global',
+        ),
+        Tab(
+          height: isCompactHeight ? 38 : 46,
+          icon: PixelIconAsset(
+            assetName: PixelIconAsset.coin,
+            size: isCompactHeight ? 16 : 20,
+          ),
+          text: 'Mi historial',
+        ),
+      ],
+    );
+
     return DefaultTabController(
       length: 2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Semantics(
-                  header: true,
-                  child: Text(
-                    'Leaderboard por personaje',
-                    style: Theme.of(context).textTheme.headlineMedium,
+      child: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isCompactHeight ? 14 : 24,
+                isCompactHeight ? 8 : 20,
+                isCompactHeight ? 14 : 24,
+                isCompactHeight ? 6 : 10,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'Leaderboard por personaje',
+                      style: isCompactHeight
+                          ? Theme.of(context).textTheme.titleLarge
+                          : Theme.of(context).textTheme.headlineMedium,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Compara resultados verificados o revisa tus últimas partidas.',
-                ),
-                const SizedBox(height: 16),
-                _Filters(
-                  filter: state.filter,
-                  onCharacterChanged: controller.selectCharacter,
-                  onModeChanged: controller.selectMode,
-                ),
-                if (state.errorMessage != null) ...[
-                  const SizedBox(height: 12),
-                  _MessageBanner(
-                    icon: Icons.sync_problem_outlined,
-                    message: state.errorMessage!,
+                  SizedBox(height: isCompactHeight ? 2 : 6),
+                  Text(
+                    'Compara resultados verificados o revisa tus últimas partidas.',
+                    style: TextStyle(
+                      fontSize: isCompactHeight ? 12 : 14,
+                      color: RetroColors.textMuted,
+                    ),
                   ),
+                  SizedBox(height: isCompactHeight ? 8 : 14),
+                  _Filters(
+                    filter: state.filter,
+                    onCharacterChanged: controller.selectCharacter,
+                    onModeChanged: controller.selectMode,
+                    isCompact: isCompactHeight,
+                  ),
+                  if (state.errorMessage != null) ...[
+                    SizedBox(height: isCompactHeight ? 6 : 12),
+                    _MessageBanner(
+                      icon: Icons.sync_problem_outlined,
+                      message: state.errorMessage!,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-          TabBar(
-            indicatorColor: RetroColors.cyan,
-            indicatorSize: TabBarIndicatorSize.tab,
-            labelStyle: GoogleFonts.pressStart2p(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-            ),
-            unselectedLabelStyle: GoogleFonts.pressStart2p(fontSize: 9),
-            labelColor: RetroColors.cyan,
-            unselectedLabelColor: RetroColors.textMuted,
-            tabs: const [
-              Tab(
-                icon: PixelIconAsset(
-                  assetName: PixelIconAsset.trophy,
-                  size: 20,
-                ),
-                text: 'Top global',
-              ),
-              Tab(
-                icon: PixelIconAsset(assetName: PixelIconAsset.coin, size: 20),
-                text: 'Mi historial',
-              ),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _GlobalList(
-                  state: state,
-                  onRefresh: controller.refresh,
-                  onLoadMore: controller.loadMore,
-                ),
-                _HistoryList(
-                  entries: state.personalHistory,
-                  onRefresh: controller.refresh,
-                ),
-              ],
-            ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _LeaderboardTabBarDelegate(tabBar),
           ),
         ],
+        body: TabBarView(
+          children: [
+            _GlobalList(
+              state: state,
+              onRefresh: controller.refresh,
+              onLoadMore: controller.loadMore,
+              isCompact: isCompactHeight,
+            ),
+            _HistoryList(
+              entries: state.personalHistory,
+              onRefresh: controller.refresh,
+              isCompact: isCompactHeight,
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _LeaderboardTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _LeaderboardTabBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF070D16),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF1E354F), width: 1.5),
+        ),
+      ),
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_LeaderboardTabBarDelegate oldDelegate) => false;
 }
 
 class _Filters extends StatelessWidget {
@@ -120,74 +181,101 @@ class _Filters extends StatelessWidget {
     required this.filter,
     required this.onCharacterChanged,
     required this.onModeChanged,
+    this.isCompact = false,
   });
 
   final LeaderboardFilter filter;
   final ValueChanged<CharacterId> onCharacterChanged;
   final ValueChanged<RunMode> onModeChanged;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(
-          spacing: 20,
-          runSpacing: 14,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            SizedBox(
-              width: 230,
-              child: DropdownButtonFormField<CharacterId>(
-                key: ValueKey(filter.characterId),
-                initialValue: filter.characterId,
-                decoration: const InputDecoration(
-                  labelText: 'Personaje',
-                  border: OutlineInputBorder(),
+    return RetroArcadeCard(
+      borderColor: const Color(0xFF1E354F),
+      backgroundColor: const Color(0xFF0C1420),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 10 : 16,
+        vertical: isCompact ? 6 : 12,
+      ),
+      child: Wrap(
+        spacing: isCompact ? 10 : 16,
+        runSpacing: isCompact ? 6 : 10,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: isCompact ? 190 : 230,
+            child: DropdownButtonFormField<CharacterId>(
+              key: ValueKey(filter.characterId),
+              initialValue: filter.characterId,
+              isDense: true,
+              decoration: InputDecoration(
+                labelText: 'Personaje',
+                prefixIcon: const Icon(Icons.person_outline, size: 18),
+                border: const OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: isCompact ? 8 : 12,
                 ),
-                items: [
-                  for (final character in CharacterId.values)
-                    DropdownMenuItem(
-                      value: character,
-                      child: Text(character.definition.displayName),
-                    ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    onCharacterChanged(value);
-                  }
-                },
               ),
-            ),
-            SegmentedButton<RunMode>(
-              segments: const [
-                ButtonSegment(
-                  value: RunMode.progression,
-                  icon: Icon(Icons.map_outlined),
-                  label: Text('Progresión'),
-                ),
-                ButtonSegment(
-                  value: RunMode.standard,
-                  icon: Icon(Icons.speed_outlined),
-                  label: Text('Estándar'),
-                ),
-                ButtonSegment(
-                  value: RunMode.bossRush,
-                  icon: Icon(Icons.whatshot_outlined),
-                  label: Text('Boss Rush'),
-                ),
+              items: [
+                for (final character in CharacterId.values)
+                  DropdownMenuItem(
+                    value: character,
+                    child: Text(
+                      character.definition.displayName,
+                      style: GoogleFonts.vt323(fontSize: 18),
+                    ),
+                  ),
               ],
-              selected: {filter.mode},
-              onSelectionChanged: (selection) {
-                onModeChanged(selection.single);
+              onChanged: (value) {
+                if (value != null) {
+                  onCharacterChanged(value);
+                }
               },
             ),
-            Chip(
-              avatar: const Icon(Icons.layers_outlined, size: 18),
-              label: Text('Versión ${filter.contentVersion}'),
+          ),
+          SegmentedButton<RunMode>(
+            style: SegmentedButton.styleFrom(
+              visualDensity: isCompact ? VisualDensity.compact : VisualDensity.standard,
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 6 : 12,
+                vertical: isCompact ? 4 : 8,
+              ),
             ),
-          ],
-        ),
+            segments: const [
+              ButtonSegment(
+                value: RunMode.progression,
+                icon: Icon(Icons.map_outlined, size: 16),
+                label: Text('Progresión'),
+              ),
+              ButtonSegment(
+                value: RunMode.standard,
+                icon: Icon(Icons.speed_outlined, size: 16),
+                label: Text('Estándar'),
+              ),
+              ButtonSegment(
+                value: RunMode.bossRush,
+                icon: Icon(Icons.whatshot_outlined, size: 16),
+                label: Text('Boss Rush'),
+              ),
+            ],
+            selected: {filter.mode},
+            onSelectionChanged: (selection) {
+              onModeChanged(selection.single);
+            },
+          ),
+          Chip(
+            visualDensity: isCompact ? VisualDensity.compact : VisualDensity.standard,
+            backgroundColor: const Color(0xFF132032),
+            side: const BorderSide(color: Color(0xFF1E354F)),
+            avatar: const Icon(Icons.layers_outlined, size: 16, color: RetroColors.cyan),
+            label: Text(
+              'Versión ${filter.contentVersion}',
+              style: GoogleFonts.vt323(fontSize: 15, color: RetroColors.textBright),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -198,20 +286,27 @@ class _GlobalList extends StatelessWidget {
     required this.state,
     required this.onRefresh,
     required this.onLoadMore,
+    this.isCompact = false,
   });
 
   final LeaderboardViewState state;
   final Future<void> Function() onRefresh;
   final Future<void> Function() onLoadMore;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
+    final listPadding = EdgeInsets.symmetric(
+      horizontal: isCompact ? 14 : 24,
+      vertical: isCompact ? 10 : 20,
+    );
+
     if (state.globalEntries.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(24),
+          padding: listPadding,
           children: [
             _EmptyState(
               icon: Icons.emoji_events_outlined,
@@ -228,7 +323,7 @@ class _GlobalList extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24),
+        padding: listPadding,
         itemCount:
             state.globalEntries.length + (state.nextCursor == null ? 0 : 1),
         itemBuilder: (context, index) {
@@ -353,19 +448,29 @@ class _LeaderboardCard extends StatelessWidget {
 }
 
 class _HistoryList extends StatelessWidget {
-  const _HistoryList({required this.entries, required this.onRefresh});
+  const _HistoryList({
+    required this.entries,
+    required this.onRefresh,
+    this.isCompact = false,
+  });
 
   final List<RunHistoryEntry> entries;
   final Future<void> Function() onRefresh;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
+    final listPadding = EdgeInsets.symmetric(
+      horizontal: isCompact ? 14 : 24,
+      vertical: isCompact ? 10 : 20,
+    );
+
     if (entries.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(24),
+          padding: listPadding,
           children: const [
             _EmptyState(
               icon: Icons.history_toggle_off_outlined,
@@ -381,7 +486,7 @@ class _HistoryList extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24),
+        padding: listPadding,
         itemCount: entries.length,
         itemBuilder: (context, index) => _HistoryCard(entry: entries[index]),
       ),
@@ -488,10 +593,27 @@ class _MessageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialBanner(
-      leading: Icon(icon),
-      content: Text(message),
-      actions: const [SizedBox.shrink()],
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF160B11),
+        border: Border.all(color: RetroColors.magenta, width: 1.5),
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, offset: Offset(2, 2)),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: RetroColors.magenta),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.vt323(fontSize: 16, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

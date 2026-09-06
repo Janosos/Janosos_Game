@@ -29,23 +29,62 @@ class HomeScreen extends ConsumerWidget {
         vertical: isShort ? 10 : 20,
       ),
       children: [
-        // Banner retro arcade de título
+        // Banner retro arcade con el icono oficial de Janosos Game y título
         Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: isShort ? 4 : 10),
-            child: Image.asset(
-              'assets/images/title_retro.png',
-              height: isShort ? 44 : (isMobile ? 54 : 72),
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.none,
-              errorBuilder: (_, _, _) => Text(
-                '★ JANOSOS ARCADE ★',
-                style: GoogleFonts.pressStart2p(
-                  fontSize: isShort ? 13 : (isMobile ? 15 : 20),
-                  color: RetroColors.cyan,
-                  letterSpacing: 2,
+            padding: EdgeInsets.symmetric(vertical: isShort ? 4 : 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: isShort ? 44 : (isMobile ? 54 : 68),
+                  height: isShort ? 44 : (isMobile ? 54 : 68),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F1722),
+                    border: Border.all(
+                      color: RetroColors.cyan,
+                      width: isShort ? 1.5 : 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: RetroColors.cyan.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.all(isShort ? 3 : 5),
+                  child: Image.asset(
+                    'assets/images/icon.png',
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.none,
+                    errorBuilder: (_, _, _) => const Icon(
+                      Icons.videogame_asset,
+                      color: RetroColors.cyan,
+                      size: 28,
+                    ),
+                  ),
                 ),
-              ),
+                SizedBox(width: isShort ? 10 : 16),
+                Flexible(
+                  child: Image.asset(
+                    'assets/images/title_retro.png',
+                    height: isShort ? 46 : (isMobile ? 56 : 74),
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.none,
+                    errorBuilder: (_, _, _) => Text(
+                      '★ JANOSOS ARCADE ★',
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isShort ? 13 : (isMobile ? 15 : 20),
+                        color: RetroColors.cyan,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

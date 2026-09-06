@@ -80,28 +80,31 @@ class _ProgressionContentState extends ConsumerState<_ProgressionContent> {
                     isCompactHeight: isCompactHeight,
                   )
                 else
-                  _buildCompactBadgesRow(snapshot),
+                  _buildCompactBadgesRow(snapshot, isCompact: isCompactHeight),
                 if (!snapshot.storeUnlocked) ...[
-                  const SizedBox(height: 6),
-                  const _MessageBanner(
+                  SizedBox(height: isCompactHeight ? 4 : 6),
+                  _MessageBanner(
                     icon: Icons.lock_outline,
                     message:
                         'Puedes explorar todo el catálogo. Para comprar, completa los 10 niveles con este personaje.',
+                    isCompact: isCompactHeight,
                   ),
                 ],
                 if (widget.state.noticeMessage != null) ...[
-                  const SizedBox(height: 6),
+                  SizedBox(height: isCompactHeight ? 4 : 6),
                   _MessageBanner(
                     icon: Icons.check_circle_outline,
                     message: widget.state.noticeMessage!,
                     success: true,
+                    isCompact: isCompactHeight,
                   ),
                 ],
                 if (widget.state.errorMessage != null) ...[
-                  const SizedBox(height: 6),
+                  SizedBox(height: isCompactHeight ? 4 : 6),
                   _MessageBanner(
                     icon: Icons.warning_amber_outlined,
                     message: widget.state.errorMessage!,
+                    isCompact: isCompactHeight,
                   ),
                 ],
               ],
@@ -132,26 +135,26 @@ class _ProgressionContentState extends ConsumerState<_ProgressionContent> {
                 Tab(
                   icon: Icon(
                     Icons.trending_up,
-                    size: isCompactHeight ? 16 : 20,
+                    size: isCompactHeight ? 15 : 20,
                   ),
                   text: 'Mejoras',
-                  height: isCompactHeight ? 40 : 48,
+                  height: isCompactHeight ? 36 : 48,
                 ),
                 Tab(
                   icon: Icon(
                     Icons.auto_awesome,
-                    size: isCompactHeight ? 16 : 20,
+                    size: isCompactHeight ? 15 : 20,
                   ),
                   text: 'Habilidades',
-                  height: isCompactHeight ? 40 : 48,
+                  height: isCompactHeight ? 36 : 48,
                 ),
                 Tab(
                   icon: Icon(
                     Icons.palette_outlined,
-                    size: isCompactHeight ? 16 : 20,
+                    size: isCompactHeight ? 15 : 20,
                   ),
                   text: 'Paletas',
-                  height: isCompactHeight ? 40 : 48,
+                  height: isCompactHeight ? 36 : 48,
                 ),
               ],
             ),
@@ -297,32 +300,39 @@ class _ProgressionContentState extends ConsumerState<_ProgressionContent> {
     );
   }
 
-  Widget _buildCompactBadgesRow(ProgressionSnapshot snapshot) {
+  Widget _buildCompactBadgesRow(
+    ProgressionSnapshot snapshot, {
+    bool isCompact = false,
+  }) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 6,
+      spacing: isCompact ? 6 : 8,
+      runSpacing: isCompact ? 4 : 6,
       children: [
         _SummaryChip(
           icon: Icons.workspace_premium_outlined,
           pixelIconAsset: PixelIconAsset.trophy,
           label: 'Maestría ${snapshot.masteryLevel}/30',
           color: RetroColors.gold,
+          isCompact: isCompact,
         ),
         _SummaryChip(
           icon: Icons.savings_outlined,
           pixelIconAsset: PixelIconAsset.coin,
           label: '${_coins(snapshot.bankedCurrency)} guardadas',
           color: RetroColors.goldLight,
+          isCompact: isCompact,
         ),
         _SummaryChip(
           icon: Icons.warning_amber_outlined,
           label: '${_coins(snapshot.temporaryCurrency)} en riesgo',
           color: RetroColors.magenta,
+          isCompact: isCompact,
         ),
-        const _SummaryChip(
+        _SummaryChip(
           icon: Icons.balance_outlined,
           label: 'Estándar normalizado',
           color: RetroColors.cyan,
+          isCompact: isCompact,
         ),
       ],
     );
@@ -498,68 +508,102 @@ class _StatsTab extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'Efecto actual: +${_percent(stat.effectiveBasisPoints)}',
-                    style: GoogleFonts.vt323(
-                      fontSize: 16,
-                      color: RetroColors.cyan,
-                    ),
-                  ),
-                  if (!stat.isCapped) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Siguiente: ${stat.nextBonusLives > 0 ? '+1 vida y ' : ''}+${_percent(stat.nextBonusBasisPoints ?? 0)} · Maestría ${stat.nextUnlockLevel} · ${_coins(stat.nextCost ?? 0)} monedas',
-                      style: GoogleFonts.vt323(
-                        fontSize: 15,
-                        color: RetroColors.textMuted,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton.icon(
-                      onPressed: canBuy
-                          ? () => controller.purchaseUpgrade(stat)
-                          : null,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(130, 48),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        backgroundColor: RetroColors.cyan,
-                        foregroundColor: Colors.black,
-                        disabledBackgroundColor: const Color(0xFF132032),
-                        disabledForegroundColor: RetroColors.textMuted,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
-                          side: BorderSide(
-                            color: Color(0xFF1E354F),
-                            width: 1.5,
+                  const SizedBox(height: 8),
+                  LayoutBuilder(
+                    builder: (context, cardConstraints) {
+                      final isWideCard = cardConstraints.maxWidth > 380;
+                      final effectDetails = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Efecto actual: +${_percent(stat.effectiveBasisPoints)}',
+                            style: GoogleFonts.vt323(
+                              fontSize: isCompactHeight ? 15 : 16,
+                              color: RetroColors.cyan,
+                            ),
+                          ),
+                          if (!stat.isCapped) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Siguiente: ${stat.nextBonusLives > 0 ? '+1 vida y ' : ''}+${_percent(stat.nextBonusBasisPoints ?? 0)} · Maestría ${stat.nextUnlockLevel} · ${_coins(stat.nextCost ?? 0)} monedas',
+                              style: GoogleFonts.vt323(
+                                fontSize: isCompactHeight ? 14 : 15,
+                                color: RetroColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+
+                      final buyButton = FilledButton.icon(
+                        onPressed: canBuy
+                            ? () => controller.purchaseUpgrade(stat)
+                            : null,
+                        style: FilledButton.styleFrom(
+                          minimumSize: Size(
+                            isCompactHeight ? 120 : 130,
+                            isCompactHeight ? 40 : 46,
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isCompactHeight ? 12 : 16,
+                            vertical: isCompactHeight ? 8 : 12,
+                          ),
+                          backgroundColor: RetroColors.cyan,
+                          foregroundColor: Colors.black,
+                          disabledBackgroundColor: const Color(0xFF132032),
+                          disabledForegroundColor: RetroColors.textMuted,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                            side: BorderSide(
+                              color: Color(0xFF1E354F),
+                              width: 1.5,
+                            ),
                           ),
                         ),
-                      ),
-                      icon: busy
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.black,
+                        icon: busy
+                            ? const SizedBox.square(
+                                dimension: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : Icon(
+                                stat.isCapped ? Icons.check : Icons.add,
+                                size: isCompactHeight ? 16 : 18,
                               ),
-                            )
-                          : Icon(
-                              stat.isCapped ? Icons.check : Icons.add,
-                              size: 18,
-                            ),
-                      label: Text(
-                        _statActionLabel(snapshot, stat),
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                        label: Text(
+                          _statActionLabel(snapshot, stat),
+                          style: GoogleFonts.pressStart2p(
+                            fontSize: isCompactHeight ? 8 : 9,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+
+                      if (isWideCard) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(child: effectDetails),
+                            const SizedBox(width: 12),
+                            buyButton,
+                          ],
+                        );
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          effectDetails,
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: buyButton,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -711,11 +755,12 @@ class _SkillCard extends ConsumerWidget {
         balanceReady;
     final canEquip = !state.isBusy && skill.owned;
     final busy = state.busyAction?.contains(skill.id) == true;
+    final isCompactHeight = MediaQuery.sizeOf(context).height < 520;
 
     return RetroArcadeCard(
       borderColor: selected ? RetroColors.cyan : const Color(0xFF1E354F),
       accentHeaderColor: selected ? RetroColors.cyan : null,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isCompactHeight ? 12 : 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -761,91 +806,129 @@ class _SkillCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Maestría ${skill.unlockLevel} · ${_coins(skill.cost)} monedas · Progresión/Boss Rush',
-            style: GoogleFonts.vt323(
-              fontSize: 14,
-              color: RetroColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerRight,
-            child: skill.owned
-                ? FilledButton.tonalIcon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(120, 48),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                        side: BorderSide(
-                          color: Color(0xFF1E354F),
-                          width: 1.5,
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, cardConstraints) {
+              final isWideCard = cardConstraints.maxWidth > 380;
+              final requirementText = Text(
+                'Maestría ${skill.unlockLevel} · ${_coins(skill.cost)} monedas · Progresión/Boss Rush',
+                style: GoogleFonts.vt323(
+                  fontSize: isCompactHeight ? 13 : 14,
+                  color: RetroColors.textMuted,
+                ),
+              );
+
+              final actionButton = skill.owned
+                  ? FilledButton.tonalIcon(
+                      style: FilledButton.styleFrom(
+                        minimumSize: Size(
+                          isCompactHeight ? 110 : 120,
+                          isCompactHeight ? 40 : 46,
                         ),
-                      ),
-                    ),
-                    onPressed: canEquip
-                        ? () => skill.slot == SkillSlot.active
-                            ? controller.equipActive(skill.id)
-                            : controller.togglePassive(skill.id)
-                        : null,
-                    icon: busy
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(
-                            selected ? Icons.remove_circle : Icons.check,
-                            size: 18,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isCompactHeight ? 12 : 16,
+                          vertical: isCompactHeight ? 8 : 12,
+                        ),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(
+                            color: Color(0xFF1E354F),
+                            width: 1.5,
                           ),
-                    label: Text(
-                      selected
-                          ? skill.slot == SkillSlot.active
-                              ? 'Equipada'
-                              : 'Retirar'
-                          : 'Equipar',
-                      style: GoogleFonts.pressStart2p(fontSize: 9),
-                    ),
-                  )
-                : FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(130, 48),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      backgroundColor: RetroColors.cyan,
-                      foregroundColor: Colors.black,
-                      disabledBackgroundColor: const Color(0xFF132032),
-                      disabledForegroundColor: RetroColors.textMuted,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.zero,
-                        side: BorderSide(
-                          color: Color(0xFF1E354F),
-                          width: 1.5,
                         ),
                       ),
-                    ),
-                    onPressed: canPurchase
-                        ? () => controller.purchaseSkill(skill)
-                        : null,
-                    icon: busy
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
+                      onPressed: canEquip
+                          ? () => skill.slot == SkillSlot.active
+                              ? controller.equipActive(skill.id)
+                              : controller.togglePassive(skill.id)
+                          : null,
+                      icon: busy
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              selected ? Icons.remove_circle : Icons.check,
+                              size: isCompactHeight ? 16 : 18,
                             ),
-                          )
-                        : const Icon(Icons.shopping_bag_outlined, size: 18),
-                    label: Text(
-                      _skillActionLabel(snapshot, skill),
-                      style: GoogleFonts.pressStart2p(fontSize: 9),
-                    ),
+                      label: Text(
+                        selected
+                            ? skill.slot == SkillSlot.active
+                                ? 'Equipada'
+                                : 'Retirar'
+                            : 'Equipar',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isCompactHeight ? 8 : 9,
+                        ),
+                      ),
+                    )
+                  : FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        minimumSize: Size(
+                          isCompactHeight ? 120 : 130,
+                          isCompactHeight ? 40 : 46,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isCompactHeight ? 12 : 16,
+                          vertical: isCompactHeight ? 8 : 12,
+                        ),
+                        backgroundColor: RetroColors.cyan,
+                        foregroundColor: Colors.black,
+                        disabledBackgroundColor: const Color(0xFF132032),
+                        disabledForegroundColor: RetroColors.textMuted,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(
+                            color: Color(0xFF1E354F),
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      onPressed: canPurchase
+                          ? () => controller.purchaseSkill(skill)
+                          : null,
+                      icon: busy
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                          : Icon(
+                              Icons.shopping_bag_outlined,
+                              size: isCompactHeight ? 16 : 18,
+                            ),
+                      label: Text(
+                        _skillActionLabel(snapshot, skill),
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isCompactHeight ? 8 : 9,
+                        ),
+                      ),
+                    );
+
+              if (isWideCard) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: requirementText),
+                    const SizedBox(width: 12),
+                    actionButton,
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  requirementText,
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: actionButton,
                   ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1007,12 +1090,14 @@ class _SummaryChip extends StatelessWidget {
     required this.label,
     this.color = RetroColors.cyan,
     this.pixelIconAsset,
+    this.isCompact = false,
   });
 
   final IconData icon;
   final String label;
   final Color color;
   final String? pixelIconAsset;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -1028,19 +1113,22 @@ class _SummaryChip extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 7 : 10,
+        vertical: isCompact ? 4 : 7,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (pixelIconAsset != null)
-            PixelIconAsset(assetName: pixelIconAsset!, size: 16)
+            PixelIconAsset(assetName: pixelIconAsset!, size: isCompact ? 13 : 16)
           else
-            Icon(icon, size: 16, color: color),
-          const SizedBox(width: 8),
+            Icon(icon, size: isCompact ? 13 : 16, color: color),
+          SizedBox(width: isCompact ? 5 : 8),
           Text(
             label,
             style: GoogleFonts.vt323(
-              fontSize: 16,
+              fontSize: isCompact ? 14 : 16,
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
@@ -1056,11 +1144,13 @@ class _MessageBanner extends StatelessWidget {
     required this.icon,
     required this.message,
     this.success = false,
+    this.isCompact = false,
   });
 
   final IconData icon;
   final String message;
   final bool success;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -1079,17 +1169,21 @@ class _MessageBanner extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 8 : 12,
+          vertical: isCompact ? 4 : 8,
+        ),
         child: Row(
           children: [
-            Icon(icon, color: borderColor, size: 20),
-            const SizedBox(width: 10),
+            Icon(icon, color: borderColor, size: isCompact ? 14 : 18),
+            SizedBox(width: isCompact ? 6 : 10),
             Expanded(
               child: Text(
                 message,
                 style: GoogleFonts.vt323(
-                  fontSize: 16,
+                  fontSize: isCompact ? 14 : 16,
                   color: Colors.white,
+                  height: 1.1,
                 ),
               ),
             ),

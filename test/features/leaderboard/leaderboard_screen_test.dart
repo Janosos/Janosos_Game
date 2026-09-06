@@ -55,6 +55,56 @@ void main() {
     expect(find.text('Sólo en este dispositivo'), findsOneWidget);
     expect(find.textContaining('todavía no aparece'), findsOneWidget);
   });
+
+  testWidgets('renders responsively in landscape mobile without overflow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 390);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final authRepository = FakeAuthRepository.signedIn(
+      userId: 'user-landscape-lead',
+      displayName: 'Leader',
+    );
+    addTearDown(authRepository.dispose);
+    final repository = _FixtureLeaderboardRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEnvironmentProvider.overrideWithValue(
+            AppEnvironment(
+              backendMode: BackendMode.local,
+              supabaseUrl: '',
+              supabasePublishableKey: '',
+              authRedirectUri: Uri(
+                scheme: 'io.janosos.game',
+                host: 'auth',
+                path: '/callback',
+              ),
+              contentVersion: 'v6-preview-1',
+            ),
+          ),
+          authRepositoryProvider.overrideWithValue(authRepository),
+          leaderboardRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(home: Scaffold(body: LeaderboardScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Leaderboard por personaje'), findsOneWidget);
+    expect(find.text('Alpha'), findsOneWidget);
+
+    await tester.tap(find.text('Mi historial'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Pendiente'), findsOneWidget);
+  });
 }
 
 class _FixtureLeaderboardRepository implements LeaderboardRepository {

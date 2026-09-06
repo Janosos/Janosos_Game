@@ -44,11 +44,25 @@ class JanososAppShell extends StatelessWidget {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            PixelIconAsset(
-              assetName: PixelIconAsset.gamepad,
-              size: isCompactHeight ? 18 : 24,
+            Container(
+              width: isCompactHeight ? 22 : 28,
+              height: isCompactHeight ? 22 : 28,
+              decoration: BoxDecoration(
+                border: Border.all(color: cyan, width: 1.5),
+                color: const Color(0xFF0D1520),
+              ),
+              padding: const EdgeInsets.all(2),
+              child: Image.asset(
+                'assets/images/icon.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, _, _) => PixelIconAsset(
+                  assetName: PixelIconAsset.gamepad,
+                  size: isCompactHeight ? 16 : 22,
+                ),
+              ),
             ),
-            SizedBox(width: isCompactHeight ? 6 : 10),
+            SizedBox(width: isCompactHeight ? 8 : 10),
             Text(
               'JANOSOS V6',
               style: GoogleFonts.pressStart2p(

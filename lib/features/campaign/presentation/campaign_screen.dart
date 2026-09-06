@@ -210,13 +210,18 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+          padding: EdgeInsets.fromLTRB(
+            isCompactHeight ? 14 : 24,
+            8,
+            isCompactHeight ? 14 : 24,
+            24,
+          ),
           sliver: SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 430,
-              mainAxisExtent: 330,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              mainAxisExtent: isCompactHeight ? 205 : 220,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
             ),
             itemCount: initialCampaignLevels.length,
             itemBuilder: (context, index) {
@@ -401,7 +406,7 @@ class _LevelCard extends StatelessWidget {
           ? RetroColors.green
           : null,
       glow: available,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -418,14 +423,14 @@ class _LevelCard extends StatelessWidget {
                     : Colors.white54,
                 fontSize: 8,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   level.scenario.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.pressStart2p(
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -442,11 +447,11 @@ class _LevelCard extends StatelessWidget {
                     : available
                     ? RetroColors.cyan
                     : Colors.white38,
-                size: 18,
+                size: 16,
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             'JEFE',
             style: GoogleFonts.pressStart2p(
@@ -455,45 +460,43 @@ class _LevelCard extends StatelessWidget {
               letterSpacing: 1,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             level.boss,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.pressStart2p(fontSize: 10, color: Colors.white),
           ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: Text(
-              level.mechanic,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.vt323(
-                fontSize: 16,
-                color: RetroColors.textMuted,
-                height: 1.15,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            level.mechanic,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.vt323(
+              fontSize: 15,
+              color: RetroColors.textMuted,
+              height: 1.15,
             ),
           ),
-          const SizedBox(height: 8),
+          const Spacer(),
           Row(
             children: [
-              const PixelIconAsset(assetName: PixelIconAsset.coin, size: 16),
-              const SizedBox(width: 8),
+              const PixelIconAsset(assetName: PixelIconAsset.coin, size: 14),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '${level.uniqueReward} · 1%',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.vt323(
-                    fontSize: 16,
+                    fontSize: 15,
                     color: RetroColors.gold,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
             child: RetroArcadeButton(
