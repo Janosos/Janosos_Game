@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flame_audio/flame_audio.dart';
+import '../audio/app_audio_manager.dart';
 import '../dino_run_game.dart';
 import '../domain/run_configuration.dart';
 
@@ -113,9 +113,12 @@ class _StartMenuOverlayState extends State<StartMenuOverlay>
                         SizedBox(height: spacing),
                         GestureDetector(
                           onTap: () async {
-                            if (widget.game.runConfiguration.sfxEnabled) {
-                              FlameAudio.play('Select.wav');
-                            }
+                            AppAudioManager.playSfx(
+                              'Select.wav',
+                              audioEnabled:
+                                  widget.game.runConfiguration.sfxEnabled &&
+                                  widget.game.runConfiguration.audioEnabled,
+                            );
                             if (widget.game.runConfiguration.experience !=
                                 RunExperience.endlessRunner) {
                               await widget.game.startGame(

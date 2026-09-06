@@ -2,7 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
-import 'package:flame_audio/flame_audio.dart';
+import '../audio/app_audio_manager.dart';
 import '../dino_run_game.dart';
 import '../domain/character_definition.dart';
 import '../domain/character_id.dart';
@@ -359,7 +359,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       _yVelocity = jumpForce;
       _isJumping = true;
       current = DinoState.jumping;
-      if (_configuration.sfxEnabled) FlameAudio.play('Jump.wav');
+      AppAudioManager.playSfx(
+        'Jump.wav',
+        audioEnabled:
+            _configuration.sfxEnabled && _configuration.audioEnabled,
+      );
     } else {
       if (characterId.definition.hasTrait(CharacterCoreTrait.doubleJump) &&
           !hasDoubleJumped) {
@@ -369,7 +373,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
         );
         _yVelocity = jumpForce * (1 + control.clamp(0, 1000) / 10000);
         hasDoubleJumped = true;
-        if (_configuration.sfxEnabled) FlameAudio.play('Jump.wav');
+        AppAudioManager.playSfx(
+          'Jump.wav',
+          audioEnabled:
+              _configuration.sfxEnabled && _configuration.audioEnabled,
+        );
       } else if (characterId.definition.hasTrait(CharacterCoreTrait.glide)) {
         isGliding = true;
       }
@@ -390,7 +398,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     if (activeAbility == ActiveAbilityId.pistolShot && cooldownTimer <= 0) {
       game.add(Projectile(position: position + Vector2(size.x, -size.y / 2)));
       cooldownTimer = pistoleroCooldown / _configuration.stats.speedMultiplier;
-      if (_configuration.sfxEnabled) FlameAudio.play('Shoot.wav');
+      AppAudioManager.playSfx(
+        'Shoot.wav',
+        audioEnabled:
+            _configuration.sfxEnabled && _configuration.audioEnabled,
+      );
       current = DinoState.shooting;
       abilityDurationTimer = 0.5;
       game.abilityActivated(ActiveAbilityId.pistolShot);
@@ -404,7 +416,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       abilityDurationTimer =
           fantasmaDuration * (1 + durationBonus.clamp(0, 1000) / 10000);
       cooldownTimer = fantasmaCooldown / _configuration.stats.speedMultiplier;
-      if (_configuration.sfxEnabled) FlameAudio.play('Invisibility.wav');
+      AppAudioManager.playSfx(
+        'Invisibility.wav',
+        audioEnabled:
+            _configuration.sfxEnabled && _configuration.audioEnabled,
+      );
       game.abilityActivated(ActiveAbilityId.intangibility);
     } else if (activeAbility == ActiveAbilityId.electricDischarge &&
         isSuperCharged) {
@@ -416,7 +432,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       isSuperCharged = false;
       game.resetSpeed();
 
-      if (_configuration.sfxEnabled) FlameAudio.play('Shoot.wav');
+      AppAudioManager.playSfx(
+        'Shoot.wav',
+        audioEnabled:
+            _configuration.sfxEnabled && _configuration.audioEnabled,
+      );
       game.abilityActivated(ActiveAbilityId.electricDischarge);
     }
   }
@@ -438,7 +458,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
             !_firstOrbBonusUsed;
         energy += doubleCharge ? 40 : 20;
         if (doubleCharge) _firstOrbBonusUsed = true;
-        if (_configuration.sfxEnabled) FlameAudio.play('Select.wav');
+        AppAudioManager.playSfx(
+          'Select.wav',
+          audioEnabled:
+              _configuration.sfxEnabled && _configuration.audioEnabled,
+        );
         if (energy >= maxEnergy) {
           energy = maxEnergy;
           isSuperCharged = true;
@@ -452,7 +476,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       if (isDamageInvulnerable) return;
       if (characterId == CharacterId.nanic && isDischarging) {
         other.removeFromParent();
-        if (_configuration.sfxEnabled) FlameAudio.play('Hit.wav');
+        AppAudioManager.playSfx(
+          'Hit.wav',
+          audioEnabled:
+              _configuration.sfxEnabled && _configuration.audioEnabled,
+        );
         isDischarging = false;
         abilityDurationTimer = 0;
         return;
@@ -463,7 +491,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       if (hasShield) {
         hasShield = false;
         game.playerDamaged(wasAbsorbed: true);
-        if (_configuration.sfxEnabled) FlameAudio.play('Hit.wav');
+        AppAudioManager.playSfx(
+          'Hit.wav',
+          audioEnabled:
+              _configuration.sfxEnabled && _configuration.audioEnabled,
+        );
         if (characterId == CharacterId.chema) {
           final reduction = game.passiveParameter(
             'shield_penalty_reduction',
@@ -494,7 +526,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
 
   void hit() {
     current = DinoState.hit;
-    if (_configuration.sfxEnabled) FlameAudio.play('Hit.wav');
+    AppAudioManager.playSfx(
+      'Hit.wav',
+      audioEnabled:
+          _configuration.sfxEnabled && _configuration.audioEnabled,
+    );
     game.receiveUnabsorbedHit();
   }
 

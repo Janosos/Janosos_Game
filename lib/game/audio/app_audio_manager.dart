@@ -1,13 +1,28 @@
+import 'dart:async';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 
 /// Centralized manager for background music (BGM) and sound effects (SFX)
-/// to ensure resilient playback and reactive muting across settings and gameplay.
+/// using a bounded, recycled [AudioPool] system to eliminate native AudioTrack
+/// exhaustion, audio distortion, and FPS drops during extended gameplay and boss fights.
 class AppAudioManager {
   static const String bgmTrack = 'LoopSong.wav';
 
+  static const List<String> sfxAssets = [
+    'Jump.wav',
+    'Select.wav',
+    'Shoot.wav',
+    'Invisibility.wav',
+    'Hit.wav',
+  ];
+
   /// Tracks whether the game screen/route is currently mounted and active.
   static bool isGameActive = false;
+
+  /// Recycled audio pools for each sound effect (strictly bounds native players).
+  static final Map<String, AudioPool> _pools = {};
+  static final Map<String, int> _lastPlayTimeMs = {};
+  static bool _poolsInitialized = false;
 
   /// Ensures [FlameAudio.bgm] has an active, non-disposed [AudioPlayer].
   static void ensureBgmPlayer() {
@@ -23,33 +38,47 @@ class AppAudioManager {
     }
   }
 
-  /// Initialize BGM with audio focus settings.
+  /// Initialize BGM and pre-warmed audio pools for all sound effects.
   static Future<void> initialize() async {
     ensureBgmPlayer();
     try {
       await FlameAudio.bgm.initialize();
     } catch (e) {
-      debugPrint('AppAudioManager.initialize notice: $e');
+      debugPrint('AppAudioManager.initialize bgm notice: $e');
+    }
+    await _initPools();
+  }
+
+  /// Pre-creates a bounded AudioPool for each SFX to prevent creating unbounded
+  /// native AudioPlayer/AudioTrack instances that crash or lag Android on extended play.
+  static Future<void> _initPools() async {
+    if (_poolsInitialized) return;
+    _poolsInitialized = true;
+
+    for (final sfx in sfxAssets) {
+      try {
+        // maxPlayers: 2 per sound is ideal: allows overlapping impacts or jumps
+        // while strictly capping total active native audio players to <= 10.
+        final pool = await FlameAudio.createPool(
+          sfx,
+          minPlayers: 1,
+          maxPlayers: sfx == 'Invisibility.wav' ? 1 : 2,
+        );
+        _pools[sfx] = pool;
+      } catch (e) {
+        debugPrint('AppAudioManager error creating pool for "$sfx": $e');
+      }
     }
   }
 
   /// Preload SFX and BGM assets safely.
   static Future<void> preloadAssets() async {
     ensureBgmPlayer();
-    const assets = [
-      'Jump.wav',
-      'Select.wav',
-      'Shoot.wav',
-      'Invisibility.wav',
-      'Hit.wav',
-      bgmTrack,
-    ];
-    for (final sfx in assets) {
-      try {
-        await FlameAudio.audioCache.load(sfx);
-      } catch (e) {
-        debugPrint('AppAudioManager preload defer "$sfx": $e');
-      }
+    await _initPools();
+    try {
+      await FlameAudio.audioCache.load(bgmTrack);
+    } catch (e) {
+      debugPrint('AppAudioManager preload defer "$bgmTrack": $e');
     }
   }
 
@@ -118,17 +147,72 @@ class AppAudioManager {
     }
   }
 
-  /// Play SFX safely checking [audioEnabled].
+  /// Minimum interval between plays of the same sound (in ms).
+  /// Prevents audio clipping, crackling, and native track thrashing when rapid hits occur.
+  static int _minIntervalFor(String sfx) {
+    switch (sfx) {
+      case 'Hit.wav':
+        return 70;
+      case 'Shoot.wav':
+        return 60;
+      case 'Jump.wav':
+        return 90;
+      case 'Select.wav':
+        return 60;
+      case 'Invisibility.wav':
+        return 200;
+      default:
+        return 50;
+    }
+  }
+
+  /// Plays SFX safely using the bounded recycled [AudioPool] system.
+  /// Completely non-blocking and safe from native AudioTrack leaks.
   static void playSfx(
     String sfx, {
     required bool audioEnabled,
     double volume = 1.0,
   }) {
     if (!audioEnabled) return;
-    try {
-      FlameAudio.play(sfx, volume: volume);
-    } catch (e) {
-      debugPrint('AppAudioManager.playSfx error: $e');
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final lastTime = _lastPlayTimeMs[sfx] ?? 0;
+    final minInterval = _minIntervalFor(sfx);
+
+    if (now - lastTime < minInterval) {
+      // Throttle rapid repeated triggers of the same sound
+      return;
     }
+    _lastPlayTimeMs[sfx] = now;
+
+    unawaited(_playSfxAsync(sfx, volume));
+  }
+
+  static Future<void> _playSfxAsync(String sfx, double volume) async {
+    try {
+      var pool = _pools[sfx];
+      if (pool == null) {
+        pool = await FlameAudio.createPool(
+          sfx,
+          minPlayers: 1,
+          maxPlayers: sfx == 'Invisibility.wav' ? 1 : 2,
+        );
+        _pools[sfx] = pool;
+      }
+      await pool.start(volume: volume);
+    } catch (error) {
+      debugPrint('AppAudioManager.playSfx error for "$sfx": $error');
+    }
+  }
+
+  /// Clean up pools on application shutdown if needed.
+  static Future<void> dispose() async {
+    for (final pool in _pools.values) {
+      try {
+        await pool.dispose();
+      } catch (_) {}
+    }
+    _pools.clear();
+    _poolsInitialized = false;
   }
 }

@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flame/game.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
+import '../audio/app_audio_manager.dart';
 
 import '../dino_run_game.dart';
 import '../domain/character_id.dart';
@@ -259,9 +259,12 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                           ],
                           ElevatedButton(
                             onPressed: () {
-                              if (game.runConfiguration.sfxEnabled) {
-                                FlameAudio.play('Select.wav');
-                              }
+                              AppAudioManager.playSfx(
+                                'Select.wav',
+                                audioEnabled:
+                                    game.runConfiguration.sfxEnabled &&
+                                    game.runConfiguration.audioEnabled,
+                              );
                               setState(() {
                                 _resultSaveStatus = _ResultSaveStatus.none;
                                 _resultSaveMessage = null;

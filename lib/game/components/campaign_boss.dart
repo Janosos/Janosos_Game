@@ -31,7 +31,7 @@ class CampaignBoss extends PositionComponent
 
   Color get _accent => _bossAccent(definition.level);
 
-  late final TextPaint _namePaint = TextPaint(
+  static final TextPaint _namePaint = TextPaint(
     style: const TextStyle(
       color: Color(0xFFFFD54F),
       fontSize: 14,
@@ -217,7 +217,7 @@ class CampaignBossHazard extends PositionComponent
   bool _armed = false;
   late double _ground;
   late final double _laneSeed;
-  late final TextPaint _warningPaint = TextPaint(
+  static final TextPaint _warningPaint = TextPaint(
     style: const TextStyle(
       color: Colors.white,
       fontSize: 14,

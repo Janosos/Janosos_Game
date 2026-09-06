@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flame/events.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/foundation.dart';
@@ -309,6 +308,14 @@ class DinoRunGame extends FlameGame
     }
 
     unawaited(AppAudioManager.stopBgm());
+
+    for (final orb in children.whereType<OrbComponent>().toList()) {
+      orb.removeFromParent();
+    }
+    for (final projectile in children.whereType<Projectile>().toList()) {
+      projectile.removeFromParent();
+    }
+    _removeBossEncounter();
 
     _scoreSystem.completeRun();
     final result = RunResult(
@@ -669,11 +676,11 @@ class DinoRunGame extends FlameGame
       ignoreCooldown: ignoresCooldown,
     );
     if (damage == 0) return;
-    try {
-      if (_configuration.audioEnabled) {
-        FlameAudio.play('Hit.wav');
-      }
-    } catch (_) {}
+    AppAudioManager.playSfx(
+      'Hit.wav',
+      audioEnabled:
+          _configuration.sfxEnabled && _configuration.audioEnabled,
+    );
     _boss?.flashDamage();
     _bossActionButton?.triggerPress();
     _eventSink(
@@ -825,10 +832,15 @@ class DinoRunGame extends FlameGame
     _boss?.removeFromParent();
     _boss = null;
     final button = _bossActionButton;
-    if (button != null) camera.viewport.remove(button);
-    _bossActionButton = null;
-    for (final hazard in children.whereType<CampaignBossHazard>()) {
+    if (button != null) {
+      camera.viewport.remove(button);
+      _bossActionButton = null;
+    }
+    for (final hazard in children.whereType<CampaignBossHazard>().toList()) {
       hazard.removeFromParent();
+    }
+    for (final projectile in children.whereType<Projectile>().toList()) {
+      projectile.removeFromParent();
     }
     overlays.remove('BossTutorial');
     overlays.remove('BossHelp');

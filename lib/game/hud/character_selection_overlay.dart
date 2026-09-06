@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flame/widgets.dart';
 import 'package:flame/components.dart';
 import 'package:flame/sprite.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../audio/app_audio_manager.dart';
 import '../dino_run_game.dart';
 import '../domain/character_definition.dart';
 import '../domain/character_id.dart';
@@ -59,9 +59,12 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onTap: () {
-              if (widget.game.runConfiguration.sfxEnabled) {
-                FlameAudio.play('Select.wav');
-              }
+              AppAudioManager.playSfx(
+                'Select.wav',
+                audioEnabled:
+                    widget.game.runConfiguration.sfxEnabled &&
+                    widget.game.runConfiguration.audioEnabled,
+              );
               setState(() {
                 selectedCharacter = type;
               });
@@ -274,9 +277,12 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                   child: ElevatedButton(
                     onPressed: selectedCharacter != null
                         ? () {
-                            if (widget.game.runConfiguration.sfxEnabled) {
-                              FlameAudio.play('Select.wav');
-                            }
+                            AppAudioManager.playSfx(
+                              'Select.wav',
+                              audioEnabled:
+                                  widget.game.runConfiguration.sfxEnabled &&
+                                  widget.game.runConfiguration.audioEnabled,
+                            );
                             widget.game.startGame(
                               widget.configurationForCharacter(
                                 selectedCharacter!,
