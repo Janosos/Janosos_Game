@@ -4,6 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flame/game.dart';
 import 'package:flame/input.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' show KeyEventResult;
 
@@ -33,9 +34,19 @@ class DinoRunGame extends FlameGame
     required RunConfiguration configuration,
     GameplayEventSink onEvent = ignoreGameplayEvent,
     DateTime Function()? now,
+    bool? isMobileOrTablet,
   }) : _configuration = configuration,
        _eventSink = onEvent,
-       _now = now ?? DateTime.now;
+       _now = now ?? DateTime.now,
+       _isMobileOrTabletOverride = isMobileOrTablet;
+
+  final bool? _isMobileOrTabletOverride;
+
+  bool get isMobileOrTablet {
+    if (_isMobileOrTabletOverride != null) return _isMobileOrTabletOverride;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
 
   late DinoComponent _dino;
   late GroundComponent _ground;
@@ -126,6 +137,10 @@ class DinoRunGame extends FlameGame
       'nanic_clean.png',
       'bullet.png',
       'orb.png',
+      'dpad_arrow_left.png',
+      'dpad_arrow_left_pressed.png',
+      'dpad_arrow_right.png',
+      'dpad_arrow_right_pressed.png',
       'boss_horseman_pixel.png',
       'boss_queen_pixel.png',
       'boss_hyde_pixel.png',
@@ -223,8 +238,10 @@ class DinoRunGame extends FlameGame
       camera.viewport.remove(_directionalPad!);
       _directionalPad = null;
     }
-    _directionalPad = DirectionalPad();
-    camera.viewport.add(_directionalPad!);
+    if (isMobileOrTablet) {
+      _directionalPad = DirectionalPad();
+      camera.viewport.add(_directionalPad!);
+    }
 
     _dino.reset();
     _obstacleManager.reset(seed: configuration.seed);

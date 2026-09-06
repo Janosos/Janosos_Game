@@ -131,12 +131,6 @@ class _FakeEmptyCampaignRepository implements CampaignRepository {
 
 class _FakeProgressionRepository implements ProgressionRepository {
   @override
-  Future<ProgressionSnapshot> equipPalette({
-    required ProgressionSnapshot snapshot,
-    required String paletteId,
-  }) async => snapshot;
-
-  @override
   Future<ProgressionSnapshot> loadSnapshot({
     required CharacterId characterId,
     required String contentVersion,

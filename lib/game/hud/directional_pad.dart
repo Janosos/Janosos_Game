@@ -9,28 +9,38 @@ class DirectionalPad extends PositionComponent
     with HasGameReference<DinoRunGame>, TapCallbacks {
   DirectionalPad()
     : super(
-        size: Vector2(136, 56),
+        size: Vector2(136, 60),
         anchor: Anchor.bottomLeft,
         priority: 120,
       );
 
   bool _leftPressed = false;
   bool _rightPressed = false;
+  bool _spritesLoaded = false;
 
-  late final TextPaint _arrowPaint = TextPaint(
-    style: const TextStyle(
-      color: Colors.white,
-      fontSize: 22,
-      fontWeight: FontWeight.w900,
-      shadows: [
-        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
-      ],
-    ),
-  );
+  late final Sprite _leftNormal;
+  late final Sprite _leftPressedSprite;
+  late final Sprite _rightNormal;
+  late final Sprite _rightPressedSprite;
 
   @override
   Future<void> onLoad() async {
     position = Vector2(16, game.size.y - 16);
+
+    final leftImg = await game.images.load('dpad_arrow_left.png');
+    final leftPressedImg = await game.images.load(
+      'dpad_arrow_left_pressed.png',
+    );
+    final rightImg = await game.images.load('dpad_arrow_right.png');
+    final rightPressedImg = await game.images.load(
+      'dpad_arrow_right_pressed.png',
+    );
+
+    _leftNormal = Sprite(leftImg);
+    _leftPressedSprite = Sprite(leftPressedImg);
+    _rightNormal = Sprite(rightImg);
+    _rightPressedSprite = Sprite(rightPressedImg);
+    _spritesLoaded = true;
   }
 
   @override
@@ -45,10 +55,10 @@ class DirectionalPad extends PositionComponent
     final top = position.y - height;
     final right = position.x + width;
     final bottom = position.y;
-    return point.x >= left - 6 &&
-        point.x <= right + 6 &&
-        point.y >= top - 6 &&
-        point.y <= bottom + 6;
+    return point.x >= left - 8 &&
+        point.x <= right + 8 &&
+        point.y >= top - 8 &&
+        point.y <= bottom + 8;
   }
 
   @override
@@ -84,60 +94,16 @@ class DirectionalPad extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+    if (!_spritesLoaded) return;
 
-    _renderButton(
+    final leftSprite = _leftPressed ? _leftPressedSprite : _leftNormal;
+    leftSprite.render(canvas, position: Vector2(0, 0), size: Vector2(60, 60));
+
+    final rightSprite = _rightPressed ? _rightPressedSprite : _rightNormal;
+    rightSprite.render(
       canvas,
-      rect: const Rect.fromLTWH(0, 0, 62, 56),
-      label: '◀',
-      pressed: _leftPressed,
-    );
-
-    _renderButton(
-      canvas,
-      rect: const Rect.fromLTWH(74, 0, 62, 56),
-      label: '▶',
-      pressed: _rightPressed,
-    );
-  }
-
-  void _renderButton(
-    Canvas canvas, {
-    required Rect rect,
-    required String label,
-    required bool pressed,
-  }) {
-    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(12));
-    final bgColor = pressed
-        ? const Color(0xFF1E3A5F)
-        : const Color(0xFF121722).withValues(alpha: 0.85);
-    final borderColor = pressed
-        ? const Color(0xFF00E5FF)
-        : const Color(0xFF4A5568).withValues(alpha: 0.90);
-
-    // Drop shadow
-    canvas.drawRRect(
-      rrect.shift(const Offset(0, 3)),
-      Paint()..color = Colors.black45,
-    );
-
-    // Background fill
-    canvas.drawRRect(rrect, Paint()..color = bgColor);
-
-    // Border
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = pressed ? 3 : 2,
-    );
-
-    // Arrow icon
-    _arrowPaint.render(
-      canvas,
-      label,
-      Vector2(rect.center.dx, rect.center.dy - 1),
-      anchor: Anchor.center,
+      position: Vector2(76, 0),
+      size: Vector2(60, 60),
     );
   }
 }

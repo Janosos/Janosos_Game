@@ -20,6 +20,7 @@ class DinoRunApp extends StatefulWidget {
     this.configurationForCharacter,
     this.onRunFinished,
     this.onCampaignExit,
+    this.isMobileOrTablet,
   });
 
   final int initialHighScore;
@@ -28,6 +29,7 @@ class DinoRunApp extends StatefulWidget {
   configurationForCharacter;
   final Future<String> Function(RunResult result)? onRunFinished;
   final VoidCallback? onCampaignExit;
+  final bool? isMobileOrTablet;
 
   @override
   State<DinoRunApp> createState() => _DinoRunAppState();
@@ -47,6 +49,7 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
     _game = DinoRunGame(
       configuration: _configurationFor(CharacterId.jano),
       onEvent: _handleGameplayEvent,
+      isMobileOrTablet: widget.isMobileOrTablet,
     );
   }
 
