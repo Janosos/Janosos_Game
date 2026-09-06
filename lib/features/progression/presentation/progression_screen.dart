@@ -21,160 +21,166 @@ class ProgressionScreen extends ConsumerWidget {
       error: (error, stackTrace) => _LoadFailure(
         onRetry: () => ref.invalidate(progressionControllerProvider),
       ),
-      data: (state) => _ProgressionContent(state: state),
+      data: (state) => _LandscapeProgressionView(state: state),
     );
   }
 }
 
-class _ProgressionContent extends ConsumerStatefulWidget {
-  const _ProgressionContent({required this.state});
+enum _StoreCategory { stats, skills, palettes }
+
+class _LandscapeProgressionView extends ConsumerStatefulWidget {
+  const _LandscapeProgressionView({required this.state});
 
   final ProgressionViewState state;
 
   @override
-  ConsumerState<_ProgressionContent> createState() =>
-      _ProgressionContentState();
+  ConsumerState<_LandscapeProgressionView> createState() =>
+      _LandscapeProgressionViewState();
 }
 
-class _ProgressionContentState extends ConsumerState<_ProgressionContent> {
-  bool? _summaryExpanded;
+class _LandscapeProgressionViewState
+    extends ConsumerState<_LandscapeProgressionView> {
+  _StoreCategory _selectedCategory = _StoreCategory.stats;
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.sizeOf(context);
-    final isCompactHeight = media.height < 520;
-    final isMobileWidth = media.width < 600;
-    final showFullSummary = _summaryExpanded ?? !isCompactHeight;
-
+    final isLandscape = media.width > media.height || media.width >= 600;
+    final isCompactHeight = media.height < 500;
     final snapshot = widget.state.snapshot;
     final controller = ref.read(progressionControllerProvider.notifier);
 
-    return DefaultTabController(
-      length: 3,
-      child: Column(
+    if (!isLandscape) {
+      return _buildPortraitLayout(
+        context,
+        snapshot,
+        controller,
+        isCompactHeight,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF070D16),
+      body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              isMobileWidth ? 12 : 20,
-              isCompactHeight ? 8 : 16,
-              isMobileWidth ? 12 : 20,
-              isCompactHeight ? 4 : 8,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildTopRow(
-                  context,
-                  snapshot,
-                  controller,
-                  isCompactHeight,
-                  isMobileWidth,
-                  showFullSummary,
-                ),
-                SizedBox(height: isCompactHeight ? 6 : 10),
-                if (showFullSummary)
-                  _ProgressSummary(
-                    snapshot: snapshot,
-                    isCompactHeight: isCompactHeight,
-                  )
-                else
-                  _buildCompactBadgesRow(snapshot, isCompact: isCompactHeight),
-                if (!snapshot.storeUnlocked) ...[
-                  SizedBox(height: isCompactHeight ? 4 : 6),
-                  _MessageBanner(
-                    icon: Icons.lock_outline,
-                    message:
-                        'Puedes explorar todo el catálogo. Para comprar, completa los 10 niveles con este personaje.',
-                    isCompact: isCompactHeight,
-                  ),
-                ],
-                if (widget.state.noticeMessage != null) ...[
-                  SizedBox(height: isCompactHeight ? 4 : 6),
-                  _MessageBanner(
-                    icon: Icons.check_circle_outline,
-                    message: widget.state.noticeMessage!,
-                    success: true,
-                    isCompact: isCompactHeight,
-                  ),
-                ],
-                if (widget.state.errorMessage != null) ...[
-                  SizedBox(height: isCompactHeight ? 4 : 6),
-                  _MessageBanner(
-                    icon: Icons.warning_amber_outlined,
-                    message: widget.state.errorMessage!,
-                    isCompact: isCompactHeight,
-                  ),
-                ],
-              ],
-            ),
-          ),
+          // PANEL LATERAL IZQUIERDO: HUD, Personaje, Billetera y Categorías
           Container(
+            width: isCompactHeight ? 230 : 260,
             decoration: const BoxDecoration(
-              color: Color(0xFF070D16),
+              color: Color(0xFF090F18),
               border: Border(
-                top: BorderSide(color: Color(0xFF1E354F), width: 1.5),
-                bottom: BorderSide(color: Color(0xFF1E354F), width: 1.5),
+                right: BorderSide(color: Color(0xFF1E354F), width: 1.5),
               ),
             ),
-            child: TabBar(
-              indicatorColor: RetroColors.cyan,
-              indicatorWeight: 3,
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: RetroColors.cyan,
-              unselectedLabelColor: RetroColors.textMuted,
-              labelStyle: GoogleFonts.pressStart2p(
-                fontSize: isCompactHeight ? 8 : 10,
-                fontWeight: FontWeight.bold,
+            child: SafeArea(
+              right: false,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(isCompactHeight ? 8 : 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Selector de Personaje
+                    _CharacterSelector(
+                      selectedId: snapshot.characterId,
+                      onChanged: (id) => controller.selectCharacter(id),
+                      isCompact: isCompactHeight,
+                    ),
+                    SizedBox(height: isCompactHeight ? 6 : 10),
+
+                    // Billetera Arcade (Monedas guardadas)
+                    _WalletCard(
+                      bankedCurrency: snapshot.bankedCurrency,
+                      masteryLevel: snapshot.masteryLevel,
+                      masteryXp: snapshot.masteryXp,
+                      nextLevelXp: snapshot.nextLevelXp,
+                      isCompact: isCompactHeight,
+                    ),
+                    SizedBox(height: isCompactHeight ? 6 : 8),
+
+                    // Estado de Tienda (Abierta / Bloqueada)
+                    _StoreStatusBadge(
+                      isUnlocked: snapshot.storeUnlocked,
+                      isCompact: isCompactHeight,
+                    ),
+                    SizedBox(height: isCompactHeight ? 8 : 12),
+
+                    // Selector de Categoría (Pestañas laterales)
+                    _CategoryButton(
+                      title: 'MEJORAS',
+                      subtitle: 'Vidas y atributos',
+                      icon: Icons.trending_up,
+                      isSelected: _selectedCategory == _StoreCategory.stats,
+                      color: RetroColors.cyan,
+                      isCompact: isCompactHeight,
+                      onTap: () => setState(
+                        () => _selectedCategory = _StoreCategory.stats,
+                      ),
+                    ),
+                    SizedBox(height: isCompactHeight ? 5 : 8),
+                    _CategoryButton(
+                      title: 'HABILIDADES',
+                      subtitle: 'Activas y pasivas',
+                      icon: Icons.auto_awesome,
+                      isSelected: _selectedCategory == _StoreCategory.skills,
+                      color: RetroColors.magenta,
+                      isCompact: isCompactHeight,
+                      onTap: () => setState(
+                        () => _selectedCategory = _StoreCategory.skills,
+                      ),
+                    ),
+                    SizedBox(height: isCompactHeight ? 5 : 8),
+                    _CategoryButton(
+                      title: 'PALETAS',
+                      subtitle: 'Aspectos retro',
+                      icon: Icons.palette_outlined,
+                      isSelected: _selectedCategory == _StoreCategory.palettes,
+                      color: RetroColors.gold,
+                      isCompact: isCompactHeight,
+                      onTap: () => setState(
+                        () => _selectedCategory = _StoreCategory.palettes,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              unselectedLabelStyle: GoogleFonts.pressStart2p(
-                fontSize: isCompactHeight ? 8 : 10,
-              ),
-              tabs: [
-                Tab(
-                  icon: Icon(
-                    Icons.trending_up,
-                    size: isCompactHeight ? 15 : 20,
-                  ),
-                  text: 'Mejoras',
-                  height: isCompactHeight ? 36 : 48,
-                ),
-                Tab(
-                  icon: Icon(
-                    Icons.auto_awesome,
-                    size: isCompactHeight ? 15 : 20,
-                  ),
-                  text: 'Habilidades',
-                  height: isCompactHeight ? 36 : 48,
-                ),
-                Tab(
-                  icon: Icon(
-                    Icons.palette_outlined,
-                    size: isCompactHeight ? 15 : 20,
-                  ),
-                  text: 'Paletas',
-                  height: isCompactHeight ? 36 : 48,
-                ),
-              ],
             ),
           ),
+
+          // PANEL PRINCIPAL DERECHO: Catálogo scrollable espacioso
           Expanded(
-            child: TabBarView(
-              children: [
-                _StatsTab(
-                  state: widget.state,
-                  isCompactHeight: isCompactHeight,
-                ),
-                _SkillsTab(
-                  state: widget.state,
-                  isCompactHeight: isCompactHeight,
-                ),
-                _PalettesTab(
-                  state: widget.state,
-                  isCompactHeight: isCompactHeight,
-                ),
-              ],
+            child: SafeArea(
+              left: false,
+              child: Column(
+                children: [
+                  // Notificación temporal (si existe)
+                  if (widget.state.noticeMessage != null ||
+                      widget.state.errorMessage != null)
+                    _StoreNoticeBar(
+                      message: widget.state.noticeMessage ??
+                          widget.state.errorMessage!,
+                      isError: widget.state.errorMessage != null,
+                    ),
+
+                  // Contenido de la categoría seleccionada
+                  Expanded(
+                    child: switch (_selectedCategory) {
+                      _StoreCategory.stats => _StatsCatalog(
+                        state: widget.state,
+                        isCompactHeight: isCompactHeight,
+                      ),
+                      _StoreCategory.skills => _SkillsCatalog(
+                        state: widget.state,
+                        isCompactHeight: isCompactHeight,
+                      ),
+                      _StoreCategory.palettes => _PalettesCatalog(
+                        state: widget.state,
+                        isCompactHeight: isCompactHeight,
+                      ),
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -182,238 +188,284 @@ class _ProgressionContentState extends ConsumerState<_ProgressionContent> {
     );
   }
 
-  Widget _buildTopRow(
+  Widget _buildPortraitLayout(
     BuildContext context,
     ProgressionSnapshot snapshot,
     ProgressionController controller,
     bool isCompactHeight,
-    bool isMobileWidth,
-    bool showFullSummary,
   ) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      alignment: WrapAlignment.spaceBetween,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Semantics(
-          header: true,
-          child: Text(
-            'Progresión del personaje',
-            style: GoogleFonts.pressStart2p(
-              fontSize: isCompactHeight ? 11 : 14,
-              fontWeight: FontWeight.bold,
-              color: RetroColors.cyan,
-              letterSpacing: 1.2,
-            ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: _CharacterSelector(
+                  selectedId: snapshot.characterId,
+                  onChanged: (id) => controller.selectCharacter(id),
+                  isCompact: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F1B2B),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: RetroColors.gold, width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    const PixelIconAsset(
+                      assetName: PixelIconAsset.coin,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _coins(snapshot.bankedCurrency),
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: 10,
+                        color: RetroColors.gold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: isMobileWidth ? 180 : 220,
-              child: DropdownButtonFormField<CharacterId>(
-                key: ValueKey(snapshot.characterId),
-                initialValue: snapshot.characterId,
-                dropdownColor: const Color(0xFF0C1420),
-                style: GoogleFonts.pressStart2p(
-                  fontSize: 10,
-                  color: Colors.white,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Personaje',
-                  labelStyle: GoogleFonts.pressStart2p(
-                    fontSize: 9,
-                    color: RetroColors.cyan,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF0C1420),
-                  isDense: isCompactHeight,
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Color(0xFF1E354F),
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: RetroColors.cyan,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: isCompactHeight ? 8 : 12,
-                  ),
-                ),
-                items: [
-                  for (final character in CharacterId.values)
-                    DropdownMenuItem(
-                      value: character,
-                      child: Text(
-                        character.definition.displayName,
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: 10,
-                          color: Colors.white,
+        // Barra de pestañas horizontal
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            children: [
+              for (final cat in _StoreCategory.values)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedCategory = cat),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedCategory == cat
+                              ? const Color(0xFF1E354F)
+                              : const Color(0xFF0C1420),
+                          border: Border.all(
+                            color: _selectedCategory == cat
+                                ? RetroColors.cyan
+                                : const Color(0xFF1E354F),
+                          ),
+                        ),
+                        child: Text(
+                          cat == _StoreCategory.stats
+                              ? 'MEJORAS'
+                              : (cat == _StoreCategory.skills
+                                  ? 'SKILLS'
+                                  : 'PALETAS'),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.pressStart2p(
+                            fontSize: 8,
+                            color: _selectedCategory == cat
+                                ? Colors.white
+                                : Colors.white54,
+                          ),
                         ),
                       ),
                     ),
-                ],
-                onChanged: widget.state.isBusy
-                    ? null
-                    : (value) {
-                        if (value != null) {
-                          controller.selectCharacter(value);
-                        }
-                      },
-              ),
-            ),
-            if (isCompactHeight) ...[
-              const SizedBox(width: 8),
-              IconButton(
-                tooltip: showFullSummary ? 'Ocultar detalles' : 'Ver detalles',
-                style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF0C1420),
-                  side: const BorderSide(
-                    color: Color(0xFF1E354F),
-                    width: 1.5,
                   ),
                 ),
-                icon: Icon(
-                  showFullSummary
-                      ? Icons.keyboard_arrow_up
-                      : Icons.keyboard_arrow_down,
-                  color: RetroColors.cyan,
-                  size: 20,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _summaryExpanded = !showFullSummary;
-                  });
-                },
-              ),
             ],
-          ],
+          ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildCompactBadgesRow(
-    ProgressionSnapshot snapshot, {
-    bool isCompact = false,
-  }) {
-    return Wrap(
-      spacing: isCompact ? 6 : 8,
-      runSpacing: isCompact ? 4 : 6,
-      children: [
-        _SummaryChip(
-          icon: Icons.workspace_premium_outlined,
-          pixelIconAsset: PixelIconAsset.trophy,
-          label: 'Maestría ${snapshot.masteryLevel}/30',
-          color: RetroColors.gold,
-          isCompact: isCompact,
-        ),
-        _SummaryChip(
-          icon: Icons.savings_outlined,
-          pixelIconAsset: PixelIconAsset.coin,
-          label: '${_coins(snapshot.bankedCurrency)} guardadas',
-          color: RetroColors.goldLight,
-          isCompact: isCompact,
-        ),
-        _SummaryChip(
-          icon: Icons.warning_amber_outlined,
-          label: '${_coins(snapshot.temporaryCurrency)} en riesgo',
-          color: RetroColors.magenta,
-          isCompact: isCompact,
-        ),
-        _SummaryChip(
-          icon: Icons.balance_outlined,
-          label: 'Estándar normalizado',
-          color: RetroColors.cyan,
-          isCompact: isCompact,
+        const SizedBox(height: 8),
+        Expanded(
+          child: switch (_selectedCategory) {
+            _StoreCategory.stats => _StatsCatalog(
+              state: widget.state,
+              isCompactHeight: isCompactHeight,
+            ),
+            _StoreCategory.skills => _SkillsCatalog(
+              state: widget.state,
+              isCompactHeight: isCompactHeight,
+            ),
+            _StoreCategory.palettes => _PalettesCatalog(
+              state: widget.state,
+              isCompactHeight: isCompactHeight,
+            ),
+          },
         ),
       ],
     );
   }
 }
 
-class _ProgressSummary extends StatelessWidget {
-  const _ProgressSummary({
-    required this.snapshot,
-    required this.isCompactHeight,
+// ---------------------------------------------------------------------------
+// COMPONENTES DEL PANEL LATERAL
+// ---------------------------------------------------------------------------
+
+class _CharacterSelector extends StatelessWidget {
+  const _CharacterSelector({
+    required this.selectedId,
+    required this.onChanged,
+    required this.isCompact,
   });
 
-  final ProgressionSnapshot snapshot;
-  final bool isCompactHeight;
+  final CharacterId selectedId;
+  final ValueChanged<CharacterId> onChanged;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
-    return RetroArcadeCard(
-      borderColor: const Color(0xFF1E354F),
-      padding: EdgeInsets.all(isCompactHeight ? 10 : 16),
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C1420),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFF1E354F), width: 1.5),
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 8 : 10,
+        vertical: isCompact ? 2 : 4,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<CharacterId>(
+          value: selectedId,
+          dropdownColor: const Color(0xFF0F1724),
+          isExpanded: true,
+          icon: const Icon(Icons.arrow_drop_down, color: RetroColors.cyan),
+          items: [
+            for (final character in CharacterId.values)
+              DropdownMenuItem(
+                value: character,
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/${character.definition.assetName}',
+                      width: isCompact ? 20 : 24,
+                      height: isCompact ? 20 : 24,
+                      filterQuality: FilterQuality.none,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        character.definition.displayName.toUpperCase(),
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isCompact ? 8 : 9,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+          onChanged: (val) {
+            if (val != null) onChanged(val);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _WalletCard extends StatelessWidget {
+  const _WalletCard({
+    required this.bankedCurrency,
+    required this.masteryLevel,
+    required this.masteryXp,
+    required this.nextLevelXp,
+    required this.isCompact,
+  });
+
+  final int bankedCurrency;
+  final int masteryLevel;
+  final int masteryXp;
+  final int nextLevelXp;
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = nextLevelXp > 0
+        ? (masteryXp / nextLevelXp).clamp(0.0, 1.0)
+        : 1.0;
+
+    return Container(
+      padding: EdgeInsets.all(isCompact ? 8 : 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1B2B),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: RetroColors.gold.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
+          Row(
             children: [
-              _SummaryChip(
-                icon: Icons.workspace_premium_outlined,
-                pixelIconAsset: PixelIconAsset.trophy,
-                label: 'Maestría ${snapshot.masteryLevel}/30',
-                color: RetroColors.gold,
+              const PixelIconAsset(
+                assetName: PixelIconAsset.coin,
+                size: 20,
               ),
-              _SummaryChip(
-                icon: Icons.savings_outlined,
-                pixelIconAsset: PixelIconAsset.coin,
-                label: '${_coins(snapshot.bankedCurrency)} guardadas',
-                color: RetroColors.goldLight,
-              ),
-              _SummaryChip(
-                icon: Icons.warning_amber_outlined,
-                label: '${_coins(snapshot.temporaryCurrency)} en riesgo',
-                color: RetroColors.magenta,
-              ),
-              const _SummaryChip(
-                icon: Icons.balance_outlined,
-                label: 'Estándar normalizado',
-                color: RetroColors.cyan,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'MONEDAS',
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: 7,
+                        color: Colors.white60,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _coins(bankedCurrency),
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isCompact ? 11 : 13,
+                        fontWeight: FontWeight.bold,
+                        color: RetroColors.gold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          SizedBox(height: isCompactHeight ? 6 : 12),
-          Semantics(
-            label:
-                'Progreso de maestría, nivel ${snapshot.masteryLevel} de 30',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: snapshot.masteryProgress,
-                minHeight: isCompactHeight ? 6 : 8,
-                backgroundColor: const Color(0xFF132032),
-                color: RetroColors.cyan,
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'MAESTRÍA LVL $masteryLevel',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 7,
+                  color: RetroColors.cyan,
+                ),
               ),
-            ),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: GoogleFonts.vt323(fontSize: 13, color: Colors.white70),
+              ),
+            ],
           ),
-          SizedBox(height: isCompactHeight ? 6 : 8),
-          Text(
-            snapshot.masteryLevel >= 30
-                ? 'Maestría máxima alcanzada.'
-                : '${_coins(snapshot.masteryXp)} / ${_coins(snapshot.nextLevelXp)} XP para el siguiente nivel.',
-            style: GoogleFonts.vt323(
-              fontSize: isCompactHeight ? 15 : 17,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: isCompactHeight ? 4 : 6),
-          Text(
-            'Las mejoras y skills funcionan sólo en Progresión y Boss Rush. Las paletas son visuales y no cambian hitboxes.',
-            style: GoogleFonts.vt323(
-              fontSize: isCompactHeight ? 13 : 15,
-              color: RetroColors.textMuted,
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 4,
+              backgroundColor: const Color(0xFF070D16),
+              color: RetroColors.cyan,
             ),
           ),
         ],
@@ -422,8 +474,208 @@ class _ProgressSummary extends StatelessWidget {
   }
 }
 
-class _StatsTab extends ConsumerWidget {
-  const _StatsTab({
+class _StoreStatusBadge extends StatelessWidget {
+  const _StoreStatusBadge({
+    required this.isUnlocked,
+    required this.isCompact,
+  });
+
+  final bool isUnlocked;
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isUnlocked) {
+      return Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: isCompact ? 3 : 5,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0C241B),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: RetroColors.green, width: 1.2),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, color: RetroColors.green, size: 12),
+            const SizedBox(width: 6),
+            Text(
+              'TIENDA DESBLOQUEADA',
+              style: GoogleFonts.pressStart2p(
+                fontSize: 6.5,
+                color: RetroColors.green,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: isCompact ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2B190F),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: RetroColors.gold, width: 1.2),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_outline, color: RetroColors.gold, size: 13),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'CATÁLOGO · SUPERA CAMPAÑA',
+              style: GoogleFonts.pressStart2p(
+                fontSize: 6.5,
+                color: RetroColors.gold,
+                height: 1.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryButton extends StatelessWidget {
+  const _CategoryButton({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.isSelected,
+    required this.color,
+    required this.isCompact,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final bool isSelected;
+  final Color color;
+  final bool isCompact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isCompact ? 10 : 12,
+            vertical: isCompact ? 7 : 10,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color.withValues(alpha: 0.15)
+                : const Color(0xFF0C1420),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: isSelected ? color : const Color(0xFF1E354F),
+              width: isSelected ? 2 : 1.2,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.25),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: isSelected ? color : Colors.white54, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isCompact ? 8 : 9,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : Colors.white70,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.vt323(
+                        fontSize: 13,
+                        color: isSelected ? color : Colors.white38,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                Icon(Icons.chevron_right, color: color, size: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StoreNoticeBar extends StatelessWidget {
+  const _StoreNoticeBar({
+    required this.message,
+    required this.isError,
+  });
+
+  final String message;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isError ? RetroColors.magenta : RetroColors.green;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      color: color.withValues(alpha: 0.15),
+      child: Row(
+        children: [
+          Icon(
+            isError ? Icons.warning_amber : Icons.check_circle,
+            color: color,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.vt323(
+                fontSize: 15,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// CATÁLOGO DE MEJORAS (STATS)
+// ---------------------------------------------------------------------------
+
+class _StatsCatalog extends ConsumerWidget {
+  const _StatsCatalog({
     required this.state,
     required this.isCompactHeight,
   });
@@ -435,188 +687,166 @@ class _StatsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = state.snapshot;
     final controller = ref.read(progressionControllerProvider.notifier);
-    return RefreshIndicator(
-      color: RetroColors.cyan,
-      backgroundColor: const Color(0xFF0C1420),
-      onRefresh: controller.refresh,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(isCompactHeight ? 12 : 20),
-        itemCount: snapshot.stats.length,
-        itemBuilder: (context, index) {
-          final stat = snapshot.stats[index];
-          final masteryReady =
-              snapshot.masteryLevel >= (stat.nextUnlockLevel ?? 0);
-          final balanceReady = snapshot.bankedCurrency >= (stat.nextCost ?? 0);
-          final canBuy =
-              !state.isBusy &&
-              snapshot.storeUnlocked &&
-              !stat.isCapped &&
-              masteryReady &&
-              balanceReady;
-          final busy = state.busyAction == 'stat:${stat.id}';
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: RetroArcadeCard(
-              borderColor: stat.isCapped
-                  ? RetroColors.green.withValues(alpha: 0.5)
-                  : const Color(0xFF1E354F),
-              accentHeaderColor: stat.isCapped
-                  ? RetroColors.green
-                  : (canBuy ? RetroColors.cyan : null),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          stat.displayName,
-                          style: GoogleFonts.pressStart2p(
-                            fontSize: isCompactHeight ? 11 : 13,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      RetroBadge(
-                        text: 'Rango ${stat.rank}/${stat.maxRank}',
-                        color: stat.isCapped
-                            ? RetroColors.green
-                            : RetroColors.gold,
-                        fontSize: 8,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    stat.description,
-                    style: GoogleFonts.vt323(
-                      fontSize: 16,
-                      color: RetroColors.textBright,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: stat.rank / stat.maxRank,
-                      minHeight: 6,
-                      backgroundColor: const Color(0xFF132032),
-                      color: RetroColors.cyan,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const SizedBox(height: 8),
-                  LayoutBuilder(
-                    builder: (context, cardConstraints) {
-                      final isWideCard = cardConstraints.maxWidth > 380;
-                      final effectDetails = Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Efecto actual: +${_percent(stat.effectiveBasisPoints)}',
-                            style: GoogleFonts.vt323(
-                              fontSize: isCompactHeight ? 15 : 16,
-                              color: RetroColors.cyan,
-                            ),
-                          ),
-                          if (!stat.isCapped) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              'Siguiente: ${stat.nextBonusLives > 0 ? '+1 vida y ' : ''}+${_percent(stat.nextBonusBasisPoints ?? 0)} · Maestría ${stat.nextUnlockLevel} · ${_coins(stat.nextCost ?? 0)} monedas',
-                              style: GoogleFonts.vt323(
-                                fontSize: isCompactHeight ? 14 : 15,
-                                color: RetroColors.textMuted,
-                              ),
-                            ),
-                          ],
-                        ],
-                      );
 
-                      final buyButton = FilledButton.icon(
-                        onPressed: canBuy
-                            ? () => controller.purchaseUpgrade(stat)
-                            : null,
-                        style: FilledButton.styleFrom(
-                          minimumSize: Size(
-                            isCompactHeight ? 120 : 130,
-                            isCompactHeight ? 40 : 46,
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isCompactHeight ? 12 : 16,
-                            vertical: isCompactHeight ? 8 : 12,
-                          ),
-                          backgroundColor: RetroColors.cyan,
-                          foregroundColor: Colors.black,
-                          disabledBackgroundColor: const Color(0xFF132032),
-                          disabledForegroundColor: RetroColors.textMuted,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.zero,
-                            side: BorderSide(
-                              color: Color(0xFF1E354F),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        icon: busy
-                            ? const SizedBox.square(
-                                dimension: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : Icon(
-                                stat.isCapped ? Icons.check : Icons.add,
-                                size: isCompactHeight ? 16 : 18,
-                              ),
-                        label: Text(
-                          _statActionLabel(snapshot, stat),
-                          style: GoogleFonts.pressStart2p(
-                            fontSize: isCompactHeight ? 8 : 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      );
+    return ListView.builder(
+      padding: EdgeInsets.all(isCompactHeight ? 10 : 16),
+      itemCount: snapshot.stats.length,
+      itemBuilder: (context, index) {
+        final stat = snapshot.stats[index];
+        final masteryReady =
+            snapshot.masteryLevel >= (stat.nextUnlockLevel ?? 0);
+        final balanceReady = snapshot.bankedCurrency >= (stat.nextCost ?? 0);
+        final canBuy = !state.isBusy &&
+            snapshot.storeUnlocked &&
+            !stat.isCapped &&
+            masteryReady &&
+            balanceReady;
+        final busy = state.busyAction == 'stat:${stat.id}';
 
-                      if (isWideCard) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(child: effectDetails),
-                            const SizedBox(width: 12),
-                            buyButton,
-                          ],
-                        );
-                      }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          effectDetails,
-                          const SizedBox(height: 10),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: buyButton,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: EdgeInsets.all(isCompactHeight ? 10 : 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1724),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: stat.isCapped
+                  ? RetroColors.green.withValues(alpha: 0.6)
+                  : (canBuy
+                      ? RetroColors.cyan.withValues(alpha: 0.5)
+                      : const Color(0xFF1E354F)),
+              width: 1.5,
             ),
-          );
-        },
-      ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Icono / Rango
+              Container(
+                width: isCompactHeight ? 40 : 48,
+                height: isCompactHeight ? 40 : 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF070D16),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: stat.isCapped ? RetroColors.green : RetroColors.cyan,
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    _statIcon(stat.id),
+                    color:
+                        stat.isCapped ? RetroColors.green : RetroColors.cyan,
+                    size: isCompactHeight ? 20 : 24,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Detalles y descripción
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            stat.displayName.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.pressStart2p(
+                              fontSize: isCompactHeight ? 9 : 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        RetroBadge(
+                          text: stat.isCapped
+                              ? 'MAX'
+                              : '${stat.rank}/${stat.maxRank}',
+                          color: stat.isCapped
+                              ? RetroColors.green
+                              : RetroColors.gold,
+                          fontSize: 7,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      stat.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.vt323(
+                        fontSize: isCompactHeight ? 14 : 15,
+                        color: RetroColors.textBright,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          'Bono actual: +${_percent(stat.effectiveBasisPoints)}',
+                          style: GoogleFonts.vt323(
+                            fontSize: 14,
+                            color: RetroColors.cyan,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (!stat.isCapped && stat.nextCost != null) ...[
+                          Text(
+                            ' · Siguiente: +${_percent(stat.nextBonusBasisPoints ?? 0)}',
+                            style: GoogleFonts.vt323(
+                              fontSize: 13,
+                              color: Colors.white60,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Botón de Compra
+              _BuyActionButton(
+                isCapped: stat.isCapped,
+                canBuy: canBuy,
+                cost: stat.nextCost,
+                unlockLevel: stat.nextUnlockLevel,
+                masteryReady: masteryReady,
+                balanceReady: balanceReady,
+                storeUnlocked: snapshot.storeUnlocked,
+                isBusy: busy,
+                isCompact: isCompactHeight,
+                onPressed: () => controller.purchaseUpgrade(stat),
+              ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  IconData _statIcon(String id) {
+    if (id.contains('life') || id.contains('health')) return Icons.favorite;
+    if (id.contains('jump')) return Icons.arrow_upward;
+    if (id.contains('speed')) return Icons.flash_on;
+    if (id.contains('shield') || id.contains('armor')) return Icons.security;
+    return Icons.upgrade;
   }
 }
 
-class _SkillsTab extends ConsumerWidget {
-  const _SkillsTab({
+// ---------------------------------------------------------------------------
+// CATÁLOGO DE HABILIDADES (SKILLS)
+// ---------------------------------------------------------------------------
+
+class _SkillsCatalog extends ConsumerWidget {
+  const _SkillsCatalog({
     required this.state,
     required this.isCompactHeight,
   });
@@ -629,315 +859,248 @@ class _SkillsTab extends ConsumerWidget {
     final snapshot = state.snapshot;
     final controller = ref.read(progressionControllerProvider.notifier);
     final definition = snapshot.characterId.definition;
-    return RefreshIndicator(
-      color: RetroColors.cyan,
-      backgroundColor: const Color(0xFF0C1420),
-      onRefresh: controller.refresh,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(isCompactHeight ? 12 : 20),
-        children: [
-          RetroArcadeCard(
-            borderColor: const Color(0xFF1E354F),
-            accentHeaderColor: RetroColors.cyan,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: RetroColors.cyan.withValues(alpha: 0.12),
-                    border: Border.all(color: RetroColors.cyan, width: 1.5),
+
+    return ListView(
+      padding: EdgeInsets.all(isCompactHeight ? 10 : 16),
+      children: [
+        // Identidad innata del héroe
+        Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: EdgeInsets.all(isCompactHeight ? 8 : 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0C1826),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: RetroColors.cyan, width: 1.2),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.fingerprint, color: RetroColors.cyan, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Habilidad innata: ${definition.description}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.vt323(fontSize: 15, color: Colors.white),
+                ),
+              ),
+              if (definition.defaultActive != null &&
+                  snapshot.authorizedBuild.activeSkillId != null) ...[
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  onPressed: state.isBusy
+                      ? null
+                      : () => controller.equipActive(null),
+                  style: OutlinedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    side: const BorderSide(color: RetroColors.cyan),
                   ),
-                  child: const Icon(
-                    Icons.fingerprint,
-                    color: RetroColors.cyan,
-                    size: 26,
+                  child: Text(
+                    'RESTAURAR INNATA',
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: 7,
+                      color: RetroColors.cyan,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Identidad innata',
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${definition.description}\nLas habilidades originales nunca se venden ni ocupan un slot pasivo.',
-                        style: GoogleFonts.vt323(
-                          fontSize: 16,
-                          color: RetroColors.textBright,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                definition.defaultActive == null
-                    ? const RetroBadge(
-                        text: 'Sin activa inicial',
-                        color: RetroColors.textMuted,
-                        fontSize: 8,
-                      )
-                    : FilledButton.tonal(
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(110, 48),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.zero,
-                            side: BorderSide(
-                              color: Color(0xFF1E354F),
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        onPressed: state.isBusy ||
-                                snapshot.authorizedBuild.activeSkillId == null
-                            ? null
-                            : () => controller.equipActive(null),
-                        child: Text(
-                          'Usar predeterminada',
-                          style: GoogleFonts.vt323(fontSize: 15),
-                        ),
-                      ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(height: 10),
-          const _MessageBanner(
-            icon: Icons.info_outline,
-            message:
-                'Hay un slot activo y dos pasivos. Al comprar ambos pasivos no existe una tercera opción excluida en V6.',
+        ),
+
+        // Lista de habilidades
+        for (final skill in snapshot.skills) ...[
+          _SkillRow(
+            skill: skill,
+            state: state,
+            isCompactHeight: isCompactHeight,
+            onEquipActive: () => controller.equipActive(skill.id),
+            onTogglePassive: () => controller.togglePassive(skill.id),
+            onPurchase: () => controller.purchaseSkill(skill),
           ),
-          const SizedBox(height: 10),
-          for (final skill in snapshot.skills)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _SkillCard(state: state, skill: skill),
-            ),
+          const SizedBox(height: 8),
         ],
-      ),
+      ],
     );
   }
 }
 
-class _SkillCard extends ConsumerWidget {
-  const _SkillCard({required this.state, required this.skill});
+class _SkillRow extends StatelessWidget {
+  const _SkillRow({
+    required this.skill,
+    required this.state,
+    required this.isCompactHeight,
+    required this.onEquipActive,
+    required this.onTogglePassive,
+    required this.onPurchase,
+  });
 
-  final ProgressionViewState state;
   final ProgressionSkill skill;
+  final ProgressionViewState state;
+  final bool isCompactHeight;
+  final VoidCallback onEquipActive;
+  final VoidCallback onTogglePassive;
+  final VoidCallback onPurchase;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final snapshot = state.snapshot;
-    final controller = ref.read(progressionControllerProvider.notifier);
-    final selected = skill.slot == SkillSlot.active
+    final isEquipped = skill.slot == SkillSlot.active
         ? snapshot.authorizedBuild.activeSkillId == skill.id
         : snapshot.authorizedBuild.passiveSkillIds.contains(skill.id);
     final masteryReady = snapshot.masteryLevel >= skill.unlockLevel;
     final balanceReady = snapshot.bankedCurrency >= skill.cost;
-    final canPurchase =
-        !state.isBusy &&
+    final canPurchase = !state.isBusy &&
         snapshot.storeUnlocked &&
         !skill.owned &&
         masteryReady &&
         balanceReady;
-    final canEquip = !state.isBusy && skill.owned;
     final busy = state.busyAction?.contains(skill.id) == true;
-    final isCompactHeight = MediaQuery.sizeOf(context).height < 520;
 
-    return RetroArcadeCard(
-      borderColor: selected ? RetroColors.cyan : const Color(0xFF1E354F),
-      accentHeaderColor: selected ? RetroColors.cyan : null,
-      padding: EdgeInsets.all(isCompactHeight ? 12 : 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Container(
+      padding: EdgeInsets.all(isCompactHeight ? 10 : 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1724),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isEquipped
+              ? RetroColors.green
+              : (skill.owned ? RetroColors.cyan : const Color(0xFF1E354F)),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  skill.displayName,
-                  style: GoogleFonts.pressStart2p(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+          // Insignia de ranura (Activa / Pasiva)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              color: skill.slot == SkillSlot.active
+                  ? RetroColors.cyan.withValues(alpha: 0.15)
+                  : RetroColors.magenta.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: skill.slot == SkillSlot.active
+                    ? RetroColors.cyan
+                    : RetroColors.magenta,
               ),
-              RetroBadge(
-                text: skill.slot.label,
-                color: RetroColors.cyan,
-                fontSize: 8,
+            ),
+            child: Text(
+              skill.slot == SkillSlot.active ? 'ACTIVA' : 'PASIVA',
+              style: GoogleFonts.pressStart2p(
+                fontSize: 7,
+                color: skill.slot == SkillSlot.active
+                    ? RetroColors.cyan
+                    : RetroColors.magenta,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(width: 8),
-              RetroBadge(
-                text: skill.owned ? 'Propia' : 'Por desbloquear',
-                color: skill.owned ? RetroColors.green : RetroColors.gold,
-                fontSize: 8,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            skill.description,
-            style: GoogleFonts.vt323(
-              fontSize: 16,
-              color: RetroColors.textBright,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            skill.uiExplanation,
-            style: GoogleFonts.vt323(
-              fontSize: 15,
-              color: RetroColors.cyan,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const SizedBox(height: 8),
-          LayoutBuilder(
-            builder: (context, cardConstraints) {
-              final isWideCard = cardConstraints.maxWidth > 380;
-              final requirementText = Text(
-                'Maestría ${skill.unlockLevel} · ${_coins(skill.cost)} monedas · Progresión/Boss Rush',
-                style: GoogleFonts.vt323(
-                  fontSize: isCompactHeight ? 13 : 14,
-                  color: RetroColors.textMuted,
-                ),
-              );
+          const SizedBox(width: 12),
 
-              final actionButton = skill.owned
-                  ? FilledButton.tonalIcon(
-                      style: FilledButton.styleFrom(
-                        minimumSize: Size(
-                          isCompactHeight ? 110 : 120,
-                          isCompactHeight ? 40 : 46,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isCompactHeight ? 12 : 16,
-                          vertical: isCompactHeight ? 8 : 12,
-                        ),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
-                          side: BorderSide(
-                            color: Color(0xFF1E354F),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      onPressed: canEquip
-                          ? () => skill.slot == SkillSlot.active
-                              ? controller.equipActive(skill.id)
-                              : controller.togglePassive(skill.id)
-                          : null,
-                      icon: busy
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Icon(
-                              selected ? Icons.remove_circle : Icons.check,
-                              size: isCompactHeight ? 16 : 18,
-                            ),
-                      label: Text(
-                        selected
-                            ? skill.slot == SkillSlot.active
-                                ? 'Equipada'
-                                : 'Retirar'
-                            : 'Equipar',
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: isCompactHeight ? 8 : 9,
-                        ),
-                      ),
-                    )
-                  : FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        minimumSize: Size(
-                          isCompactHeight ? 120 : 130,
-                          isCompactHeight ? 40 : 46,
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isCompactHeight ? 12 : 16,
-                          vertical: isCompactHeight ? 8 : 12,
-                        ),
-                        backgroundColor: RetroColors.cyan,
-                        foregroundColor: Colors.black,
-                        disabledBackgroundColor: const Color(0xFF132032),
-                        disabledForegroundColor: RetroColors.textMuted,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero,
-                          side: BorderSide(
-                            color: Color(0xFF1E354F),
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      onPressed: canPurchase
-                          ? () => controller.purchaseSkill(skill)
-                          : null,
-                      icon: busy
-                          ? const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.black,
-                              ),
-                            )
-                          : Icon(
-                              Icons.shopping_bag_outlined,
-                              size: isCompactHeight ? 16 : 18,
-                            ),
-                      label: Text(
-                        _skillActionLabel(snapshot, skill),
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: isCompactHeight ? 8 : 9,
-                        ),
-                      ),
-                    );
-
-              if (isWideCard) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+          // Título y descripción
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Expanded(child: requirementText),
-                    const SizedBox(width: 12),
-                    actionButton,
+                    Flexible(
+                      child: Text(
+                        skill.displayName.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isCompactHeight ? 8.5 : 9.5,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    if (isEquipped) ...[
+                      const SizedBox(width: 8),
+                      const RetroBadge(
+                        text: 'EQUIPADA',
+                        color: RetroColors.green,
+                        fontSize: 7,
+                      ),
+                    ],
                   ],
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  requirementText,
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: actionButton,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  skill.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.vt323(
+                    fontSize: isCompactHeight ? 14 : 15,
+                    color: RetroColors.textBright,
                   ),
-                ],
-              );
-            },
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
+
+          // Botón Acción
+          if (skill.owned)
+            FilledButton.icon(
+              onPressed: state.isBusy
+                  ? null
+                  : (skill.slot == SkillSlot.active
+                      ? (isEquipped ? null : onEquipActive)
+                      : onTogglePassive),
+              style: FilledButton.styleFrom(
+                backgroundColor: isEquipped
+                    ? const Color(0xFF132032)
+                    : const Color(0xFF1E354F),
+                foregroundColor:
+                    isEquipped ? RetroColors.green : Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                  side: BorderSide(
+                    color: isEquipped ? RetroColors.green : RetroColors.cyan,
+                  ),
+                ),
+              ),
+              icon: Icon(
+                isEquipped ? Icons.check : Icons.touch_app,
+                size: 14,
+              ),
+              label: Text(
+                isEquipped
+                    ? (skill.slot == SkillSlot.active ? 'EN USO' : 'QUITAR')
+                    : 'EQUIPAR',
+                style: GoogleFonts.pressStart2p(fontSize: 7.5),
+              ),
+            )
+          else
+            _BuyActionButton(
+              isCapped: false,
+              canBuy: canPurchase,
+              cost: skill.cost,
+              unlockLevel: skill.unlockLevel,
+              masteryReady: masteryReady,
+              balanceReady: balanceReady,
+              storeUnlocked: snapshot.storeUnlocked,
+              isBusy: busy,
+              isCompact: isCompactHeight,
+              onPressed: onPurchase,
+            ),
         ],
       ),
     );
   }
 }
 
-class _PalettesTab extends ConsumerWidget {
-  const _PalettesTab({
+// ---------------------------------------------------------------------------
+// CATÁLOGO DE PALETAS (SKINS / ASPECTOS)
+// ---------------------------------------------------------------------------
+
+class _PalettesCatalog extends ConsumerWidget {
+  const _PalettesCatalog({
     required this.state,
     required this.isCompactHeight,
   });
@@ -949,42 +1112,49 @@ class _PalettesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = state.snapshot;
     final controller = ref.read(progressionControllerProvider.notifier);
-    return RefreshIndicator(
-      color: RetroColors.cyan,
-      backgroundColor: const Color(0xFF0C1420),
-      onRefresh: controller.refresh,
-      child: GridView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(isCompactHeight ? 12 : 20),
-        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 340,
-          mainAxisExtent: isCompactHeight ? 280 : 320,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-        ),
-        itemCount: snapshot.palettes.length,
-        itemBuilder: (context, index) {
-          final palette = snapshot.palettes[index];
-          final masteryReady = snapshot.masteryLevel >= palette.unlockLevel;
-          final balanceReady = snapshot.bankedCurrency >= palette.cost;
-          final canPurchase =
-              !state.isBusy &&
-              snapshot.storeUnlocked &&
-              !palette.owned &&
-              masteryReady &&
-              balanceReady;
-          final busy = state.busyAction?.contains(palette.id) == true;
 
-          return RetroArcadeCard(
-            borderColor: palette.equipped
-                ? RetroColors.cyan
-                : const Color(0xFF1E354F),
-            accentHeaderColor: palette.equipped ? RetroColors.cyan : null,
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
+    return GridView.builder(
+      padding: EdgeInsets.all(isCompactHeight ? 10 : 16),
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 220,
+        mainAxisExtent: isCompactHeight ? 180 : 205,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+      ),
+      itemCount: snapshot.palettes.length,
+      itemBuilder: (context, index) {
+        final palette = snapshot.palettes[index];
+        final masteryReady = snapshot.masteryLevel >= palette.unlockLevel;
+        final balanceReady = snapshot.bankedCurrency >= palette.cost;
+        final canPurchase = !state.isBusy &&
+            snapshot.storeUnlocked &&
+            !palette.owned &&
+            masteryReady &&
+            balanceReady;
+        final busy = state.busyAction?.contains(palette.id) == true;
+
+        return Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1724),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: palette.equipped
+                  ? RetroColors.green
+                  : (palette.owned ? RetroColors.cyan : const Color(0xFF1E354F)),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Previsualización de personaje con el filtro de color
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF070D16),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                   child: Center(
                     child: ColorFiltered(
                       colorFilter: palette.transform.colorFilter ??
@@ -996,198 +1166,182 @@ class _PalettesTab extends ConsumerWidget {
                         'assets/images/${snapshot.characterId.definition.assetName}',
                         fit: BoxFit.contain,
                         filterQuality: FilterQuality.none,
-                        semanticLabel:
-                            '${snapshot.characterId.definition.displayName}, paleta ${palette.displayName}',
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        palette.displayName,
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    if (palette.equipped)
-                      const RetroBadge(
-                        text: 'Equipada',
-                        color: RetroColors.cyan,
-                        fontSize: 8,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  palette.cost == 0
-                      ? 'Paleta original incluida.'
-                      : 'Maestría ${palette.unlockLevel} · ${_coins(palette.cost)} monedas',
-                  style: GoogleFonts.vt323(
-                    fontSize: 15,
-                    color: RetroColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                FilledButton.tonalIcon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    backgroundColor: palette.owned
-                        ? (palette.equipped
-                            ? const Color(0xFF132032)
-                            : const Color(0xFF1E354F))
-                        : RetroColors.cyan,
-                    foregroundColor: palette.owned ? Colors.white : Colors.black,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                      side: BorderSide(
-                        color: Color(0xFF1E354F),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  onPressed: palette.owned
-                      ? state.isBusy || palette.equipped
-                          ? null
-                          : () => controller.equipPalette(palette.id)
-                      : canPurchase
-                          ? () => controller.purchasePalette(palette)
-                          : null,
-                  icon: busy
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(
-                          palette.owned
-                              ? Icons.palette_outlined
-                              : Icons.shopping_bag_outlined,
-                          size: 18,
-                        ),
-                  label: Text(
-                    _paletteActionLabel(snapshot, palette),
-                    style: GoogleFonts.pressStart2p(fontSize: 9),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SummaryChip extends StatelessWidget {
-  const _SummaryChip({
-    required this.icon,
-    required this.label,
-    this.color = RetroColors.cyan,
-    this.pixelIconAsset,
-    this.isCompact = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final String? pixelIconAsset;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C1420),
-        border: Border.all(color: color.withValues(alpha: 0.6), width: 1.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black45,
-            offset: Offset(2, 2),
-            blurRadius: 0,
-          ),
-        ],
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 7 : 10,
-        vertical: isCompact ? 4 : 7,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (pixelIconAsset != null)
-            PixelIconAsset(assetName: pixelIconAsset!, size: isCompact ? 13 : 16)
-          else
-            Icon(icon, size: isCompact ? 13 : 16, color: color),
-          SizedBox(width: isCompact ? 5 : 8),
-          Text(
-            label,
-            style: GoogleFonts.vt323(
-              fontSize: isCompact ? 14 : 16,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MessageBanner extends StatelessWidget {
-  const _MessageBanner({
-    required this.icon,
-    required this.message,
-    this.success = false,
-    this.isCompact = false,
-  });
-
-  final IconData icon;
-  final String message;
-  final bool success;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = success ? RetroColors.green : RetroColors.gold;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF0C1420),
-          border: Border.all(color: borderColor, width: 1.5),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black38,
-              offset: Offset(2, 2),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        padding: EdgeInsets.symmetric(
-          horizontal: isCompact ? 8 : 12,
-          vertical: isCompact ? 4 : 8,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: borderColor, size: isCompact ? 14 : 18),
-            SizedBox(width: isCompact ? 6 : 10),
-            Expanded(
-              child: Text(
-                message,
-                style: GoogleFonts.vt323(
-                  fontSize: isCompact ? 14 : 16,
-                  color: Colors.white,
-                  height: 1.1,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+
+              // Nombre de la paleta
+              Text(
+                palette.displayName.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 8,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Botón Equipar / Comprar
+              if (palette.owned)
+                FilledButton(
+                  onPressed: palette.equipped || state.isBusy
+                      ? null
+                      : () => controller.equipPalette(palette.id),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: palette.equipped
+                        ? const Color(0xFF132032)
+                        : RetroColors.cyan,
+                    foregroundColor:
+                        palette.equipped ? RetroColors.green : Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    minimumSize: const Size.fromHeight(32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  child: Text(
+                    palette.equipped ? 'EQUIPADA' : 'EQUIPAR',
+                    style: GoogleFonts.pressStart2p(fontSize: 7.5),
+                  ),
+                )
+              else
+                _BuyActionButton(
+                  isCapped: false,
+                  canBuy: canPurchase,
+                  cost: palette.cost,
+                  unlockLevel: palette.unlockLevel,
+                  masteryReady: masteryReady,
+                  balanceReady: balanceReady,
+                  storeUnlocked: snapshot.storeUnlocked,
+                  isBusy: busy,
+                  isCompact: isCompactHeight,
+                  onPressed: () => controller.purchasePalette(palette),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// BOTÓN DE ACCIÓN / COMPRA REUTILIZABLE
+// ---------------------------------------------------------------------------
+
+class _BuyActionButton extends StatelessWidget {
+  const _BuyActionButton({
+    required this.isCapped,
+    required this.canBuy,
+    required this.cost,
+    required this.unlockLevel,
+    required this.masteryReady,
+    required this.balanceReady,
+    required this.storeUnlocked,
+    required this.isBusy,
+    required this.isCompact,
+    required this.onPressed,
+  });
+
+  final bool isCapped;
+  final bool canBuy;
+  final int? cost;
+  final int? unlockLevel;
+  final bool masteryReady;
+  final bool balanceReady;
+  final bool storeUnlocked;
+  final bool isBusy;
+  final bool isCompact;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isCapped) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0C241B),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: RetroColors.green),
+        ),
+        child: Text(
+          'MÁXIMO',
+          style: GoogleFonts.pressStart2p(
+            fontSize: 7.5,
+            color: RetroColors.green,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    if (canBuy) {
+      return FilledButton.icon(
+        onPressed: isBusy ? null : onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: RetroColors.gold,
+          foregroundColor: Colors.black,
+          padding: EdgeInsets.symmetric(
+            horizontal: isCompact ? 10 : 14,
+            vertical: isCompact ? 8 : 10,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        icon: isBusy
+            ? const SizedBox.square(
+                dimension: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.black,
+                ),
+              )
+            : const PixelIconAsset(
+                assetName: PixelIconAsset.coin,
+                size: 14,
+              ),
+        label: Text(
+          _coins(cost ?? 0),
+          style: GoogleFonts.pressStart2p(
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    // Si no se puede comprar, mostrar motivo breve
+    String reason = 'BLOQUEADO';
+    if (!storeUnlocked) {
+      reason = 'REQ. CLEAR';
+    } else if (!masteryReady && unlockLevel != null) {
+      reason = 'REQ. NVL $unlockLevel';
+    } else if (!balanceReady && cost != null) {
+      reason = '🪙 ${_coins(cost!)}';
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 8 : 10,
+        vertical: isCompact ? 6 : 8,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF141A24),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFF1E354F)),
+      ),
+      child: Text(
+        reason,
+        style: GoogleFonts.pressStart2p(
+          fontSize: 7,
+          color: Colors.white38,
         ),
       ),
     );
@@ -1209,20 +1363,20 @@ class _LoadFailure extends StatelessWidget {
           children: [
             const Icon(
               Icons.cloud_off_outlined,
-              size: 56,
+              size: 48,
               color: RetroColors.magenta,
             ),
             const SizedBox(height: 12),
             Text(
-              'No se pudo cargar la progresión.',
+              'NO SE PUDO CARGAR LA TIENDA',
               style: GoogleFonts.pressStart2p(
-                fontSize: 11,
+                fontSize: 10,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
             RetroArcadeButton(
-              text: 'Reintentar',
+              text: 'REINTENTAR',
               onPressed: onRetry,
               primaryColor: RetroColors.cyan,
               icon: Icons.refresh,
@@ -1232,45 +1386,6 @@ class _LoadFailure extends StatelessWidget {
       ),
     );
   }
-}
-
-String _statActionLabel(ProgressionSnapshot snapshot, ProgressionStat stat) {
-  if (stat.isCapped) return 'Máximo';
-  if (!snapshot.storeUnlocked) return 'Requiere clear';
-  if (snapshot.masteryLevel < (stat.nextUnlockLevel ?? 0)) {
-    return 'Maestría ${stat.nextUnlockLevel}';
-  }
-  if (snapshot.bankedCurrency < (stat.nextCost ?? 0)) {
-    return 'Faltan ${_coins((stat.nextCost ?? 0) - snapshot.bankedCurrency)}';
-  }
-  return 'Comprar por ${_coins(stat.nextCost ?? 0)}';
-}
-
-String _skillActionLabel(ProgressionSnapshot snapshot, ProgressionSkill skill) {
-  if (!snapshot.storeUnlocked) return 'Requiere clear';
-  if (snapshot.masteryLevel < skill.unlockLevel) {
-    return 'Maestría ${skill.unlockLevel}';
-  }
-  if (snapshot.bankedCurrency < skill.cost) {
-    return 'Faltan ${_coins(skill.cost - snapshot.bankedCurrency)}';
-  }
-  return 'Comprar por ${_coins(skill.cost)}';
-}
-
-String _paletteActionLabel(
-  ProgressionSnapshot snapshot,
-  PaletteVariant palette,
-) {
-  if (palette.equipped) return 'Equipada';
-  if (palette.owned) return 'Equipar';
-  if (!snapshot.storeUnlocked) return 'Requiere clear';
-  if (snapshot.masteryLevel < palette.unlockLevel) {
-    return 'Maestría ${palette.unlockLevel}';
-  }
-  if (snapshot.bankedCurrency < palette.cost) {
-    return 'Faltan ${_coins(palette.cost - snapshot.bankedCurrency)}';
-  }
-  return 'Comprar por ${_coins(palette.cost)}';
 }
 
 String _percent(int basisPoints) {

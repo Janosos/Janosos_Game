@@ -32,13 +32,14 @@ class JanososAppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.sizeOf(context);
-    final wide = media.width >= 900;
     final isCompactHeight = media.height < 500;
+    final isLandscape = media.width > media.height;
+    final wide = media.width >= 900 || (isLandscape && media.width >= 580 && isCompactHeight);
     const cyan = Color(0xFF29FFE4);
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: isCompactHeight ? 38 : 54,
+        toolbarHeight: isCompactHeight ? 36 : 54,
         backgroundColor: const Color(0xFF070D16),
         elevation: 0,
         title: Row(
@@ -78,7 +79,7 @@ class JanososAppShell extends StatelessWidget {
               onPressed: () => context.go('/settings'),
               padding: EdgeInsets.zero,
               constraints: isCompactHeight
-                  ? const BoxConstraints(minWidth: 32, minHeight: 32)
+                  ? const BoxConstraints(minWidth: 30, minHeight: 30)
                   : null,
               icon: Icon(
                 Icons.settings_outlined,
@@ -93,6 +94,7 @@ class JanososAppShell extends StatelessWidget {
           ? Row(
               children: [
                 NavigationRail(
+                  minWidth: isCompactHeight ? 56 : 72,
                   backgroundColor: const Color(0xFF070D16),
                   selectedIndex: _selectedIndex,
                   labelType: NavigationRailLabelType.all,
@@ -101,12 +103,12 @@ class JanososAppShell extends StatelessWidget {
                     color: Color(0xFF7A9BB8),
                   ),
                   selectedLabelTextStyle: GoogleFonts.pressStart2p(
-                    fontSize: 8,
+                    fontSize: isCompactHeight ? 6 : 8,
                     fontWeight: FontWeight.bold,
                     color: cyan,
                   ),
                   unselectedLabelTextStyle: GoogleFonts.pressStart2p(
-                    fontSize: 8,
+                    fontSize: isCompactHeight ? 6 : 8,
                     color: const Color(0xFF7A9BB8),
                   ),
                   indicatorColor: cyan.withValues(alpha: 0.15),
@@ -120,7 +122,10 @@ class JanososAppShell extends StatelessWidget {
                   destinations: [
                     for (final destination in _destinations)
                       NavigationRailDestination(
-                        icon: Icon(destination.icon),
+                        icon: Icon(
+                          destination.icon,
+                          size: isCompactHeight ? 16 : 22,
+                        ),
                         label: Text(destination.label),
                       ),
                   ],
