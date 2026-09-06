@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../features/settings/application/game_settings_controller.dart';
 import '../domain/character_definition.dart';
 import '../domain/character_id.dart';
 import '../domain/run_configuration.dart';
+import '../domain/run_result.dart';
 import 'dino_run_app.dart';
 
 class GameRouteScreen extends ConsumerStatefulWidget {
@@ -264,6 +266,31 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             initialHighScore: legacyHighScore,
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
+              if (result.outcome == RunOutcome.victory) {
+                final character = session.configuration.characterId.serialized;
+                final beatenLevel = session.configuration.level;
+                final currentUnlocked =
+                    preferences.getInt('campaign_max_unlocked_level_$character') ??
+                    preferences.getInt('campaign_max_unlocked_level') ??
+                    1;
+                final nextUnlocked =
+                    max(currentUnlocked, beatenLevel + 1).clamp(1, 10);
+                await preferences.setInt(
+                  'campaign_max_unlocked_level_$character',
+                  nextUnlocked,
+                );
+                await preferences.setInt(
+                  'campaign_max_unlocked_level',
+                  nextUnlocked,
+                );
+                if (beatenLevel == 10) {
+                  await preferences.setBool(
+                    'campaign_completed_$character',
+                    true,
+                  );
+                  await preferences.setBool('campaign_completed', true);
+                }
+              }
               final message = await resultCoordinator.sealAndSynchronize(
                 session,
                 result,

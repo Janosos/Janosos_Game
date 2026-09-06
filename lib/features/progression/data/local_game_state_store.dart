@@ -176,6 +176,7 @@ class LocalCharacterProgress {
     this.bankedCurrency = 0,
     this.storeUnlocked = false,
     this.activeSkillId,
+    this.highestUnlockedLevel = 1,
   });
 
   factory LocalCharacterProgress.empty(CharacterId characterId) =>
@@ -192,6 +193,7 @@ class LocalCharacterProgress {
         passiveSkillIds: <String>[],
         uniqueRewardIds: <String>{},
         equippedPaletteId: '${characterId.serialized}_default',
+        highestUnlockedLevel: 1,
       );
 
   factory LocalCharacterProgress.fromJson(
@@ -206,6 +208,9 @@ class LocalCharacterProgress {
     empty.masteryXp = _integer(json['masteryXp']);
     empty.bankedCurrency = _integer(json['bankedCurrency']);
     empty.storeUnlocked = json['storeUnlocked'] == true;
+    empty.highestUnlockedLevel =
+        (_integer(json['highestUnlockedLevel'])).clamp(1, 10);
+    if (empty.highestUnlockedLevel == 0) empty.highestUnlockedLevel = 1;
     empty.ownedSkillIds.addAll(_stringList(json['ownedSkillIds']));
     empty.ownedPaletteIds.addAll(_stringList(json['ownedPaletteIds']));
     empty.passiveSkillIds
@@ -222,6 +227,7 @@ class LocalCharacterProgress {
   int masteryXp;
   int bankedCurrency;
   bool storeUnlocked;
+  int highestUnlockedLevel;
   final Map<String, int> statRanks;
   final Set<String> ownedSkillIds;
   final Set<String> ownedPaletteIds;
@@ -234,6 +240,7 @@ class LocalCharacterProgress {
     'masteryXp': masteryXp,
     'bankedCurrency': bankedCurrency,
     'storeUnlocked': storeUnlocked,
+    'highestUnlockedLevel': highestUnlockedLevel,
     'statRanks': statRanks,
     'ownedSkillIds': ownedSkillIds.toList()..sort(),
     'ownedPaletteIds': ownedPaletteIds.toList()..sort(),

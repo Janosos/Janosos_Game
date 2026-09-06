@@ -50,13 +50,20 @@ class LocalCampaignRepository implements CampaignRepository {
           'Termina o abandona Boss Rush antes de iniciar una campaña.',
         );
       }
+      final progress = state.character(configuration.characterId);
       var campaign = state.campaign;
+      final maxAllowedLevel = max(
+        campaign?.expectedSequence ?? 1,
+        progress.highestUnlockedLevel,
+      ).clamp(1, 10);
+      final effectiveLevel = configuration.level.clamp(1, maxAllowedLevel);
+
       if (campaign == null) {
         campaign = LocalCampaignState(
           id: _uuid.v4(),
           characterId: configuration.characterId,
-          level: 1,
-          expectedSequence: 1,
+          level: effectiveLevel,
+          expectedSequence: effectiveLevel,
           temporaryCurrency: 0,
           totalScore: 0,
           totalDurationMs: 0,
@@ -70,15 +77,21 @@ class LocalCampaignRepository implements CampaignRepository {
           'Termina o abandona la campaña activa antes de cambiar personaje.',
         );
       }
+
+      final isReplay = effectiveLevel < campaign.expectedSequence;
+      final token = isReplay
+          ? 'local:${campaign.id}:replay:$effectiveLevel'
+          : _stageToken(campaign);
+
       return CampaignStageSession(
         eligibility: CampaignEligibility.local,
         configuration: configuration.copyWith(
-          level: campaign.level,
+          level: effectiveLevel,
           experience: RunExperience.campaignStage,
         ),
         campaignId: campaign.id,
-        stageToken: _stageToken(campaign),
-        bankedCurrency: state.character(campaign.characterId).bankedCurrency,
+        stageToken: token,
+        bankedCurrency: progress.bankedCurrency,
         temporaryCurrency: campaign.temporaryCurrency,
       );
     });
@@ -95,7 +108,11 @@ class LocalCampaignRepository implements CampaignRepository {
       if (prior != null) return _finishReceipt(prior);
 
       final campaign = state.campaign;
-      if (campaign == null || payload['stage_token'] != _stageToken(campaign)) {
+      final stageToken = payload['stage_token'] as String?;
+      final isReplay = stageToken != null && stageToken.contains(':replay:');
+
+      if (campaign == null ||
+          (!isReplay && stageToken != _stageToken(campaign))) {
         throw const AppFailure(
           AppFailureCode.conflict,
           'La etapa local ya no está activa.',
@@ -108,7 +125,9 @@ class LocalCampaignRepository implements CampaignRepository {
         payload,
         'duration_ms',
       ).clamp(1000, 21600000);
-      final sequence = campaign.expectedSequence;
+      final sequence = isReplay
+          ? (int.tryParse(stageToken.split(':').last) ?? 1)
+          : campaign.expectedSequence;
       final victory = outcome == 'victory';
       if (!victory && outcome != 'defeat') {
         throw const AppFailure(
@@ -132,7 +151,18 @@ class LocalCampaignRepository implements CampaignRepository {
       var lostCurrency = 0;
       var readyToComplete = false;
       var nextLevel = 1;
-      if (victory) {
+
+      if (isReplay) {
+        if (victory) {
+          rewardId = campaignLevelDefinition(sequence).uniqueRewardId;
+          if (!progress.uniqueRewardIds.contains(rewardId) &&
+              _random.nextInt(100) == 0) {
+            progress.uniqueRewardIds.add(rewardId);
+            dropGranted = true;
+          }
+        }
+        nextLevel = campaign.level;
+      } else if (victory) {
         campaign.temporaryCurrency += currencyEarned;
         rewardId = campaignLevelDefinition(sequence).uniqueRewardId;
         if (!progress.uniqueRewardIds.contains(rewardId) &&
@@ -145,10 +175,14 @@ class LocalCampaignRepository implements CampaignRepository {
           nextLevel = 10;
           campaign.level = 10;
           campaign.expectedSequence = 11;
+          progress.highestUnlockedLevel = 10;
         } else {
           campaign.level = sequence + 1;
           campaign.expectedSequence = sequence + 1;
           nextLevel = campaign.level;
+          if (nextLevel > progress.highestUnlockedLevel) {
+            progress.highestUnlockedLevel = nextLevel.clamp(1, 10);
+          }
         }
       } else {
         lostCurrency = campaign.temporaryCurrency;
@@ -249,6 +283,7 @@ class LocalCampaignRepository implements CampaignRepository {
     final progress = state.character(campaign.characterId);
     progress.bankedCurrency += campaign.temporaryCurrency;
     progress.storeUnlocked = true;
+    progress.highestUnlockedLevel = 10;
     state.campaign = null;
   }
 

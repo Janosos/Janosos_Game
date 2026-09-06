@@ -28,7 +28,7 @@ class CampaignStageCoordinator {
   }) async {
     final active = await _loadActiveCampaignSafely();
     final characterId = active?.characterId ?? requestedCharacter;
-    final level = active?.currentLevel ?? requestedLevel.clamp(1, 10);
+    final level = requestedLevel.clamp(1, 10);
     final cached = await _campaignRepository.loadPreparedStage(characterId);
     if (cached != null && cached.configuration.level == level) return cached;
 

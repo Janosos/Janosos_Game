@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,6 +36,37 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
 
   Future<CampaignProgress?> _loadProgress() =>
       ref.read(campaignRepositoryProvider).loadActiveCampaign();
+
+  int _getHighestUnlockedLevel(
+    CharacterId character,
+    CampaignProgress? progress,
+  ) {
+    try {
+      final prefs = ref.read(sharedPreferencesProvider);
+      final characterUnlocked =
+          prefs.getInt('campaign_max_unlocked_level_${character.serialized}') ??
+          1;
+      final globalUnlocked = prefs.getInt('campaign_max_unlocked_level') ?? 1;
+      final activeLevel = progress?.currentLevel ?? 1;
+      return max(
+        max(characterUnlocked, globalUnlocked),
+        activeLevel,
+      ).clamp(1, 10);
+    } catch (_) {
+      return (progress?.currentLevel ?? 1).clamp(1, 10);
+    }
+  }
+
+  bool _isCampaignCompleted(CharacterId character) {
+    try {
+      final prefs = ref.read(sharedPreferencesProvider);
+      return (prefs.getBool('campaign_completed_${character.serialized}') ??
+              false) ||
+          (prefs.getBool('campaign_completed') ?? false);
+    } catch (_) {
+      return false;
+    }
+  }
 
   Future<bool> _loadBossRushEntitlement(CharacterId character) async {
     final environment = ref.read(appEnvironmentProvider);
@@ -84,7 +117,11 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
 
   Widget _buildMap(BuildContext context, CampaignProgress? progress) {
     final selectedCharacter = progress?.characterId ?? _selectedCharacter;
-    final currentLevel = progress?.currentLevel ?? 1;
+    final highestUnlocked = _getHighestUnlockedLevel(
+      selectedCharacter,
+      progress,
+    );
+    final campaignCompleted = _isCampaignCompleted(selectedCharacter);
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -168,10 +205,14 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
             itemCount: initialCampaignLevels.length,
             itemBuilder: (context, index) {
               final level = initialCampaignLevels[index];
+              final isCompleted =
+                  level.level < highestUnlocked ||
+                  (level.level == 10 && campaignCompleted);
+              final isAvailable = level.level == highestUnlocked && !isCompleted;
               return _LevelCard(
                 level: level,
-                available: level.level == currentLevel,
-                completed: level.level < currentLevel,
+                available: isAvailable,
+                completed: isCompleted,
                 selectedCharacter: selectedCharacter,
               );
             },
@@ -333,7 +374,11 @@ class _LevelCard extends StatelessWidget {
 
     return RetroArcadeCard(
       borderColor: borderColor,
-      accentHeaderColor: available ? RetroColors.cyan : null,
+      accentHeaderColor: available
+          ? RetroColors.cyan
+          : completed
+          ? RetroColors.green
+          : null,
       glow: available,
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -342,7 +387,9 @@ class _LevelCard extends StatelessWidget {
           Row(
             children: [
               RetroBadge(
-                text: 'LVL ${level.level}',
+                text: completed
+                    ? 'LVL ${level.level} · COMPLETADO'
+                    : 'LVL ${level.level}',
                 color: completed
                     ? RetroColors.green
                     : available
@@ -430,10 +477,15 @@ class _LevelCard extends StatelessWidget {
             width: double.infinity,
             child: RetroArcadeButton(
               text: completed
-                  ? 'COMPLETADO'
+                  ? 'VOLVER A JUGAR'
                   : available
                   ? 'JUGAR NIVEL ${level.level}'
                   : 'BLOQUEADO',
+              icon: completed
+                  ? Icons.replay
+                  : available
+                  ? Icons.play_arrow
+                  : null,
               fontSize: 8,
               primaryColor: completed
                   ? RetroColors.green
@@ -441,7 +493,7 @@ class _LevelCard extends StatelessWidget {
                   ? RetroColors.cyan
                   : Colors.grey.shade800,
               textColor: completed || available ? Colors.black : Colors.white38,
-              onPressed: available
+              onPressed: completed || available
                   ? () => context.go(
                       '/game?experience=campaign&character=${selectedCharacter.serialized}&level=${level.level}',
                     )
