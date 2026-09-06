@@ -7,6 +7,7 @@ import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_models.dart';
 import '../application/game_settings_controller.dart';
+import 'hud_customizer_dialog.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -241,6 +242,55 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
 
+    final hudControlsCard = RetroArcadeCard(
+      borderColor: RetroColors.green,
+      accentHeaderColor: RetroColors.green,
+      padding: EdgeInsets.all(isCompactHeight ? 12 : 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'CONTROLES HUD / BOTONES',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: RetroColors.green,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const RetroBadge(
+                text: 'LOCAL',
+                color: RetroColors.green,
+                fontSize: 8,
+              ),
+            ],
+          ),
+          SizedBox(height: isCompactHeight ? 8 : 12),
+          Text(
+            'Personaliza tamaño, opacidad y posición de los botones en partida (D-Pad, Habilidad y Golpe Jefe). Guardado local.',
+            style: GoogleFonts.vt323(
+              fontSize: isCompactHeight ? 15 : 17,
+              color: RetroColors.textBright,
+              height: 1.2,
+            ),
+          ),
+          SizedBox(height: isCompactHeight ? 10 : 14),
+          RetroArcadeButton(
+            text: 'PERSONALIZAR BOTONES HUD',
+            icon: Icons.tune,
+            primaryColor: RetroColors.green,
+            textColor: Colors.black,
+            fontSize: 8,
+            isFullWidth: true,
+            onPressed: () => HudCustomizerDialog.show(context),
+          ),
+        ],
+      ),
+    );
+
     final sessionCard = RetroArcadeCard(
       borderColor: const Color(0xFF1E354F),
       backgroundColor: const Color(0xFF0F141E),
@@ -328,7 +378,15 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(child: gameSettingsCard),
+              Expanded(
+                child: Column(
+                  children: [
+                    gameSettingsCard,
+                    const SizedBox(height: 14),
+                    hudControlsCard,
+                  ],
+                ),
+              ),
             ],
           )
         else
@@ -337,6 +395,8 @@ class SettingsScreen extends ConsumerWidget {
               accountCard,
               const SizedBox(height: 14),
               gameSettingsCard,
+              const SizedBox(height: 14),
+              hudControlsCard,
               const SizedBox(height: 14),
               sessionCard,
             ],

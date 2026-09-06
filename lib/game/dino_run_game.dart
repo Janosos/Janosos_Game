@@ -18,6 +18,7 @@ import 'components/sky.dart';
 import 'domain/character_definition.dart';
 import 'domain/character_id.dart';
 import 'domain/gameplay_event.dart';
+import 'domain/hud_settings.dart';
 import 'domain/level_runtime.dart';
 import 'domain/run_configuration.dart';
 import 'domain/run_result.dart';
@@ -37,12 +38,14 @@ class DinoRunGame extends FlameGame
     GameplayEventSink onEvent = ignoreGameplayEvent,
     DateTime Function()? now,
     bool? isMobileOrTablet,
+    this.hudSettings = HudSettings.defaults,
   }) : _configuration = configuration,
        _eventSink = onEvent,
        _now = now ?? DateTime.now,
        _isMobileOrTabletOverride = isMobileOrTablet;
 
   final bool? _isMobileOrTabletOverride;
+  HudSettings hudSettings;
 
   bool get isMobileOrTablet {
     if (_isMobileOrTabletOverride != null) return _isMobileOrTabletOverride;
@@ -251,7 +254,7 @@ class DinoRunGame extends FlameGame
     camera.viewport.add(_hudIndicators!);
 
     if (configuration.controlLayout.hasActiveAbilityControl) {
-      _abilityButton = AbilityButton(dinoGame: this);
+      _abilityButton = AbilityButton(dinoGame: this, settings: hudSettings);
       camera.viewport.add(_abilityButton!);
     }
 
@@ -259,8 +262,8 @@ class DinoRunGame extends FlameGame
       camera.viewport.remove(_directionalPad!);
       _directionalPad = null;
     }
-    if (isMobileOrTablet) {
-      _directionalPad = DirectionalPad();
+    if (isMobileOrTablet && hudSettings.dpadEnabled) {
+      _directionalPad = DirectionalPad(settings: hudSettings);
       camera.viewport.add(_directionalPad!);
     }
 
@@ -385,6 +388,28 @@ class DinoRunGame extends FlameGame
       unawaited(AppAudioManager.playBgm());
     } else {
       unawaited(AppAudioManager.stopBgm());
+    }
+  }
+
+  void setHudSettings(HudSettings settings) {
+    hudSettings = settings;
+    if (_directionalPad != null) {
+      camera.viewport.remove(_directionalPad!);
+      _directionalPad = null;
+      if (isMobileOrTablet && settings.dpadEnabled) {
+        _directionalPad = DirectionalPad(settings: settings);
+        camera.viewport.add(_directionalPad!);
+      }
+    }
+    if (_abilityButton != null) {
+      camera.viewport.remove(_abilityButton!);
+      _abilityButton = AbilityButton(dinoGame: this, settings: settings);
+      camera.viewport.add(_abilityButton!);
+    }
+    if (_bossActionButton != null) {
+      camera.viewport.remove(_bossActionButton!);
+      _bossActionButton = BossActionButton(settings: settings);
+      camera.viewport.add(_bossActionButton!);
     }
   }
 
@@ -752,7 +777,7 @@ class DinoRunGame extends FlameGame
     _obstacleManager.pauseSpawning();
     _boss = CampaignBoss(definition: runtime.definition);
     add(_boss!);
-    _bossActionButton = BossActionButton();
+    _bossActionButton = BossActionButton(settings: hudSettings);
     camera.viewport.add(_bossActionButton!);
     if (autoStart) {
       runtime.beginBossCombat();

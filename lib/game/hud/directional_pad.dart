@@ -3,12 +3,21 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 import '../dino_run_game.dart';
+import '../domain/hud_settings.dart';
 
 /// On-screen retro directional controls allowing the player to move left and right.
 class DirectionalPad extends PositionComponent
     with HasGameReference<DinoRunGame>, TapCallbacks {
-  DirectionalPad()
-    : super(size: Vector2(136, 60), anchor: Anchor.bottomLeft, priority: 120);
+  DirectionalPad({this.settings = HudSettings.defaults})
+    : super(
+        size: Vector2(136 * settings.dpadScale, 60 * settings.dpadScale),
+        anchor: settings.dpadInvertSide
+            ? Anchor.bottomRight
+            : Anchor.bottomLeft,
+        priority: 120,
+      );
+
+  final HudSettings settings;
 
   bool _leftPressed = false;
   bool _rightPressed = false;
@@ -21,8 +30,17 @@ class DirectionalPad extends PositionComponent
 
   void _updateLayout(Vector2 size) {
     final isCompact = size.y < 500;
-    this.size = isCompact ? Vector2(116, 52) : Vector2(136, 60);
-    position = Vector2(isCompact ? 12 : 16, size.y - (isCompact ? 10 : 16));
+    final scale = settings.dpadScale;
+    this.size = isCompact
+        ? Vector2(116 * scale, 52 * scale)
+        : Vector2(136 * scale, 60 * scale);
+    anchor = settings.dpadInvertSide ? Anchor.bottomRight : Anchor.bottomLeft;
+    position = Vector2(
+      settings.dpadInvertSide
+          ? size.x - (isCompact ? 12 : 16)
+          : (isCompact ? 12 : 16),
+      size.y - (isCompact ? 10 : 16),
+    );
   }
 
   @override
@@ -53,9 +71,9 @@ class DirectionalPad extends PositionComponent
 
   @override
   bool containsPoint(Vector2 point) {
-    final left = position.x;
+    final left = settings.dpadInvertSide ? position.x - width : position.x;
     final top = position.y - height;
-    final right = position.x + width;
+    final right = settings.dpadInvertSide ? position.x : position.x + width;
     final bottom = position.y;
     return point.x >= left - 8 &&
         point.x <= right + 8 &&
@@ -97,8 +115,17 @@ class DirectionalPad extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
     if (!_spritesLoaded) return;
+
+    if (settings.dpadOpacity < 1.0) {
+      canvas.saveLayer(
+        null,
+        Paint()
+          ..color = Colors.white.withValues(alpha: settings.dpadOpacity),
+      );
+    }
+
+    super.render(canvas);
 
     final btnSize = height;
     final rightBtnX = width - btnSize;
@@ -116,5 +143,10 @@ class DirectionalPad extends PositionComponent
       position: Vector2(rightBtnX, 0),
       size: Vector2(btnSize, btnSize),
     );
+
+    if (settings.dpadOpacity < 1.0) {
+      canvas.restore();
+    }
   }
 }
+

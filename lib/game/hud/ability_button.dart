@@ -3,9 +3,11 @@ import 'package:flame/events.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
 import '../dino_run_game.dart';
+import '../domain/hud_settings.dart';
 
 class AbilityButton extends HudButtonComponent {
   final DinoRunGame dinoGame;
+  final HudSettings settings;
   Sprite? _buttonSprite;
 
   late final TextPaint _cooldownPaint = TextPaint(
@@ -30,17 +32,31 @@ class AbilityButton extends HudButtonComponent {
     ),
   );
 
-  AbilityButton({required this.dinoGame})
-    : super(
-        margin: const EdgeInsets.only(right: 20, bottom: 20),
-        anchor: Anchor.bottomRight,
-        priority: 100,
-      );
+  AbilityButton({
+    required this.dinoGame,
+    this.settings = HudSettings.defaults,
+  }) : super(
+         margin: EdgeInsets.only(
+           right: 18,
+           bottom: settings.swapActionButtons ? 95 : 18,
+         ),
+         anchor: Anchor.bottomRight,
+         priority: 100,
+       );
 
   void _updateLayout(Vector2 size) {
     final isCompact = size.y < 500;
-    final btnSize = isCompact ? Vector2(62, 62) : Vector2(80, 80);
+    final scale = settings.abilityScale;
+    final btnSize = isCompact
+        ? Vector2(62 * scale, 62 * scale)
+        : Vector2(80 * scale, 80 * scale);
     this.size = btnSize;
+    margin = EdgeInsets.only(
+      right: isCompact ? 14 : 20,
+      bottom: settings.swapActionButtons
+          ? (isCompact ? 86 : 112)
+          : (isCompact ? 14 : 20),
+    );
     if (_buttonSprite != null) {
       button = SpriteComponent(sprite: _buttonSprite, size: btnSize);
     }
@@ -64,10 +80,21 @@ class AbilityButton extends HudButtonComponent {
 
   @override
   void render(Canvas canvas) {
+    if (settings.abilityOpacity < 1.0) {
+      canvas.saveLayer(
+        null,
+        Paint()
+          ..color = Colors.white.withValues(alpha: settings.abilityOpacity),
+      );
+    }
+
     super.render(canvas);
     final dino = dinoGame.dino;
     final isCompact = dinoGame.size.y < 500;
-    final currentSize = isCompact ? Vector2(62, 62) : Vector2(80, 80);
+    final scale = settings.abilityScale;
+    final currentSize = isCompact
+        ? Vector2(62 * scale, 62 * scale)
+        : Vector2(80 * scale, 80 * scale);
 
     if (dino.cooldownTimer > 0) {
       final center = Offset(currentSize.x / 2, currentSize.y / 2);
@@ -90,6 +117,10 @@ class AbilityButton extends HudButtonComponent {
         anchor: Anchor.center,
       );
     }
+
+    if (settings.abilityOpacity < 1.0) {
+      canvas.restore();
+    }
   }
 
   @override
@@ -103,3 +134,4 @@ class AbilityButton extends HudButtonComponent {
     event.handled = true;
   }
 }
+

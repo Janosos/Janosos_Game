@@ -343,11 +343,14 @@ class _CharacterSelector extends StatelessWidget {
                 value: character,
                 child: Row(
                   children: [
-                    CharacterIcon(
-                      assetName: character.definition.assetName,
-                      size: isCompact ? 20 : 24,
+                    SizedBox(
+                      width: isCompact ? 22 : 26,
+                      height: isCompact ? 22 : 26,
+                      child: CharacterRunningSprite(
+                        assetName: character.definition.assetName,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         character.definition.displayName.toUpperCase(),

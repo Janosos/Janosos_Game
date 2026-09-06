@@ -7,6 +7,7 @@ import '../audio/app_audio_manager.dart';
 import '../dino_run_game.dart';
 import '../domain/character_id.dart';
 import '../domain/gameplay_event.dart';
+import '../domain/hud_settings.dart';
 import '../domain/run_configuration.dart';
 import '../domain/run_result.dart';
 import '../hud/character_selection_overlay.dart';
@@ -24,6 +25,7 @@ class DinoRunApp extends StatefulWidget {
     this.audioEnabled = true,
     this.musicEnabled = true,
     this.sfxEnabled = true,
+    this.hudSettings = HudSettings.defaults,
   });
 
   final int initialHighScore;
@@ -36,6 +38,7 @@ class DinoRunApp extends StatefulWidget {
   final bool audioEnabled;
   final bool musicEnabled;
   final bool sfxEnabled;
+  final HudSettings hudSettings;
 
   @override
   State<DinoRunApp> createState() => _DinoRunAppState();
@@ -56,6 +59,7 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
       configuration: _configurationFor(CharacterId.jano),
       onEvent: _handleGameplayEvent,
       isMobileOrTablet: widget.isMobileOrTablet,
+      hudSettings: widget.hudSettings,
     );
   }
 
@@ -70,6 +74,9 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
     }
     if (oldWidget.audioEnabled != widget.audioEnabled) {
       _game.setAudioEnabled(widget.audioEnabled);
+    }
+    if (oldWidget.hudSettings != widget.hudSettings) {
+      _game.setHudSettings(widget.hudSettings);
     }
   }
 

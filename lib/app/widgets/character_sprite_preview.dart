@@ -25,10 +25,12 @@ class CharacterIcon extends StatelessWidget {
       width: size,
       height: size,
       child: ClipRect(
-        child: Align(
+        child: OverflowBox(
           alignment: Alignment.topLeft,
-          widthFactor: 0.5,
-          heightFactor: 0.5,
+          minWidth: size * 2,
+          maxWidth: size * 2,
+          minHeight: size * 2,
+          maxHeight: size * 2,
           child: Image.asset(
             'assets/images/$assetName',
             width: size * 2,

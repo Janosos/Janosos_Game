@@ -10,6 +10,7 @@ import '../../features/campaign/domain/campaign_repository.dart';
 import '../../features/boss_rush/domain/boss_rush_repository.dart';
 import '../../features/leaderboard/application/leaderboard_controller.dart';
 import '../../features/settings/application/game_settings_controller.dart';
+import '../../features/settings/application/hud_settings_controller.dart';
 import '../domain/character_definition.dart';
 import '../domain/character_id.dart';
 import '../domain/run_configuration.dart';
@@ -144,6 +145,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             audioEnabled: configuration.audioEnabled,
             musicEnabled: configuration.musicEnabled,
             sfxEnabled: configuration.sfxEnabled,
+            hudSettings: ref.watch(hudSettingsControllerProvider),
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
               final message = await coordinator.sealAndSynchronize(
@@ -213,6 +215,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             audioEnabled: gameSettings.audioEnabled,
             musicEnabled: gameSettings.musicEnabled,
             sfxEnabled: gameSettings.sfxEnabled,
+            hudSettings: ref.watch(hudSettingsControllerProvider),
             onHighScoreChanged: (score) =>
                 preferences.setInt('high_score', score),
             configurationForCharacter: (CharacterId characterId) {
@@ -270,6 +273,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             audioEnabled: configuration.audioEnabled,
             musicEnabled: configuration.musicEnabled,
             sfxEnabled: configuration.sfxEnabled,
+            hudSettings: ref.watch(hudSettingsControllerProvider),
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
               if (result.outcome == RunOutcome.victory) {

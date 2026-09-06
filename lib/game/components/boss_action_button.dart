@@ -3,11 +3,18 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 import '../dino_run_game.dart';
+import '../domain/hud_settings.dart';
 
 class BossActionButton extends PositionComponent
     with HasGameReference<DinoRunGame>, TapCallbacks {
-  BossActionButton()
-    : super(size: Vector2.all(84), anchor: Anchor.bottomRight, priority: 120);
+  BossActionButton({this.settings = HudSettings.defaults})
+    : super(
+        size: Vector2.all(84 * settings.bossActionScale),
+        anchor: Anchor.bottomRight,
+        priority: 120,
+      );
+
+  final HudSettings settings;
 
   final Paint _fill = Paint();
   final Paint _border = Paint()
@@ -52,10 +59,14 @@ class BossActionButton extends PositionComponent
 
   void _updateLayout(Vector2 size) {
     final isCompact = size.y < 500;
-    this.size = isCompact ? Vector2.all(62) : Vector2.all(84);
+    final scale = settings.bossActionScale;
+    this.size = isCompact ? Vector2.all(62 * scale) : Vector2.all(84 * scale);
     position = Vector2(
       size.x - (isCompact ? 14 : 20),
-      size.y - (isCompact ? 86 : 112),
+      size.y -
+          (settings.swapActionButtons
+              ? (isCompact ? 14 : 20)
+              : (isCompact ? 86 : 112)),
     );
   }
 
@@ -92,6 +103,14 @@ class BossActionButton extends PositionComponent
 
   @override
   void render(Canvas canvas) {
+    if (settings.bossActionOpacity < 1.0) {
+      canvas.saveLayer(
+        null,
+        Paint()
+          ..color = Colors.white.withValues(alpha: settings.bossActionOpacity),
+      );
+    }
+
     super.render(canvas);
     final canAct = game.canUseBossAction;
 
@@ -138,6 +157,10 @@ class BossActionButton extends PositionComponent
         anchor: Anchor.center,
       );
     }
+
+    if (settings.bossActionOpacity < 1.0) {
+      canvas.restore();
+    }
   }
 
   @override
@@ -147,3 +170,4 @@ class BossActionButton extends PositionComponent
     event.handled = true;
   }
 }
+
