@@ -21,12 +21,51 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
     LeaderboardCursor? after,
     int pageSize = 25,
   }) async {
+    final userId = _authRepository.currentSession.user?.id;
+    if (userId != null) {
+      final rows = await _database.personalResultHistory(
+        userId: userId,
+        characterId: filter.characterId.serialized,
+        mode: filter.mode.serialized,
+        limit: 100,
+      );
+      if (rows.isNotEmpty) {
+        final sorted = [...rows]..sort((a, b) => b.score.compareTo(a.score));
+        final paged = sorted.take(pageSize).toList();
+        final entries = <LeaderboardEntry>[];
+        for (var i = 0; i < paged.length; i++) {
+          final row = paged[i];
+          entries.add(
+            LeaderboardEntry(
+              id: row.id,
+              position: i + 1,
+              displayName:
+                  _authRepository.currentSession.user?.displayName ?? 'Jugador',
+              characterId: filter.characterId,
+              mode: filter.mode,
+              completed: row.outcome == 'victory',
+              levelReached: row.levelReached,
+              totalScore: row.score,
+              durationMs: row.durationMs,
+              endedAt: row.endedAt,
+              contentVersion: row.contentVersion,
+            ),
+          );
+        }
+        return LeaderboardPage(
+          entries: entries,
+          nextCursor: null,
+          availabilityMessage:
+              'Modo Local: mostrando mejores puntuaciones de este dispositivo.',
+        );
+      }
+    }
     return const LeaderboardPage(
       entries: [],
       nextCursor: null,
       availabilityMessage:
-          'El ranking global requiere el backend de Supabase. '
-          'Tus partidas locales siguen disponibles en Historial.',
+          'El ranking global requiere conexión a Supabase. '
+          'Tus partidas locales se registrarán aquí automáticamente.',
     );
   }
 

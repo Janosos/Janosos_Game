@@ -25,135 +25,280 @@ class LeaderboardScreen extends ConsumerWidget {
   }
 }
 
-class _LeaderboardContent extends ConsumerWidget {
+class _LeaderboardContent extends ConsumerStatefulWidget {
   const _LeaderboardContent({required this.state});
 
   final LeaderboardViewState state;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LeaderboardContent> createState() => _LeaderboardContentState();
+}
+
+class _LeaderboardContentState extends ConsumerState<_LeaderboardContent>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
     final controller = ref.read(leaderboardControllerProvider.notifier);
     final media = MediaQuery.sizeOf(context);
     final isCompactHeight = media.height < 520;
-
-    final tabBar = TabBar(
-      indicatorColor: RetroColors.cyan,
-      indicatorWeight: 3,
-      indicatorSize: TabBarIndicatorSize.tab,
-      labelStyle: GoogleFonts.pressStart2p(
-        fontSize: isCompactHeight ? 8 : 9,
-        fontWeight: FontWeight.bold,
-      ),
-      unselectedLabelStyle: GoogleFonts.pressStart2p(
-        fontSize: isCompactHeight ? 8 : 9,
-      ),
-      labelColor: RetroColors.cyan,
-      unselectedLabelColor: RetroColors.textMuted,
-      tabs: [
-        Tab(
-          height: isCompactHeight ? 38 : 46,
-          icon: PixelIconAsset(
-            assetName: PixelIconAsset.trophy,
-            size: isCompactHeight ? 16 : 20,
-          ),
-          text: 'Top global',
-        ),
-        Tab(
-          height: isCompactHeight ? 38 : 46,
-          icon: PixelIconAsset(
-            assetName: PixelIconAsset.coin,
-            size: isCompactHeight ? 16 : 20,
-          ),
-          text: 'Mi historial',
-        ),
-      ],
-    );
+    final isGlobalTab = _tabController.index == 0;
 
     return DefaultTabController(
       length: 2,
-      child: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                isCompactHeight ? 14 : 24,
-                isCompactHeight ? 8 : 20,
-                isCompactHeight ? 14 : 24,
-                isCompactHeight ? 6 : 10,
+      child: RefreshIndicator(
+        onRefresh: controller.refresh,
+        color: RetroColors.cyan,
+        backgroundColor: const Color(0xFF0C1420),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isCompactHeight ? 14 : 24,
+                  isCompactHeight ? 8 : 18,
+                  isCompactHeight ? 14 : 24,
+                  isCompactHeight ? 6 : 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        'Leaderboard por personaje',
+                        style: isCompactHeight
+                            ? Theme.of(context).textTheme.titleLarge
+                            : Theme.of(context).textTheme.headlineMedium,
+                      ),
+                    ),
+                    SizedBox(height: isCompactHeight ? 2 : 6),
+                    Text(
+                      'Compara resultados verificados o revisa tus últimas partidas.',
+                      style: TextStyle(
+                        fontSize: isCompactHeight ? 12 : 14,
+                        color: RetroColors.textMuted,
+                      ),
+                    ),
+                    SizedBox(height: isCompactHeight ? 8 : 14),
+                    _Filters(
+                      filter: state.filter,
+                      onCharacterChanged: controller.selectCharacter,
+                      onModeChanged: controller.selectMode,
+                      isCompact: isCompactHeight,
+                    ),
+                    if (state.errorMessage != null) ...[
+                      SizedBox(height: isCompactHeight ? 6 : 10),
+                      _MessageBanner(
+                        icon: Icons.sync_problem_outlined,
+                        message: state.errorMessage!,
+                      ),
+                    ],
+                    if (state.availabilityMessage != null &&
+                        state.errorMessage == null) ...[
+                      SizedBox(height: isCompactHeight ? 6 : 10),
+                      _InfoBanner(
+                        icon: Icons.info_outline,
+                        message: state.availabilityMessage!,
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      'Leaderboard por personaje',
-                      style: isCompactHeight
-                          ? Theme.of(context).textTheme.titleLarge
-                          : Theme.of(context).textTheme.headlineMedium,
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _LeaderboardTabBarDelegate(
+                tabBar: TabBar(
+                  controller: _tabController,
+                  indicatorColor: RetroColors.cyan,
+                  indicatorWeight: 3,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelStyle: GoogleFonts.pressStart2p(
+                    fontSize: isCompactHeight ? 8 : 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  unselectedLabelStyle: GoogleFonts.pressStart2p(
+                    fontSize: isCompactHeight ? 8 : 9,
+                  ),
+                  labelColor: RetroColors.cyan,
+                  unselectedLabelColor: RetroColors.textMuted,
+                  tabs: const [
+                    Tab(
+                      icon: PixelIconAsset(
+                        assetName: PixelIconAsset.trophy,
+                        size: 18,
+                      ),
+                      text: 'Top global',
                     ),
-                  ),
-                  SizedBox(height: isCompactHeight ? 2 : 6),
-                  Text(
-                    'Compara resultados verificados o revisa tus últimas partidas.',
-                    style: TextStyle(
-                      fontSize: isCompactHeight ? 12 : 14,
-                      color: RetroColors.textMuted,
-                    ),
-                  ),
-                  SizedBox(height: isCompactHeight ? 8 : 14),
-                  _Filters(
-                    filter: state.filter,
-                    onCharacterChanged: controller.selectCharacter,
-                    onModeChanged: controller.selectMode,
-                    isCompact: isCompactHeight,
-                  ),
-                  if (state.errorMessage != null) ...[
-                    SizedBox(height: isCompactHeight ? 6 : 12),
-                    _MessageBanner(
-                      icon: Icons.sync_problem_outlined,
-                      message: state.errorMessage!,
+                    Tab(
+                      icon: PixelIconAsset(
+                        assetName: PixelIconAsset.coin,
+                        size: 18,
+                      ),
+                      text: 'Mi historial',
                     ),
                   ],
-                ],
+                ),
+                height: isCompactHeight ? 56 : 64,
               ),
             ),
-          ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _LeaderboardTabBarDelegate(tabBar),
-          ),
-        ],
-        body: TabBarView(
-          children: [
-            _GlobalList(
-              state: state,
-              onRefresh: controller.refresh,
-              onLoadMore: controller.loadMore,
-              isCompact: isCompactHeight,
-            ),
-            _HistoryList(
-              entries: state.personalHistory,
-              onRefresh: controller.refresh,
-              isCompact: isCompactHeight,
-            ),
+            if (isGlobalTab)
+              ..._buildGlobalSlivers(
+                context,
+                state,
+                controller,
+                isCompactHeight,
+              )
+            else
+              ..._buildHistorySlivers(context, state, isCompactHeight),
           ],
         ),
       ),
     );
   }
+
+  List<Widget> _buildGlobalSlivers(
+    BuildContext context,
+    LeaderboardViewState state,
+    LeaderboardController controller,
+    bool isCompact,
+  ) {
+    final horizontalPadding = isCompact ? 14.0 : 24.0;
+    if (state.globalEntries.isEmpty) {
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: isCompact ? 16 : 28,
+            ),
+            child: _EmptyState(
+              icon: Icons.emoji_events_outlined,
+              title: 'Todavía no hay resultados verificados',
+              message: state.availabilityMessage ??
+                  'Sé la primera persona en completar una partida con este personaje.',
+            ),
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: isCompact ? 10 : 16,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index == state.globalEntries.length) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: FilledButton.tonalIcon(
+                      onPressed: state.canLoadMore ? controller.loadMore : null,
+                      icon: state.isLoadingMore
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: RetroColors.cyan,
+                              ),
+                            )
+                          : const Icon(Icons.expand_more),
+                      label: const Text('Cargar 25 más'),
+                    ),
+                  ),
+                );
+              }
+              return _LeaderboardCard(entry: state.globalEntries[index]);
+            },
+            childCount:
+                state.globalEntries.length + (state.nextCursor == null ? 0 : 1),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildHistorySlivers(
+    BuildContext context,
+    LeaderboardViewState state,
+    bool isCompact,
+  ) {
+    final horizontalPadding = isCompact ? 14.0 : 24.0;
+    if (state.personalHistory.isEmpty) {
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: isCompact ? 16 : 28,
+            ),
+            child: const _EmptyState(
+              icon: Icons.history_toggle_off_outlined,
+              title: 'Sin partidas para este filtro',
+              message:
+                  'Tus resultados aparecerán aquí, incluidos los pendientes o rechazados.',
+            ),
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: isCompact ? 10 : 16,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) =>
+                _HistoryCard(entry: state.personalHistory[index]),
+            childCount: state.personalHistory.length,
+          ),
+        ),
+      ),
+    ];
+  }
 }
 
 class _LeaderboardTabBarDelegate extends SliverPersistentHeaderDelegate {
-  _LeaderboardTabBarDelegate(this._tabBar);
+  _LeaderboardTabBarDelegate({
+    required this.tabBar,
+    required this.height,
+  });
 
-  final TabBar _tabBar;
+  final Widget tabBar;
+  final double height;
 
   @override
-  double get minExtent => _tabBar.preferredSize.height;
+  double get minExtent => height;
 
   @override
-  double get maxExtent => _tabBar.preferredSize.height;
+  double get maxExtent => height;
 
   @override
   Widget build(
@@ -162,18 +307,24 @@ class _LeaderboardTabBarDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     return Container(
+      height: height,
       decoration: const BoxDecoration(
         color: Color(0xFF070D16),
         border: Border(
           bottom: BorderSide(color: Color(0xFF1E354F), width: 1.5),
         ),
       ),
-      child: _tabBar,
+      child: Material(
+        color: Colors.transparent,
+        child: tabBar,
+      ),
     );
   }
 
   @override
-  bool shouldRebuild(_LeaderboardTabBarDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant _LeaderboardTabBarDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.tabBar != tabBar;
+  }
 }
 
 class _Filters extends StatelessWidget {
@@ -281,75 +432,7 @@ class _Filters extends StatelessWidget {
   }
 }
 
-class _GlobalList extends StatelessWidget {
-  const _GlobalList({
-    required this.state,
-    required this.onRefresh,
-    required this.onLoadMore,
-    this.isCompact = false,
-  });
 
-  final LeaderboardViewState state;
-  final Future<void> Function() onRefresh;
-  final Future<void> Function() onLoadMore;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    final listPadding = EdgeInsets.symmetric(
-      horizontal: isCompact ? 14 : 24,
-      vertical: isCompact ? 10 : 20,
-    );
-
-    if (state.globalEntries.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: onRefresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: listPadding,
-          children: [
-            _EmptyState(
-              icon: Icons.emoji_events_outlined,
-              title: 'Todavía no hay resultados verificados',
-              message:
-                  state.availabilityMessage ??
-                  'Sé la primera persona en completar una partida con este personaje.',
-            ),
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: listPadding,
-        itemCount:
-            state.globalEntries.length + (state.nextCursor == null ? 0 : 1),
-        itemBuilder: (context, index) {
-          if (index == state.globalEntries.length) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Center(
-                child: FilledButton.tonalIcon(
-                  onPressed: state.canLoadMore ? onLoadMore : null,
-                  icon: state.isLoadingMore
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.expand_more),
-                  label: const Text('Cargar 25 más'),
-                ),
-              ),
-            );
-          }
-          return _LeaderboardCard(entry: state.globalEntries[index]);
-        },
-      ),
-    );
-  }
-}
 
 class _LeaderboardCard extends StatelessWidget {
   const _LeaderboardCard({required this.entry});
@@ -447,48 +530,34 @@ class _LeaderboardCard extends StatelessWidget {
   }
 }
 
-class _HistoryList extends StatelessWidget {
-  const _HistoryList({
-    required this.entries,
-    required this.onRefresh,
-    this.isCompact = false,
-  });
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.icon, required this.message});
 
-  final List<RunHistoryEntry> entries;
-  final Future<void> Function() onRefresh;
-  final bool isCompact;
+  final IconData icon;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    final listPadding = EdgeInsets.symmetric(
-      horizontal: isCompact ? 14 : 24,
-      vertical: isCompact ? 10 : 20,
-    );
-
-    if (entries.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: onRefresh,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: listPadding,
-          children: const [
-            _EmptyState(
-              icon: Icons.history_toggle_off_outlined,
-              title: 'Sin partidas para este filtro',
-              message:
-                  'Tus resultados aparecerán aquí, incluidos los pendientes o rechazados.',
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C1929),
+        border: Border.all(color: RetroColors.cyan, width: 1.5),
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, offset: Offset(2, 2)),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: RetroColors.cyan),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.vt323(fontSize: 16, color: RetroColors.textBright),
             ),
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: listPadding,
-        itemCount: entries.length,
-        itemBuilder: (context, index) => _HistoryCard(entry: entries[index]),
+          ),
+        ],
       ),
     );
   }

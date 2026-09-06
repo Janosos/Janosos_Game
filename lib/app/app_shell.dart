@@ -44,25 +44,11 @@ class JanososAppShell extends StatelessWidget {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: isCompactHeight ? 22 : 28,
-              height: isCompactHeight ? 22 : 28,
-              decoration: BoxDecoration(
-                border: Border.all(color: cyan, width: 1.5),
-                color: const Color(0xFF0D1520),
-              ),
-              padding: const EdgeInsets.all(2),
-              child: Image.asset(
-                'assets/images/icon.png',
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.none,
-                errorBuilder: (_, _, _) => PixelIconAsset(
-                  assetName: PixelIconAsset.gamepad,
-                  size: isCompactHeight ? 16 : 22,
-                ),
-              ),
+            PixelIconAsset(
+              assetName: PixelIconAsset.gamepad,
+              size: isCompactHeight ? 18 : 24,
             ),
-            SizedBox(width: isCompactHeight ? 8 : 10),
+            SizedBox(width: isCompactHeight ? 6 : 10),
             Text(
               'JANOSOS V6',
               style: GoogleFonts.pressStart2p(
@@ -154,7 +140,7 @@ class JanososAppShell extends StatelessWidget {
               ),
               child: NavigationBarTheme(
                 data: NavigationBarThemeData(
-                  height: isCompactHeight ? 48 : 68,
+                  height: isCompactHeight ? 56 : 68,
                   labelTextStyle: WidgetStateProperty.resolveWith(
                     (states) => GoogleFonts.pressStart2p(
                       fontSize: isCompactHeight ? 7 : 8,
@@ -168,7 +154,7 @@ class JanososAppShell extends StatelessWidget {
                   ),
                 ),
                 child: NavigationBar(
-                  height: isCompactHeight ? 48 : 68,
+                  height: isCompactHeight ? 56 : 68,
                   backgroundColor: const Color(0xFF070D16),
                   indicatorColor: cyan.withValues(alpha: 0.15),
                   indicatorShape: const RoundedRectangleBorder(
