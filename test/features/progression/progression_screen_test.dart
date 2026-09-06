@@ -83,6 +83,71 @@ void main() {
       expect(find.text('Eclipse'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'adapts responsively to compact landscape phone screen without overflow',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 390);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final authRepository = FakeAuthRepository.signedIn(
+        userId: 'user-landscape',
+        displayName: 'Landscape Player',
+      );
+      addTearDown(authRepository.dispose);
+      final repository = _FixtureProgressionRepository();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appEnvironmentProvider.overrideWithValue(
+              AppEnvironment(
+                backendMode: BackendMode.local,
+                supabaseUrl: '',
+                supabasePublishableKey: '',
+                authRedirectUri: Uri(
+                  scheme: 'io.janosos.game',
+                  host: 'auth',
+                  path: '/callback',
+                ),
+                contentVersion: 'v6-preview-1',
+              ),
+            ),
+            authRepositoryProvider.overrideWithValue(authRepository),
+            progressionRepositoryProvider.overrideWithValue(repository),
+          ],
+          child: const MaterialApp(home: Scaffold(body: ProgressionScreen())),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify no overflow occurred and elements are rendered properly
+      expect(tester.takeException(), isNull);
+      expect(find.text('Progresión del personaje'), findsOneWidget);
+      expect(find.text('Maestría 30/30'), findsOneWidget);
+      expect(find.textContaining('guardadas'), findsOneWidget);
+
+      // Verify tabs are reachable and interactive in landscape
+      expect(find.text('Mejoras'), findsOneWidget);
+      expect(find.text('Habilidades'), findsOneWidget);
+      expect(find.text('Paletas'), findsOneWidget);
+
+      // Test tapping tabs
+      await tester.tap(find.text('Habilidades'));
+      await tester.pumpAndSettle();
+      expect(find.text('Identidad innata'), findsOneWidget);
+
+      // Test expanding summary details in compact height
+      final toggleButton = find.byTooltip('Ver detalles');
+      expect(toggleButton, findsOneWidget);
+      await tester.tap(toggleButton);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byTooltip('Ocultar detalles'), findsOneWidget);
+    },
+  );
 }
 
 class _FixtureProgressionRepository implements ProgressionRepository {

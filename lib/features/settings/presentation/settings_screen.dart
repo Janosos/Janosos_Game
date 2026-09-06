@@ -72,20 +72,22 @@ class SettingsScreen extends ConsumerWidget {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: auth.isBusy
-                            ? null
-                            : () => _link(ref, AuthProviderId.google),
-                        icon: const Icon(Icons.account_circle_outlined),
-                        label: const Text('Vincular Google'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: auth.isBusy
-                            ? null
-                            : () => _link(ref, AuthProviderId.apple),
-                        icon: const Icon(Icons.apple),
-                        label: const Text('Vincular Apple'),
-                      ),
+                      if (!environment.usesLocalBackend) ...[
+                        OutlinedButton.icon(
+                          onPressed: auth.isBusy
+                              ? null
+                              : () => _link(ref, AuthProviderId.google),
+                          icon: const Icon(Icons.account_circle_outlined),
+                          label: const Text('Vincular Google'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: auth.isBusy
+                              ? null
+                              : () => _link(ref, AuthProviderId.apple),
+                          icon: const Icon(Icons.apple),
+                          label: const Text('Vincular Apple'),
+                        ),
+                      ],
                       OutlinedButton.icon(
                         onPressed: auth.isBusy
                             ? null

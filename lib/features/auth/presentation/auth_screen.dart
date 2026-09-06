@@ -129,7 +129,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 720;
             final localCard = _buildLocalOptionCard(context, state, cyan);
-            final cloudCard = _buildCloudOptionCard(context, gold);
+            final cloudCard = _buildCloudOptionCard(
+              context,
+              gold,
+              environment,
+            );
 
             if (isWide) {
               return Row(
@@ -252,7 +256,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     );
   }
 
-  Widget _buildCloudOptionCard(BuildContext context, Color accentColor) {
+  Widget _buildCloudOptionCard(
+    BuildContext context,
+    Color accentColor,
+    AppEnvironment environment,
+  ) {
+    final isLocal = environment.usesLocalBackend;
+
     return RetroArcadeCard(
       borderColor: accentColor,
       accentHeaderColor: accentColor,
@@ -279,13 +289,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     RetroBadge(
-                      text: 'CLOUD SYNC • MULTIPLAYER',
+                      text: isLocal
+                          ? 'PERFIL EN DISPOSITIVO'
+                          : 'CLOUD SYNC • MULTIPLAYER',
                       color: accentColor,
                       fontSize: 8,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'CUENTA JANOSOS',
+                      isLocal ? 'CUENTA LOCAL' : 'CUENTA JANOSOS',
                       style: GoogleFonts.pressStart2p(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -299,7 +311,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            'Conéctate para desbloquear todas las funciones comunitarias, ranking y respaldo de partidas en la nube.',
+            isLocal
+                ? 'Crea o inicia sesión con tu perfil local para registrar tu nombre, compras y récords en este dispositivo.'
+                : 'Conéctate para desbloquear todas las funciones comunitarias, ranking y respaldo de partidas en la nube.',
             style: GoogleFonts.vt323(
               fontSize: 17,
               color: RetroColors.textBright,
@@ -310,24 +324,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           Container(height: 1, color: const Color(0xFF1E354F)),
           const SizedBox(height: 14),
           _FeatureRow(
-            icon: Icons.cloud_done_outlined,
+            icon: isLocal ? Icons.badge_outlined : Icons.cloud_done_outlined,
             color: accentColor,
-            title: 'Nube Activa',
-            subtitle: 'Tu avance y compras respaldados en la nube.',
+            title: isLocal ? 'Perfil Dedicado' : 'Nube Activa',
+            subtitle: isLocal
+                ? 'Nombre de jugador y compras asignadas a tu cuenta.'
+                : 'Tu avance y compras respaldados en la nube.',
           ),
           const SizedBox(height: 10),
           _FeatureRow(
-            icon: Icons.leaderboard_outlined,
+            icon: isLocal
+                ? Icons.lock_outline
+                : Icons.leaderboard_outlined,
             color: accentColor,
-            title: 'Rankings Globales',
-            subtitle: 'Compite en el Leaderboard mundial por personaje.',
+            title: isLocal ? 'Seguridad Local' : 'Rankings Globales',
+            subtitle: isLocal
+                ? 'Contraseña protegida en este equipo (Argon2id).'
+                : 'Compite en el Leaderboard mundial por personaje.',
           ),
           const SizedBox(height: 10),
           _FeatureRow(
-            icon: Icons.devices_outlined,
+            icon: isLocal
+                ? Icons.offline_pin_outlined
+                : Icons.devices_outlined,
             color: accentColor,
-            title: 'Multiplataforma',
-            subtitle: 'Misma cuenta en Windows, Web y Android.',
+            title: isLocal ? 'Sin Conexión' : 'Multiplataforma',
+            subtitle: isLocal
+                ? 'Funciona completamente sin requerir internet.'
+                : 'Misma cuenta en Windows, Web y Android.',
           ),
           const SizedBox(height: 22),
           Row(
@@ -542,22 +566,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       onPressed: state.isBusy ? null : _requestPasswordReset,
                       child: const Text('Olvidé mi contraseña'),
                     ),
-                  const Divider(height: 32),
-                  OutlinedButton.icon(
-                    onPressed: state.isBusy
-                        ? null
-                        : () => _openProvider(AuthProviderId.google),
-                    icon: const Icon(Icons.account_circle_outlined),
-                    label: const Text('Continuar con Google'),
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: state.isBusy
-                        ? null
-                        : () => _openProvider(AuthProviderId.apple),
-                    icon: const Icon(Icons.apple),
-                    label: const Text('Continuar con Apple'),
-                  ),
+                  if (!environment.usesLocalBackend) ...[
+                    const Divider(height: 32),
+                    OutlinedButton.icon(
+                      onPressed: state.isBusy
+                          ? null
+                          : () => _openProvider(AuthProviderId.google),
+                      icon: const Icon(Icons.account_circle_outlined),
+                      label: const Text('Continuar con Google'),
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      onPressed: state.isBusy
+                          ? null
+                          : () => _openProvider(AuthProviderId.apple),
+                      icon: const Icon(Icons.apple),
+                      label: const Text('Continuar con Apple'),
+                    ),
+                  ] else ...[
+                    const Divider(height: 32),
+                    OutlinedButton.icon(
+                      onPressed: state.isBusy ? null : _continueAsGuest,
+                      icon: const Icon(Icons.sports_esports_outlined),
+                      label: const Text('Jugar como Invitado (Sin Registro)'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        foregroundColor: RetroColors.cyan,
+                        side: const BorderSide(
+                          color: Color(0xFF1E354F),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: state.isBusy ? null : _toggleMode,
