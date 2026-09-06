@@ -1,43 +1,31 @@
-# Janosos Game V6.1
+# Janosos Game V6 (Initial Release)
 
-Runner 2D retro construido con Flutter y Flame. V6.1 mejora la experiencia de
-combate contra jefes, la responsividad en móviles y los controles táctiles.
+Runner 2D retro construido con Flutter y Flame. V6 incorpora sistema de audio resiliente con música de fondo continua, controles reactivos de silencio, sección de rankings completamente responsiva, combates contra jefes optimizados y adaptación táctil móvil.
 
 ![Janosos Game](assets/images/title_retro.png)
 
-## Novedades en V6.1
+## Novedades en V6
 
-### Gameplay
-- **Jano daña jefes**: El disparo destructor de Jano ahora impacta directamente
-  a los jefes (300 puntos de daño) e intercepta sus proyectiles.
-- **Contadores de cooldown restaurados**: Todas las habilidades muestran su
-  temporizador en tiempo real (DISPARO, FANTASMA, ESCUDO, ENERGÍA) tanto en el
-  HUD como en los botones de habilidad y golpe al jefe.
-- **Hitboxes precisos**: Los jefes, proyectiles y obstáculos usan hitboxes
-  ajustados al cuerpo visible, eliminando daño fantasma.
-- **Movimiento lateral**: Mecánica de movimiento izquierda/derecha con teclas
-  A/D o flechas, y D-Pad táctil retro en dispositivos móviles.
-- **Ataques dirigidos**: Las cartas y proyectiles de los jefes apuntan a la
-  posición del jugador, forzándolo a esquivar activamente.
-- **Desbloqueo permanente de jefes**: Al derrotar un jefe, queda desbloqueado
-  para siempre con opción de volver a jugarlo.
+### Audio y Música
+- **Música de fondo continua (`LoopSong.wav`)**: Reproducción fluida y estable de la pista de fondo retro tanto en el menú principal como durante el juego.
+- **Arquitectura de audio resiliente (`AppAudioManager`)**: Prevención y recuperación automática ante instancias desechadas de `AudioPlayer` en Android y otras plataformas.
+- **Control de silencio reactivo**: Botón de acceso rápido para silenciar/activar música y efectos directamente desde la pantalla de juego (`_AudioToggleButton`), sincronizado en tiempo real con la configuración general.
 
-### Responsividad y Controles
-- **Landscape optimizado para móviles**: Barras superior/inferior reducidas en
-  pantallas delgadas, calle dinámica (~25% de la altura en vez de 50%), y
-  amplio espacio vertical para el combate.
-- **D-Pad táctil retro**: Flechas direccionales que aparecen automáticamente
-  solo en navegadores móviles y tablets (detección por User-Agent y touch).
-- **Compatibilidad GitHub Pages**: Funciona tanto en navegadores de PC (sin
-  flechas, usa teclado) como en navegadores móviles (con flechas táctiles).
-- **Barra de vida del jefe sin recorte**: El título del jefe (★ JINETE SIN
-  CABEZA ★) siempre visible con margen seguro desde el borde superior.
+### Interfaz y Rankings
+- **Ranking / Leaderboard responsivo**: Rediseñado con arquitectura `CustomScrollView` y slivers; scroll fluido, visualización de podio y tabs sin desbordamientos en pantallas pequeñas o delgadas.
+- **Interfaz depurada**: Eliminación de textos de depuración en la pantalla principal para una presentación de producción limpia.
+- **Título retro maximizado**: Optimización de márgenes y centrado del banner retro arcade (`title_retro.png`) para máxima visibilidad.
 
-### Estabilidad
-- **Precarga resiliente de assets**: Cada imagen y audio se carga
-  individualmente con manejo de errores, evitando caídas por assets faltantes.
-- **Sprites de jefes mejorados**: Limpieza de transparencia, 4 poses dinámicas
-  de movimiento por jefe, y orientación constante hacia el jugador.
+### Gameplay y Combate
+- **Jano daña jefes**: El disparo destructor de Jano impacta a los jefes (300 de daño) e intercepta proyectiles.
+- **Contadores de cooldown restaurados**: Temporizadores en tiempo real en HUD y botones de habilidad.
+- **Hitboxes precisos**: Eliminación de daño fantasma en obstáculos, proyectiles y jefes.
+- **Movimiento lateral y D-Pad táctil**: Teclas A/D o flechas en PC, y D-Pad táctil retro automático en pantallas táctiles y móviles.
+- **Desbloqueo permanente de jefes**: Guardado permanente tras derrotar a cada jefe.
+
+### Estabilidad y Rendimiento
+- **Precarga resiliente de assets**: Carga individual protegida de imágenes y audio.
+- **Limpieza y optimización**: Empaquetado optimizado para compilación release APK.
 
 ## Juego
 
