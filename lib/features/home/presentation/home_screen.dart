@@ -78,21 +78,31 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user?.isGuest == true
-                        ? 'PARTIDA LOCAL • ESTE DISPOSITIVO'
-                        : environment.usesLocalBackend
-                        ? 'MODO LOCAL DE DESARROLLO'
-                        : 'CUENTA CONECTADA • NUBE ACTIVA',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.vt323(
-                      fontSize: isMobile ? 16 : 18,
-                      color: RetroColors.textMuted,
-                      letterSpacing: 1.1,
+                  if (user?.isGuest == true) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'PARTIDA LOCAL • ESTE DISPOSITIVO',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.vt323(
+                        fontSize: isMobile ? 16 : 18,
+                        color: RetroColors.textMuted,
+                        letterSpacing: 1.1,
+                      ),
                     ),
-                  ),
+                  ] else if (!environment.usesLocalBackend) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'CUENTA CONECTADA • NUBE ACTIVA',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.vt323(
+                        fontSize: isMobile ? 16 : 18,
+                        color: RetroColors.textMuted,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
