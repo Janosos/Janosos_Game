@@ -80,14 +80,14 @@ class CampaignBoss extends PositionComponent
     } catch (_) {}
     position = Vector2(
       game.size.x - 24,
-      game.size.y - DinoRunGame.virtualGroundHeight,
+      game.size.y - game.effectiveGroundHeight,
     );
   }
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    position = Vector2(size.x - 24, size.y - DinoRunGame.virtualGroundHeight);
+    position = Vector2(size.x - 24, size.y - game.effectiveGroundHeight);
   }
 
   @override
@@ -99,7 +99,7 @@ class CampaignBoss extends PositionComponent
     }
     _bossAnimationTicker?.update(dt);
     final hover = math.sin(_elapsed * 3.5) * 6.0;
-    position.y = game.size.y - DinoRunGame.virtualGroundHeight + hover;
+    position.y = game.size.y - game.effectiveGroundHeight + hover;
   }
 
   @override
@@ -231,7 +231,7 @@ class CampaignBossHazard extends PositionComponent
     try {
       _hazardSprite = await game.loadSprite(asset);
     } catch (_) {}
-    _ground = game.size.y - DinoRunGame.virtualGroundHeight;
+    _ground = game.size.y - game.effectiveGroundHeight;
     _laneSeed =
         ((game.runConfiguration.seed + game.bossAttackOrdinal * 97) % 61) / 100;
     switch (_profile.motion) {

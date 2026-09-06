@@ -103,18 +103,20 @@ class HudIndicators extends PositionComponent
         : (screenWidth * 0.52).clamp(290.0, 500.0);
     final barHeight = isCompact ? 16.0 : 22.0;
     final startX = (screenWidth - barWidth) / 2;
-    final startY = isCompact ? 10.0 : 16.0;
+    final titleY = isCompact ? 3.0 : 6.0;
 
-    // 1. Boss Name with Retro Arcade Accents
+    // 1. Boss Name with Retro Arcade Accents (safely padded from top edge)
     final titleText = game.runConfiguration.experience == RunExperience.bossRush
         ? '★ BOSS ${game.bossesDefeated + 1}/10 · $bossName ★'
         : '★ $bossName ★';
     _bossTitlePaint.render(
       canvas,
       titleText,
-      Vector2(startX + barWidth / 2, startY - 2),
-      anchor: Anchor.bottomCenter,
+      Vector2(startX + barWidth / 2, titleY),
+      anchor: Anchor.topCenter,
     );
+
+    final startY = titleY + (isCompact ? 13.0 : 16.0);
 
     // 2. Outer Retro 8-bit Frame
     final outerRect = Rect.fromLTWH(startX - 4, startY - 4, barWidth + 8, barHeight + 8);

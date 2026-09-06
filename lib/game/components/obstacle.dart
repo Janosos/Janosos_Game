@@ -39,7 +39,7 @@ class Obstacle extends SpriteAnimationComponent
     // Position on ground
     position = Vector2(
       game.size.x,
-      game.size.y - DinoRunGame.virtualGroundHeight,
+      game.size.y - game.effectiveGroundHeight,
     );
 
     // Forgiving hitbox matching the visible animal torso and body

@@ -68,7 +68,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     await _loadCharacterSprite();
 
     anchor = Anchor.bottomLeft;
-    position = Vector2(50, game.size.y - DinoRunGame.virtualGroundHeight);
+    position = Vector2(50, game.size.y - game.effectiveGroundHeight);
     size = Vector2(88, 88);
 
     _updateHitbox();
@@ -311,7 +311,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       }
       y += _yVelocity * dt;
 
-      double groundY = game.size.y - DinoRunGame.virtualGroundHeight;
+      double groundY = game.size.y - game.effectiveGroundHeight;
       if (y > groundY) {
         final landedFromAir = _isJumping;
         final landedFromGlide = isGliding;
@@ -533,10 +533,18 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
   }
 
   void reset() {
-    position = Vector2(50, game.size.y - DinoRunGame.virtualGroundHeight);
+    position = Vector2(50, game.size.y - game.effectiveGroundHeight);
     _yVelocity = 0;
     _isJumping = false;
     current = DinoState.running;
     _resetAbilities();
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    if (!_isJumping) {
+      y = size.y - game.effectiveGroundHeight;
+    }
   }
 }

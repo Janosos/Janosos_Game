@@ -122,10 +122,16 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
       progress,
     );
     final campaignCompleted = _isCampaignCompleted(selectedCharacter);
+    final isCompactHeight = MediaQuery.sizeOf(context).height < 500;
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          padding: EdgeInsets.fromLTRB(
+            isCompactHeight ? 14 : 24,
+            isCompactHeight ? 10 : 24,
+            isCompactHeight ? 14 : 24,
+            isCompactHeight ? 8 : 12,
+          ),
           sliver: SliverToBoxAdapter(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,18 +140,21 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                   header: true,
                   child: Text(
                     'Progresión mundial',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    style: isCompactHeight
+                        ? Theme.of(context).textTheme.titleLarge
+                        : Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: isCompactHeight ? 4 : 8),
+                Text(
                   'Supera diez niveles consecutivos. Si agotas todas las vidas, '
                   'regresas al nivel 1 y pierdes la moneda temporal; tus compras '
                   'y recompensas permanentes se conservan.',
+                  style: TextStyle(fontSize: isCompactHeight ? 12 : 14),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: isCompactHeight ? 8 : 16),
                 _CampaignNotice(progress: progress),
-                const SizedBox(height: 12),
+                SizedBox(height: isCompactHeight ? 8 : 12),
                 FutureBuilder<bool>(
                   future: _bossRushUnlocked,
                   builder: (context, entitlement) => _BossRushCard(
@@ -155,18 +164,25 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                   ),
                 ),
                 if (_syncMessage != null) ...[
-                  const SizedBox(height: 12),
+                  SizedBox(height: isCompactHeight ? 6 : 12),
                   Semantics(liveRegion: true, child: Text(_syncMessage!)),
                 ],
-                const SizedBox(height: 18),
+                SizedBox(height: isCompactHeight ? 10 : 18),
                 Semantics(
                   label: 'Personaje seleccionado para la campaña',
                   child: DropdownButtonFormField<CharacterId>(
                     initialValue: selectedCharacter,
-                    decoration: const InputDecoration(
+                    isDense: isCompactHeight,
+                    decoration: InputDecoration(
                       labelText: 'Personaje de la campaña',
-                      prefixIcon: Icon(Icons.person_outline),
-                      border: OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: const OutlineInputBorder(),
+                      contentPadding: isCompactHeight
+                          ? const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            )
+                          : null,
                     ),
                     items: [
                       for (final character in CharacterId.values)
@@ -285,10 +301,14 @@ class _BossRushCard extends StatelessWidget {
           : null,
     );
 
+    final isCompactHeight = MediaQuery.sizeOf(context).height < 500;
     return RetroArcadeCard(
       borderColor: RetroColors.magenta.withValues(alpha: 0.8),
       backgroundColor: const Color(0xFF140B16),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompactHeight ? 12 : 16,
+        vertical: isCompactHeight ? 8 : 16,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           if (constraints.maxWidth < 620) {

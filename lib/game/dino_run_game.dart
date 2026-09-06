@@ -96,6 +96,18 @@ class DinoRunGame extends FlameGame
 
   static const double virtualGroundHeight = 160;
 
+  /// Dynamically scaled ground height so thin landscape mobile screens (height < 460)
+  /// don't dedicate almost half the screen to the street, giving the character and bosses
+  /// ample vertical fighting space and headroom.
+  double get effectiveGroundHeight {
+    if (size.y < 460) {
+      return (size.y * 0.25).clamp(80.0, 105.0);
+    } else if (size.y < 600) {
+      return (size.y * 0.28).clamp(105.0, 140.0);
+    }
+    return virtualGroundHeight;
+  }
+
   double orbTimer = 2;
 
   @override
@@ -401,7 +413,7 @@ class DinoRunGame extends FlameGame
       orbTimer -= dt;
       if (orbTimer <= 0) {
         orbTimer = 3;
-        final spawnY = size.y - virtualGroundHeight - 40;
+        final spawnY = size.y - effectiveGroundHeight - 40;
         add(
           OrbComponent(
             position: Vector2(size.x + 50, spawnY),

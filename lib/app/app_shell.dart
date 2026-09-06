@@ -31,25 +31,31 @@ class JanososAppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final media = MediaQuery.sizeOf(context);
+    final wide = media.width >= 900;
+    final isCompactHeight = media.height < 500;
     const cyan = Color(0xFF29FFE4);
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: isCompactHeight ? 38 : 54,
         backgroundColor: const Color(0xFF070D16),
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const PixelIconAsset(assetName: PixelIconAsset.gamepad, size: 24),
-            const SizedBox(width: 10),
+            PixelIconAsset(
+              assetName: PixelIconAsset.gamepad,
+              size: isCompactHeight ? 18 : 24,
+            ),
+            SizedBox(width: isCompactHeight ? 6 : 10),
             Text(
               'JANOSOS V6',
               style: GoogleFonts.pressStart2p(
-                fontSize: 13,
+                fontSize: isCompactHeight ? 10 : 13,
                 fontWeight: FontWeight.bold,
                 color: cyan,
-                letterSpacing: 2,
+                letterSpacing: isCompactHeight ? 1.2 : 2,
                 shadows: [
                   Shadow(color: cyan.withValues(alpha: 0.8), blurRadius: 10),
                 ],
@@ -70,7 +76,15 @@ class JanososAppShell extends StatelessWidget {
             child: IconButton(
               tooltip: 'Configuración y cuenta',
               onPressed: () => context.go('/settings'),
-              icon: const Icon(Icons.settings_outlined, color: cyan, size: 20),
+              padding: EdgeInsets.zero,
+              constraints: isCompactHeight
+                  ? const BoxConstraints(minWidth: 32, minHeight: 32)
+                  : null,
+              icon: Icon(
+                Icons.settings_outlined,
+                color: cyan,
+                size: isCompactHeight ? 16 : 20,
+              ),
             ),
           ),
         ],
@@ -124,24 +138,44 @@ class JanososAppShell extends StatelessWidget {
                   top: BorderSide(color: Color(0xFF1E354F), width: 2),
                 ),
               ),
-              child: NavigationBar(
-                backgroundColor: const Color(0xFF070D16),
-                indicatorColor: cyan.withValues(alpha: 0.15),
-                indicatorShape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                  side: BorderSide(color: cyan, width: 1.5),
-                ),
-                selectedIndex: _selectedIndex,
-                onDestinationSelected: (index) {
-                  context.go(_destinations[index].path);
-                },
-                destinations: [
-                  for (final destination in _destinations)
-                    NavigationDestination(
-                      icon: Icon(destination.icon),
-                      label: destination.label,
+              child: NavigationBarTheme(
+                data: NavigationBarThemeData(
+                  height: isCompactHeight ? 48 : 68,
+                  labelTextStyle: WidgetStateProperty.resolveWith(
+                    (states) => GoogleFonts.pressStart2p(
+                      fontSize: isCompactHeight ? 7 : 8,
+                      fontWeight: states.contains(WidgetState.selected)
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: states.contains(WidgetState.selected)
+                          ? cyan
+                          : const Color(0xFF7A9BB8),
                     ),
-                ],
+                  ),
+                ),
+                child: NavigationBar(
+                  height: isCompactHeight ? 48 : 68,
+                  backgroundColor: const Color(0xFF070D16),
+                  indicatorColor: cyan.withValues(alpha: 0.15),
+                  indicatorShape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                    side: BorderSide(color: cyan, width: 1.5),
+                  ),
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (index) {
+                    context.go(_destinations[index].path);
+                  },
+                  destinations: [
+                    for (final destination in _destinations)
+                      NavigationDestination(
+                        icon: Icon(
+                          destination.icon,
+                          size: isCompactHeight ? 18 : 22,
+                        ),
+                        label: destination.label,
+                      ),
+                  ],
+                ),
               ),
             ),
     );

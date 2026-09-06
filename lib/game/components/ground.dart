@@ -26,8 +26,9 @@ class GroundComponent extends ParallaxComponent<DinoRunGame> {
     // Let's stick to standard positioning logic.
     // We want the TOP of the ground to be at (screenHeight - 160).
 
-    size = Vector2(game.size.x, DinoRunGame.virtualGroundHeight);
-    position = Vector2(0, game.size.y - DinoRunGame.virtualGroundHeight);
+    final gh = game.effectiveGroundHeight;
+    size = Vector2(game.size.x, gh);
+    position = Vector2(0, game.size.y - gh);
   }
 
   @override
@@ -40,7 +41,8 @@ class GroundComponent extends ParallaxComponent<DinoRunGame> {
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
     // Update position and size when window resizes
-    this.size = Vector2(size.x, DinoRunGame.virtualGroundHeight);
-    position = Vector2(0, size.y - DinoRunGame.virtualGroundHeight);
+    final gh = game.effectiveGroundHeight;
+    this.size = Vector2(size.x, gh);
+    position = Vector2(0, size.y - gh);
   }
 }
