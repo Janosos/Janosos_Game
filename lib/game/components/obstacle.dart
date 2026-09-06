@@ -37,18 +37,10 @@ class Obstacle extends SpriteAnimationComponent
     priority = 10;
 
     // Position on ground
-    position = Vector2(
-      game.size.x,
-      game.size.y - game.effectiveGroundHeight,
-    );
+    position = Vector2(game.size.x, game.size.y - game.effectiveGroundHeight);
 
     // Forgiving hitbox matching the visible animal torso and body
-    add(
-      RectangleHitbox(
-        position: Vector2(18, 16),
-        size: Vector2(34, 26),
-      ),
-    );
+    add(RectangleHitbox(position: Vector2(18, 16), size: Vector2(34, 26)));
   }
 
   @override

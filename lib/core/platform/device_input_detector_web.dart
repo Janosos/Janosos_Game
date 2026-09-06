@@ -3,7 +3,8 @@ import 'package:web/web.dart' as web;
 bool detectWebMobileOrTablet() {
   final nav = web.window.navigator;
   final userAgent = nav.userAgent.toLowerCase();
-  final isMobileUA = userAgent.contains('android') ||
+  final isMobileUA =
+      userAgent.contains('android') ||
       userAgent.contains('iphone') ||
       userAgent.contains('ipad') ||
       userAgent.contains('ipod') ||

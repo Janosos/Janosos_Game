@@ -140,27 +140,30 @@ void main() {
     expect(progress.nextLevel, 10);
   });
 
-  test('instant boss combat start enters combat with full health and Phase 1', () {
-    for (var level = 1; level <= 10; level++) {
-      final definition = campaignLevelDefinition(level);
-      final runtime = LevelRuntime(
-        definition: definition,
-        maxLives: 3,
-        damageMultiplier: 1,
-        seed: 42,
-      );
+  test(
+    'instant boss combat start enters combat with full health and Phase 1',
+    () {
+      for (var level = 1; level <= 10; level++) {
+        final definition = campaignLevelDefinition(level);
+        final runtime = LevelRuntime(
+          definition: definition,
+          maxLives: 3,
+          damageMultiplier: 1,
+          seed: 42,
+        );
 
-      // Instant boss start
-      runtime.skipRunner();
-      expect(runtime.phase, LevelPhase.bossIntro);
+        // Instant boss start
+        runtime.skipRunner();
+        expect(runtime.phase, LevelPhase.bossIntro);
 
-      runtime.beginBossCombat();
-      expect(runtime.phase, LevelPhase.bossCombat);
-      expect(runtime.bossHealthRemaining, definition.bossHealth);
-      expect(runtime.bossHealthFraction, 1.0);
-      expect(runtime.bossPhase, 1);
-    }
-  });
+        runtime.beginBossCombat();
+        expect(runtime.phase, LevelPhase.bossCombat);
+        expect(runtime.bossHealthRemaining, definition.bossHealth);
+        expect(runtime.bossHealthFraction, 1.0);
+        expect(runtime.bossPhase, 1);
+      }
+    },
+  );
 
   test('boss health accurately steps through phases 1, 2, and 3', () {
     final runtime = LevelRuntime(

@@ -128,7 +128,9 @@ class BossActionButton extends PositionComponent
     } else {
       final isCompact = game.size.y < 500;
       final remaining = game.bossActionCooldownRemaining;
-      final cdText = remaining > 0 ? '${remaining.toStringAsFixed(1)}s' : 'ESPERA';
+      final cdText = remaining > 0
+          ? '${remaining.toStringAsFixed(1)}s'
+          : 'ESPERA';
       (isCompact ? _cooldownLabelCompact : _cooldownLabel).render(
         canvas,
         cdText,

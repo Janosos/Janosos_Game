@@ -270,11 +270,15 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 final character = session.configuration.characterId.serialized;
                 final beatenLevel = session.configuration.level;
                 final currentUnlocked =
-                    preferences.getInt('campaign_max_unlocked_level_$character') ??
+                    preferences.getInt(
+                      'campaign_max_unlocked_level_$character',
+                    ) ??
                     preferences.getInt('campaign_max_unlocked_level') ??
                     1;
-                final nextUnlocked =
-                    max(currentUnlocked, beatenLevel + 1).clamp(1, 10);
+                final nextUnlocked = max(
+                  currentUnlocked,
+                  beatenLevel + 1,
+                ).clamp(1, 10);
                 await preferences.setInt(
                   'campaign_max_unlocked_level_$character',
                   nextUnlocked,
@@ -425,8 +429,13 @@ class _CampaignPreflightBannerState extends State<_CampaignPreflightBanner> {
                       ),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.94),
-                        borderRadius: BorderRadius.circular(isCompact ? 12 : 18),
-                        border: Border.all(color: Colors.white, width: isCompact ? 1.5 : 2),
+                        borderRadius: BorderRadius.circular(
+                          isCompact ? 12 : 18,
+                        ),
+                        border: Border.all(
+                          color: Colors.white,
+                          width: isCompact ? 1.5 : 2,
+                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Colors.black54,

@@ -41,68 +41,83 @@ void main() {
     );
   }
 
-  test('clearing a boss permanently unlocks the next level and keeps previous replayable', () async {
-    // 1. Initial state: Level 1 is allowed, Level 2 is locked.
-    var session1 = await campaign.startStage(
-      configuration: configuration(CharacterId.jano, level: 2),
-      bankedCurrency: 0,
-      temporaryCurrency: 0,
-    );
-    expect(session1.configuration.level, 1, reason: 'Level 2 cannot be skipped initially');
+  test(
+    'clearing a boss permanently unlocks the next level and keeps previous replayable',
+    () async {
+      // 1. Initial state: Level 1 is allowed, Level 2 is locked.
+      var session1 = await campaign.startStage(
+        configuration: configuration(CharacterId.jano, level: 2),
+        bankedCurrency: 0,
+        temporaryCurrency: 0,
+      );
+      expect(
+        session1.configuration.level,
+        1,
+        reason: 'Level 2 cannot be skipped initially',
+      );
 
-    // 2. Clear Level 1 with victory.
-    final receipt1 = await campaign.finishStage({
-      'stage_token': session1.stageToken,
-      'idempotency_key': 'win-level-1',
-      'outcome': 'victory',
-      'score': 10000,
-      'duration_ms': 50000,
-    });
-    expect(receipt1.accepted, isTrue);
-    expect(receipt1.nextLevel, 2);
+      // 2. Clear Level 1 with victory.
+      final receipt1 = await campaign.finishStage({
+        'stage_token': session1.stageToken,
+        'idempotency_key': 'win-level-1',
+        'outcome': 'victory',
+        'score': 10000,
+        'duration_ms': 50000,
+      });
+      expect(receipt1.accepted, isTrue);
+      expect(receipt1.nextLevel, 2);
 
-    // Verify stored progress has highestUnlockedLevel = 2.
-    final snapshotAfterWin = await store.read((s) => s.character(CharacterId.jano).highestUnlockedLevel);
-    expect(snapshotAfterWin, 2);
+      // Verify stored progress has highestUnlockedLevel = 2.
+      final snapshotAfterWin = await store.read(
+        (s) => s.character(CharacterId.jano).highestUnlockedLevel,
+      );
+      expect(snapshotAfterWin, 2);
 
-    // 3. Now Level 2 is unlocked! Starting at Level 2 should succeed.
-    var session2 = await campaign.startStage(
-      configuration: configuration(CharacterId.jano, level: 2),
-      bankedCurrency: 0,
-      temporaryCurrency: receipt1.temporaryCurrency,
-    );
-    expect(session2.configuration.level, 2);
+      // 3. Now Level 2 is unlocked! Starting at Level 2 should succeed.
+      var session2 = await campaign.startStage(
+        configuration: configuration(CharacterId.jano, level: 2),
+        bankedCurrency: 0,
+        temporaryCurrency: receipt1.temporaryCurrency,
+      );
+      expect(session2.configuration.level, 2);
 
-    // 4. Defeat in Level 2.
-    final receipt2 = await campaign.finishStage({
-      'stage_token': session2.stageToken,
-      'idempotency_key': 'loss-level-2',
-      'outcome': 'defeat',
-      'score': 3000,
-      'duration_ms': 20000,
-    });
-    expect(receipt2.accepted, isTrue);
+      // 4. Defeat in Level 2.
+      final receipt2 = await campaign.finishStage({
+        'stage_token': session2.stageToken,
+        'idempotency_key': 'loss-level-2',
+        'outcome': 'defeat',
+        'score': 3000,
+        'duration_ms': 20000,
+      });
+      expect(receipt2.accepted, isTrue);
 
-    // After defeat, active campaign is null, BUT highestUnlockedLevel MUST remain 2 permanently!
-    final active = await campaign.loadActiveCampaign();
-    expect(active, isNull);
-    final snapshotAfterLoss = await store.read((s) => s.character(CharacterId.jano).highestUnlockedLevel);
-    expect(snapshotAfterLoss, 2, reason: 'Unlocked level must be permanently preserved despite defeat');
+      // After defeat, active campaign is null, BUT highestUnlockedLevel MUST remain 2 permanently!
+      final active = await campaign.loadActiveCampaign();
+      expect(active, isNull);
+      final snapshotAfterLoss = await store.read(
+        (s) => s.character(CharacterId.jano).highestUnlockedLevel,
+      );
+      expect(
+        snapshotAfterLoss,
+        2,
+        reason: 'Unlocked level must be permanently preserved despite defeat',
+      );
 
-    // 5. Player can start Level 2 directly again without having to replay Level 1!
-    final session2Retry = await campaign.startStage(
-      configuration: configuration(CharacterId.jano, level: 2),
-      bankedCurrency: 0,
-      temporaryCurrency: 0,
-    );
-    expect(session2Retry.configuration.level, 2);
+      // 5. Player can start Level 2 directly again without having to replay Level 1!
+      final session2Retry = await campaign.startStage(
+        configuration: configuration(CharacterId.jano, level: 2),
+        bankedCurrency: 0,
+        temporaryCurrency: 0,
+      );
+      expect(session2Retry.configuration.level, 2);
 
-    // 6. Player can also replay Level 1 at any time!
-    final replaySession1 = await campaign.startStage(
-      configuration: configuration(CharacterId.jano, level: 1),
-      bankedCurrency: 0,
-      temporaryCurrency: 0,
-    );
-    expect(replaySession1.configuration.level, 1);
-  });
+      // 6. Player can also replay Level 1 at any time!
+      final replaySession1 = await campaign.startStage(
+        configuration: configuration(CharacterId.jano, level: 1),
+        bankedCurrency: 0,
+        temporaryCurrency: 0,
+      );
+      expect(replaySession1.configuration.level, 1);
+    },
+  );
 }

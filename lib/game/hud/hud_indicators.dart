@@ -152,21 +152,35 @@ class HudIndicators extends PositionComponent
     final startY = titleY + (isCompact ? 13.0 : 16.0);
 
     // 2. Outer Retro 8-bit Frame
-    final outerRect = Rect.fromLTWH(startX - 4, startY - 4, barWidth + 8, barHeight + 8);
+    final outerRect = Rect.fromLTWH(
+      startX - 4,
+      startY - 4,
+      barWidth + 8,
+      barHeight + 8,
+    );
     canvas.drawRect(outerRect, Paint()..color = Colors.black);
 
-    final frameRect = Rect.fromLTWH(startX - 2, startY - 2, barWidth + 4, barHeight + 4);
+    final frameRect = Rect.fromLTWH(
+      startX - 2,
+      startY - 2,
+      barWidth + 4,
+      barHeight + 4,
+    );
     canvas.drawRect(frameRect, Paint()..color = const Color(0xFFE5A93B));
 
     canvas.drawLine(
       Offset(startX - 2, startY - 2),
       Offset(startX + barWidth + 2, startY - 2),
-      Paint()..color = const Color(0xFFFFE082)..strokeWidth = 2,
+      Paint()
+        ..color = const Color(0xFFFFE082)
+        ..strokeWidth = 2,
     );
     canvas.drawLine(
       Offset(startX - 2, startY + barHeight + 2),
       Offset(startX + barWidth + 2, startY + barHeight + 2),
-      Paint()..color = const Color(0xFF6D4C41)..strokeWidth = 2,
+      Paint()
+        ..color = const Color(0xFF6D4C41)
+        ..strokeWidth = 2,
     );
 
     // 3. Dark Inset Background
@@ -199,12 +213,20 @@ class HudIndicators extends PositionComponent
       canvas.drawLine(
         Offset(startX, startY + 2),
         Offset(startX + fillWidth, startY + 2),
-        Paint()..color = Colors.white.withValues(alpha: 0.45)..strokeWidth = 2,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.45)
+          ..strokeWidth = 2,
       );
 
-      final notchPaint = Paint()..color = const Color(0xFF0D0204)..strokeWidth = 2;
+      final notchPaint = Paint()
+        ..color = const Color(0xFF0D0204)
+        ..strokeWidth = 2;
       for (var x = startX + 14; x < startX + fillWidth - 2; x += 14) {
-        canvas.drawLine(Offset(x, startY), Offset(x, startY + barHeight), notchPaint);
+        canvas.drawLine(
+          Offset(x, startY),
+          Offset(x, startY + barHeight),
+          notchPaint,
+        );
       }
     }
 
@@ -242,10 +264,7 @@ class HudIndicators extends PositionComponent
 
     final dino = game.dino;
     final isCompact = game.size.y < 500;
-    final playerBase = Vector2(
-      isCompact ? 48 : 56,
-      isCompact ? 38 : 56,
-    );
+    final playerBase = Vector2(isCompact ? 48 : 56, isCompact ? 38 : 56);
     final heartSize = isCompact ? Vector2(22, 22) : Vector2(30, 30);
     final heartSpacing = isCompact ? 25.0 : 34.0;
 
@@ -299,11 +318,7 @@ class HudIndicators extends PositionComponent
       final textOffset = isCompact ? 28.0 : 36.0;
       final textY = isCompact ? abilityBase.y + 3 : abilityBase.y + 5;
       if (dino.hasShield) {
-        shieldSprite.render(
-          canvas,
-          position: abilityBase,
-          size: shieldSize,
-        );
+        shieldSprite.render(canvas, position: abilityBase, size: shieldSize);
         tReadyPaint.render(
           canvas,
           'ESCUDO: READY',
@@ -333,11 +348,7 @@ class HudIndicators extends PositionComponent
           abilityBase,
         );
       } else {
-        tReadyPaint.render(
-          canvas,
-          'DISPARO: READY',
-          abilityBase,
-        );
+        tReadyPaint.render(canvas, 'DISPARO: READY', abilityBase);
       }
     }
     // Fantasma (Conra): Show Intangibility or Cooldown
@@ -355,11 +366,7 @@ class HudIndicators extends PositionComponent
           abilityBase,
         );
       } else {
-        tReadyPaint.render(
-          canvas,
-          'FANTASMA: READY',
-          abilityBase,
-        );
+        tReadyPaint.render(canvas, 'FANTASMA: READY', abilityBase);
       }
     }
     // Nanic: Show Energy Bar
@@ -391,7 +398,10 @@ class HudIndicators extends PositionComponent
       final iconSize = isCompact ? 32.0 : 44.0;
       lightningSprite.render(
         canvas,
-        position: Vector2(abilityBase.x + barWidth + 4, abilityBase.y - (isCompact ? 8 : 12)),
+        position: Vector2(
+          abilityBase.x + barWidth + 4,
+          abilityBase.y - (isCompact ? 8 : 12),
+        ),
         size: Vector2(iconSize, iconSize),
       );
 
@@ -412,11 +422,7 @@ class HudIndicators extends PositionComponent
           abilityBase,
         );
       } else {
-        tReadyPaint.render(
-          canvas,
-          'HABILIDAD: READY',
-          abilityBase,
-        );
+        tReadyPaint.render(canvas, 'HABILIDAD: READY', abilityBase);
       }
     }
   }

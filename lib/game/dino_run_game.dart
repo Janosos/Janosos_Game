@@ -851,8 +851,7 @@ class DinoRunGame extends FlameGame
     }
 
     final bossButton = _bossActionButton;
-    if (bossButton != null &&
-        bossButton.containsPoint(event.canvasPosition)) {
+    if (bossButton != null && bossButton.containsPoint(event.canvasPosition)) {
       useBossAction();
       event.handled = true;
       return;
@@ -876,9 +875,11 @@ class DinoRunGame extends FlameGame
     Set<LogicalKeyboardKey> keysPressed,
   ) {
     // 1. Horizontal Movement (A/D or Left/Right arrows)
-    final leftPressed = keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
+    final leftPressed =
+        keysPressed.contains(LogicalKeyboardKey.arrowLeft) ||
         keysPressed.contains(LogicalKeyboardKey.keyA);
-    final rightPressed = keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
+    final rightPressed =
+        keysPressed.contains(LogicalKeyboardKey.arrowRight) ||
         keysPressed.contains(LogicalKeyboardKey.keyD);
 
     if (_runActive) {
@@ -892,7 +893,8 @@ class DinoRunGame extends FlameGame
     }
 
     // 2. Jump (Space, ArrowUp, KeyW)
-    final isJump = keysPressed.contains(LogicalKeyboardKey.space) ||
+    final isJump =
+        keysPressed.contains(LogicalKeyboardKey.space) ||
         keysPressed.contains(LogicalKeyboardKey.arrowUp) ||
         keysPressed.contains(LogicalKeyboardKey.keyW);
 
@@ -906,7 +908,8 @@ class DinoRunGame extends FlameGame
     }
 
     // 3. Ability (KeyQ, KeyF, KeyJ)
-    final isAbility = keysPressed.contains(LogicalKeyboardKey.keyQ) ||
+    final isAbility =
+        keysPressed.contains(LogicalKeyboardKey.keyQ) ||
         keysPressed.contains(LogicalKeyboardKey.keyF) ||
         keysPressed.contains(LogicalKeyboardKey.keyJ);
 

@@ -8,11 +8,7 @@ import '../dino_run_game.dart';
 class DirectionalPad extends PositionComponent
     with HasGameReference<DinoRunGame>, TapCallbacks {
   DirectionalPad()
-    : super(
-        size: Vector2(136, 60),
-        anchor: Anchor.bottomLeft,
-        priority: 120,
-      );
+    : super(size: Vector2(136, 60), anchor: Anchor.bottomLeft, priority: 120);
 
   bool _leftPressed = false;
   bool _rightPressed = false;
@@ -108,7 +104,11 @@ class DirectionalPad extends PositionComponent
     final rightBtnX = width - btnSize;
 
     final leftSprite = _leftPressed ? _leftPressedSprite : _leftNormal;
-    leftSprite.render(canvas, position: Vector2(0, 0), size: Vector2(btnSize, btnSize));
+    leftSprite.render(
+      canvas,
+      position: Vector2(0, 0),
+      size: Vector2(btnSize, btnSize),
+    );
 
     final rightSprite = _rightPressed ? _rightPressedSprite : _rightNormal;
     rightSprite.render(

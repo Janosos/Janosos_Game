@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'device_input_detector_stub.dart'
-    if (dart.library.js_interop) 'device_input_detector_web.dart' as impl;
+    if (dart.library.js_interop) 'device_input_detector_web.dart'
+    as impl;
 
 /// Returns true if the current environment is a mobile or tablet device.
 ///

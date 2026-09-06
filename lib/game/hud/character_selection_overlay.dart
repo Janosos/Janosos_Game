@@ -303,7 +303,9 @@ class _CharacterSelectionOverlayState extends State<CharacterSelectionOverlay> {
                       child: Text(
                         'CONFIRMAR SELECCIÓN',
                         style: GoogleFonts.pressStart2p(
-                          fontSize: isShortScreen ? 10 : (isSmallScreen ? 12 : 14),
+                          fontSize: isShortScreen
+                              ? 10
+                              : (isSmallScreen ? 12 : 14),
                           fontWeight: FontWeight.bold,
                         ),
                       ),

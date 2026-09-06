@@ -224,7 +224,8 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
               final isCompleted =
                   level.level < highestUnlocked ||
                   (level.level == 10 && campaignCompleted);
-              final isAvailable = level.level == highestUnlocked && !isCompleted;
+              final isAvailable =
+                  level.level == highestUnlocked && !isCompleted;
               return _LevelCard(
                 level: level,
                 available: isAvailable,

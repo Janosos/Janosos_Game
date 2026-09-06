@@ -52,8 +52,12 @@ void main() {
             ),
             sharedPreferencesProvider.overrideWithValue(preferences),
             authRepositoryProvider.overrideWithValue(authRepository),
-            campaignRepositoryProvider.overrideWithValue(_FakeEmptyCampaignRepository()),
-            progressionRepositoryProvider.overrideWithValue(_FakeProgressionRepository()),
+            campaignRepositoryProvider.overrideWithValue(
+              _FakeEmptyCampaignRepository(),
+            ),
+            progressionRepositoryProvider.overrideWithValue(
+              _FakeProgressionRepository(),
+            ),
           ],
           child: const MaterialApp(home: Scaffold(body: CampaignScreen())),
         ),
@@ -82,35 +86,39 @@ class _FakeEmptyCampaignRepository implements CampaignRepository {
   Future<void> clearPreparedStage() async {}
 
   @override
-  Future<CampaignCompletionReceipt> completeCampaign(Map<String, Object?> payload) async =>
-      const CampaignCompletionReceipt(
-        accepted: true,
-        ranked: false,
-        bankedCurrency: 0,
-        purchasePhaseUnlocked: true,
-      );
+  Future<CampaignCompletionReceipt> completeCampaign(
+    Map<String, Object?> payload,
+  ) async => const CampaignCompletionReceipt(
+    accepted: true,
+    ranked: false,
+    bankedCurrency: 0,
+    purchasePhaseUnlocked: true,
+  );
 
   @override
   Future<void> failCampaign(Map<String, Object?> payload) async {}
 
   @override
-  Future<CampaignFinishReceipt> finishStage(Map<String, Object?> payload) async =>
-      const CampaignFinishReceipt(
-        accepted: true,
-        ranked: false,
-        masteryXpGranted: 0,
-        temporaryCurrency: 0,
-        currencyLost: 0,
-        uniqueDropGranted: false,
-        nextLevel: 1,
-        readyToComplete: false,
-      );
+  Future<CampaignFinishReceipt> finishStage(
+    Map<String, Object?> payload,
+  ) async => const CampaignFinishReceipt(
+    accepted: true,
+    ranked: false,
+    masteryXpGranted: 0,
+    temporaryCurrency: 0,
+    currencyLost: 0,
+    uniqueDropGranted: false,
+    nextLevel: 1,
+    readyToComplete: false,
+  );
 
   @override
   Future<CampaignProgress?> loadActiveCampaign() async => null;
 
   @override
-  Future<CampaignStageSession?> loadPreparedStage(CharacterId characterId) async => null;
+  Future<CampaignStageSession?> loadPreparedStage(
+    CharacterId characterId,
+  ) async => null;
 
   @override
   Future<void> markStagePlaying(CampaignStageSession session) async {}
@@ -120,13 +128,12 @@ class _FakeEmptyCampaignRepository implements CampaignRepository {
     required RunConfiguration configuration,
     required int bankedCurrency,
     required int temporaryCurrency,
-  }) async =>
-      CampaignStageSession(
-        eligibility: CampaignEligibility.local,
-        configuration: configuration,
-        bankedCurrency: 0,
-        temporaryCurrency: 0,
-      );
+  }) async => CampaignStageSession(
+    eligibility: CampaignEligibility.local,
+    configuration: configuration,
+    bankedCurrency: 0,
+    temporaryCurrency: 0,
+  );
 }
 
 class _FakeProgressionRepository implements ProgressionRepository {
@@ -134,33 +141,32 @@ class _FakeProgressionRepository implements ProgressionRepository {
   Future<ProgressionSnapshot> loadSnapshot({
     required CharacterId characterId,
     required String contentVersion,
-  }) async =>
-      ProgressionSnapshot(
-        characterId: characterId,
-        contentVersion: contentVersion,
-        contentDigest: 'digest',
-        masteryXp: 0,
-        masteryLevel: 1,
-        nextLevelXp: 100,
-        bankedCurrency: 0,
-        temporaryCurrency: 0,
-        storeUnlocked: false,
-        authorizedBuild: AuthorizedBuild(
-          speedBasisPoints: 0,
-          jumpBasisPoints: 0,
-          damageBasisPoints: 0,
-          vitalityBasisPoints: 0,
-          fortuneBasisPoints: 0,
-          maxLives: 3,
-          activeSkillId: null,
-          defaultActiveId: 'glide',
-          passiveSkillIds: const [],
-          skinId: 'jano_default',
-        ),
-        stats: const [],
-        skills: const [],
-        palettes: const [],
-      );
+  }) async => ProgressionSnapshot(
+    characterId: characterId,
+    contentVersion: contentVersion,
+    contentDigest: 'digest',
+    masteryXp: 0,
+    masteryLevel: 1,
+    nextLevelXp: 100,
+    bankedCurrency: 0,
+    temporaryCurrency: 0,
+    storeUnlocked: false,
+    authorizedBuild: AuthorizedBuild(
+      speedBasisPoints: 0,
+      jumpBasisPoints: 0,
+      damageBasisPoints: 0,
+      vitalityBasisPoints: 0,
+      fortuneBasisPoints: 0,
+      maxLives: 3,
+      activeSkillId: null,
+      defaultActiveId: 'glide',
+      passiveSkillIds: const [],
+      skinId: 'jano_default',
+    ),
+    stats: const [],
+    skills: const [],
+    palettes: const [],
+  );
 
   @override
   Future<void> purchasePalette({

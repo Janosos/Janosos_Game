@@ -22,29 +22,35 @@ void main() {
       expect(desktopGame.isMobileOrTablet, isFalse);
     });
 
-    test('isMobileOrTabletDevice returns a valid boolean on current platform', () {
-      expect(isMobileOrTabletDevice(), isA<bool>());
-    });
+    test(
+      'isMobileOrTabletDevice returns a valid boolean on current platform',
+      () {
+        expect(isMobileOrTabletDevice(), isA<bool>());
+      },
+    );
 
-    test('DirectionalPad adjusts layout adaptively for thin landscape screens', () {
-      final pad = DirectionalPad();
-      expect(pad.size.x, 136);
-      expect(pad.size.y, 60);
+    test(
+      'DirectionalPad adjusts layout adaptively for thin landscape screens',
+      () {
+        final pad = DirectionalPad();
+        expect(pad.size.x, 136);
+        expect(pad.size.y, 60);
 
-      // Simulate a thin landscape mobile screen (e.g. 740x360)
-      pad.onGameResize(Vector2(740, 360));
-      expect(pad.size.x, 116);
-      expect(pad.size.y, 52);
-      expect(pad.position.x, 12);
-      expect(pad.position.y, 350);
+        // Simulate a thin landscape mobile screen (e.g. 740x360)
+        pad.onGameResize(Vector2(740, 360));
+        expect(pad.size.x, 116);
+        expect(pad.size.y, 52);
+        expect(pad.position.x, 12);
+        expect(pad.position.y, 350);
 
-      // Simulate a desktop landscape screen (e.g. 1280x720)
-      pad.onGameResize(Vector2(1280, 720));
-      expect(pad.size.x, 136);
-      expect(pad.size.y, 60);
-      expect(pad.position.x, 16);
-      expect(pad.position.y, 704);
-    });
+        // Simulate a desktop landscape screen (e.g. 1280x720)
+        pad.onGameResize(Vector2(1280, 720));
+        expect(pad.size.x, 136);
+        expect(pad.size.y, 60);
+        expect(pad.position.x, 16);
+        expect(pad.position.y, 704);
+      },
+    );
 
     test('DirectionalPad has appropriate hit target boundaries', () {
       final pad = DirectionalPad();

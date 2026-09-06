@@ -208,8 +208,9 @@ class LocalCharacterProgress {
     empty.masteryXp = _integer(json['masteryXp']);
     empty.bankedCurrency = _integer(json['bankedCurrency']);
     empty.storeUnlocked = json['storeUnlocked'] == true;
-    empty.highestUnlockedLevel =
-        (_integer(json['highestUnlockedLevel'])).clamp(1, 10);
+    empty.highestUnlockedLevel = (_integer(
+      json['highestUnlockedLevel'],
+    )).clamp(1, 10);
     if (empty.highestUnlockedLevel == 0) empty.highestUnlockedLevel = 1;
     empty.ownedSkillIds.addAll(_stringList(json['ownedSkillIds']));
     empty.ownedPaletteIds.addAll(_stringList(json['ownedPaletteIds']));

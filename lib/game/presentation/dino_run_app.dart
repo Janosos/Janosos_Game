@@ -162,7 +162,10 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                       ? 'Victoria contra $bossName'
                       : 'Partida terminada',
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
                     constraints: BoxConstraints(
                       maxWidth: 560,
                       maxHeight: MediaQuery.sizeOf(context).height * 0.90,
@@ -203,69 +206,69 @@ class _DinoRunAppState extends State<DinoRunApp> with WidgetsBindingObserver {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                        const SizedBox(height: 12),
-                        Text(
-                          isCampaign
-                              ? isVictory
-                                    ? 'Nivel ${result?.levelReached ?? 1}/10 superado. La recompensa única tiene 1% de probabilidad y sólo el servidor confirma el resultado.'
-                                    : isAbandoned
-                                    ? 'La pausa o autorización excedió su límite. La campaña vuelve al nivel 1 y no publica ranking.'
-                                    : 'La campaña vuelve al nivel 1. Conservas maestría, compras, moneda guardada, paletas y recompensas únicas.'
-                              : isBossRush
-                              ? isVictory
-                                    ? 'Derrotaste los 10 jefes. La puntuación '
-                                          'se publica sólo en Boss Rush; no se '
-                                          'concede moneda de campaña.'
-                                    : 'Derrotaste ${result?.levelReached ?? 0}/10 '
-                                          'jefes. La cadena termina, pero todo '
-                                          'tu progreso permanente se conserva.'
-                              : isNewHighScore
-                              ? 'MODO ENDLESS CLÁSICO\n¡PUNTUACIÓN MÁXIMA: $score PTS!\nHas superado tu récord anterior.'
-                              : 'MODO ENDLESS CLÁSICO\nPuntuación: $score PTS · Récord: $_persistedHighScore PTS',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        if (_resultSaveStatus != _ResultSaveStatus.none) ...[
+                          const SizedBox(height: 12),
                           Text(
-                            _resultSaveMessage ?? _resultSaveStatus.message,
+                            isCampaign
+                                ? isVictory
+                                      ? 'Nivel ${result?.levelReached ?? 1}/10 superado. La recompensa única tiene 1% de probabilidad y sólo el servidor confirma el resultado.'
+                                      : isAbandoned
+                                      ? 'La pausa o autorización excedió su límite. La campaña vuelve al nivel 1 y no publica ranking.'
+                                      : 'La campaña vuelve al nivel 1. Conservas maestría, compras, moneda guardada, paletas y recompensas únicas.'
+                                : isBossRush
+                                ? isVictory
+                                      ? 'Derrotaste los 10 jefes. La puntuación '
+                                            'se publica sólo en Boss Rush; no se '
+                                            'concede moneda de campaña.'
+                                      : 'Derrotaste ${result?.levelReached ?? 0}/10 '
+                                            'jefes. La cadena termina, pero todo '
+                                            'tu progreso permanente se conserva.'
+                                : isNewHighScore
+                                ? 'MODO ENDLESS CLÁSICO\n¡PUNTUACIÓN MÁXIMA: $score PTS!\nHas superado tu récord anterior.'
+                                : 'MODO ENDLESS CLÁSICO\nPuntuación: $score PTS · Récord: $_persistedHighScore PTS',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                            ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 20),
+                          if (_resultSaveStatus != _ResultSaveStatus.none) ...[
+                            Text(
+                              _resultSaveMessage ?? _resultSaveStatus.message,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          ElevatedButton(
+                            onPressed: () {
+                              if (game.runConfiguration.audioEnabled) {
+                                FlameAudio.play('Select.wav');
+                              }
+                              setState(() {
+                                _resultSaveStatus = _ResultSaveStatus.none;
+                                _resultSaveMessage = null;
+                              });
+                              if (returnsToProgression) {
+                                widget.onCampaignExit?.call();
+                              } else {
+                                game.resetGame();
+                              }
+                            },
+                            child: Text(
+                              returnsToProgression
+                                  ? 'VOLVER A PROGRESIÓN'
+                                  : 'JUGAR DE NUEVO',
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                          ),
                         ],
-                        ElevatedButton(
-                          onPressed: () {
-                            if (game.runConfiguration.audioEnabled) {
-                              FlameAudio.play('Select.wav');
-                            }
-                            setState(() {
-                              _resultSaveStatus = _ResultSaveStatus.none;
-                              _resultSaveMessage = null;
-                            });
-                            if (returnsToProgression) {
-                              widget.onCampaignExit?.call();
-                            } else {
-                              game.resetGame();
-                            }
-                          },
-                          child: Text(
-                            returnsToProgression
-                                ? 'VOLVER A PROGRESIÓN'
-                                : 'JUGAR DE NUEVO',
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
             'BossTutorial': (BuildContext context, DinoRunGame game) {
               return _BossHelpOverlay(game: game, isIntroduction: true);
             },

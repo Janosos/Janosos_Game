@@ -45,12 +45,7 @@ class CampaignBoss extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    add(
-      RectangleHitbox(
-        position: Vector2(15, 10),
-        size: Vector2(154, 164),
-      ),
-    );
+    add(RectangleHitbox(position: Vector2(15, 10), size: Vector2(154, 164)));
     final asset = _bossAsset(definition.level);
     try {
       final spriteSheet = await game.images.load(asset);
@@ -78,10 +73,12 @@ class CampaignBoss extends PositionComponent
         srcSize: Vector2(fw, fh),
       );
 
-      _bossAnimation = SpriteAnimation.spriteList(
-        [frame0, frame1, frame2, frame3],
-        stepTime: 0.15,
-      );
+      _bossAnimation = SpriteAnimation.spriteList([
+        frame0,
+        frame1,
+        frame2,
+        frame3,
+      ], stepTime: 0.15);
       _bossAnimationTicker = _bossAnimation?.createTicker();
     } catch (_) {}
     position = Vector2(
@@ -251,13 +248,13 @@ class CampaignBossHazard extends PositionComponent
         // with slight variation, forcing the player to move left/right to dodge!
         final playerX = game.dino.x;
         final spread = (_laneSeed - 0.5) * 110.0;
-        final targetX = (playerX + spread).clamp(35.0, game.size.x - width - 40.0);
+        final targetX = (playerX + spread).clamp(
+          35.0,
+          game.size.x - width - 40.0,
+        );
         position = Vector2(targetX, -height);
       case _HazardMotion.charge || _HazardMotion.wave:
-        position = Vector2(
-          game.size.x + width,
-          _ground - height,
-        );
+        position = Vector2(game.size.x + width, _ground - height);
     }
   }
 
@@ -267,7 +264,8 @@ class CampaignBossHazard extends PositionComponent
     _elapsed += dt;
     if (!_armed && !isWarning) {
       _armed = true;
-      final isCircular = cue.kind == BossAttackKind.warningCharge ||
+      final isCircular =
+          cue.kind == BossAttackKind.warningCharge ||
           cue.kind == BossAttackKind.sideCharge ||
           cue.kind == BossAttackKind.spectralHazard ||
           cue.kind == BossAttackKind.chemicalRush ||
@@ -482,7 +480,10 @@ Color _bossAccent(int level) => <Color>[
 _AttackProfile _profileFor(BossAttackKind kind) => switch (kind) {
   BossAttackKind.warningCharge => _charge('CALAVERA', const Color(0xFFFF7A00)),
   BossAttackKind.sideCharge => _charge('EMBESTIDA', const Color(0xFFEB4D4B)),
-  BossAttackKind.spectralHazard => _wave('OLEADA ESPECTRAL', const Color(0xFF00F0FF)),
+  BossAttackKind.spectralHazard => _wave(
+    'OLEADA ESPECTRAL',
+    const Color(0xFF00F0FF),
+  ),
   BossAttackKind.cardVolley => _fall('CARTAS', const Color(0xFFE53371)),
   BossAttackKind.heartPlatform => _wave('CORAZÓN', const Color(0xFFFF5B99)),
   BossAttackKind.shockwave => _wave('ONDA', const Color(0xFFFFD166)),
