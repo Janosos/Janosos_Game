@@ -28,10 +28,23 @@ class HudIndicators extends PositionComponent
     ),
   );
 
+  late final TextPaint _bossTitlePaintCompact = TextPaint(
+    style: const TextStyle(
+      color: Color(0xFFFFD54F),
+      fontSize: 11,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 1.2,
+      shadows: [
+        Shadow(blurRadius: 3, color: Colors.black, offset: Offset(1.5, 1.5)),
+        Shadow(blurRadius: 1, color: Color(0xFFFF6F00), offset: Offset(0, 1)),
+      ],
+    ),
+  );
+
   late final TextPaint _bossHpPaint = TextPaint(
     style: const TextStyle(
       color: Colors.white,
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: FontWeight.bold,
       letterSpacing: 0.8,
       shadows: [
@@ -42,9 +55,10 @@ class HudIndicators extends PositionComponent
 
   late final TextPaint _activePhasePaint = TextPaint(
     style: const TextStyle(
-      color: Color(0xFFFF5252),
-      fontSize: 10,
+      color: Colors.white,
+      fontSize: 9,
       fontWeight: FontWeight.w900,
+      letterSpacing: 0.6,
       shadows: [
         Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
       ],
@@ -53,9 +67,10 @@ class HudIndicators extends PositionComponent
 
   late final TextPaint _passedPhasePaint = TextPaint(
     style: const TextStyle(
-      color: Color(0xFFFFD54F),
-      fontSize: 10,
+      color: Color(0xFF69F0AE),
+      fontSize: 9,
       fontWeight: FontWeight.bold,
+      letterSpacing: 0.6,
       shadows: [
         Shadow(blurRadius: 2, color: Colors.black, offset: Offset(1, 1)),
       ],
@@ -64,9 +79,10 @@ class HudIndicators extends PositionComponent
 
   late final TextPaint _lockedPhasePaint = TextPaint(
     style: TextStyle(
-      color: Colors.white.withValues(alpha: 0.35),
-      fontSize: 10,
-      fontWeight: FontWeight.normal,
+      color: Colors.white.withValues(alpha: 0.4),
+      fontSize: 9,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.6,
     ),
   );
 
@@ -134,22 +150,23 @@ class HudIndicators extends PositionComponent
     final barWidth = isCompact
         ? (screenWidth * 0.44).clamp(190.0, 360.0)
         : (screenWidth * 0.52).clamp(290.0, 500.0);
-    final barHeight = isCompact ? 16.0 : 22.0;
+    final barHeight = isCompact ? 16.0 : 20.0;
     final startX = (screenWidth - barWidth) / 2;
-    final titleY = isCompact ? 3.0 : 6.0;
+    final titleY = isCompact ? 8.0 : 14.0;
 
     // 1. Boss Name with Retro Arcade Accents (safely padded from top edge)
+    final titlePaint = isCompact ? _bossTitlePaintCompact : _bossTitlePaint;
     final titleText = game.runConfiguration.experience == RunExperience.bossRush
-        ? '★ BOSS ${game.bossesDefeated + 1}/10 · $bossName ★'
-        : '★ $bossName ★';
-    _bossTitlePaint.render(
+        ? '✦ BOSS ${game.bossesDefeated + 1}/10 · $bossName ✦'
+        : '✦ $bossName ✦';
+    titlePaint.render(
       canvas,
       titleText,
       Vector2(startX + barWidth / 2, titleY),
       anchor: Anchor.topCenter,
     );
 
-    final startY = titleY + (isCompact ? 13.0 : 16.0);
+    final startY = titleY + (isCompact ? 17.0 : 22.0);
 
     // 2. Outer Retro 8-bit Frame
     final outerRect = Rect.fromLTWH(
@@ -219,7 +236,7 @@ class HudIndicators extends PositionComponent
       );
 
       final notchPaint = Paint()
-        ..color = const Color(0xFF0D0204)
+        ..color = const Color(0x66000000)
         ..strokeWidth = 2;
       for (var x = startX + 14; x < startX + fillWidth - 2; x += 14) {
         canvas.drawLine(
@@ -230,30 +247,73 @@ class HudIndicators extends PositionComponent
       }
     }
 
-    // 5. HP Numeric Text
+    // 5. HP Numeric Text with Dark Backdrop Pill
+    final hpCenter = Vector2(startX + barWidth / 2, startY + barHeight / 2);
+    final hpBackdropRect = RRect.fromRectAndRadius(
+      Rect.fromCenter(
+        center: Offset(hpCenter.x, hpCenter.y),
+        width: isCompact ? 104 : 120,
+        height: barHeight - 4,
+      ),
+      const Radius.circular(3),
+    );
+    canvas.drawRRect(hpBackdropRect, Paint()..color = const Color(0xCC000000));
     _bossHpPaint.render(
       canvas,
       'HP: $remainingHp / $maxHp',
-      Vector2(startX + barWidth / 2, startY + barHeight / 2),
+      hpCenter,
       anchor: Anchor.center,
     );
 
-    // 6. Phase Indicator Badges
-    final phaseY = startY + barHeight + (isCompact ? 2 : 5);
-    final phaseSpacing = barWidth / 3;
+    // 6. Phase Indicator Badges (Centered Retro Pills)
+    final phaseY = startY + barHeight + (isCompact ? 6.0 : 8.0);
+    final badgeWidth = isCompact ? 60.0 : 72.0;
+    final badgeHeight = isCompact ? 14.0 : 16.0;
+    final badgeGap = isCompact ? 6.0 : 8.0;
+    final totalBadgesWidth = (badgeWidth * 3) + (badgeGap * 2);
+    final badgesStartX = startX + (barWidth - totalBadgesWidth) / 2;
+
     for (var p = 1; p <= 3; p++) {
-      final active = p <= phase;
-      final current = p == phase;
-      final badgeX = startX + (p - 1) * phaseSpacing + phaseSpacing / 2;
-      final phaseText = 'FASE $p';
-      final phasePaint = current
-          ? _activePhasePaint
-          : (active ? _passedPhasePaint : _lockedPhasePaint);
-      phasePaint.render(
+      final isCleared = p < phase;
+      final isCurrent = p == phase;
+      final bX = badgesStartX + (p - 1) * (badgeWidth + badgeGap);
+      final badgeRect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(bX, phaseY, badgeWidth, badgeHeight),
+        const Radius.circular(3),
+      );
+
+      final Paint bgPaint = Paint();
+      final Paint borderPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+      final TextPaint textPaint;
+      final String phaseLabel;
+
+      if (isCurrent) {
+        bgPaint.color = const Color(0xFFC62828);
+        borderPaint.color = const Color(0xFFFFD54F);
+        textPaint = _activePhasePaint;
+        phaseLabel = 'FASE $p';
+      } else if (isCleared) {
+        bgPaint.color = const Color(0xFF1B5E20);
+        borderPaint.color = const Color(0xFF00E676);
+        textPaint = _passedPhasePaint;
+        phaseLabel = '✓ FASE $p';
+      } else {
+        bgPaint.color = const Color(0x44000000);
+        borderPaint.color = const Color(0x26FFFFFF);
+        textPaint = _lockedPhasePaint;
+        phaseLabel = 'FASE $p';
+      }
+
+      canvas.drawRRect(badgeRect, bgPaint);
+      canvas.drawRRect(badgeRect, borderPaint);
+
+      textPaint.render(
         canvas,
-        current ? '▶ $phaseText ◀' : phaseText,
-        Vector2(badgeX, phaseY),
-        anchor: Anchor.topCenter,
+        phaseLabel,
+        Vector2(bX + badgeWidth / 2, phaseY + badgeHeight / 2),
+        anchor: Anchor.center,
       );
     }
   }
