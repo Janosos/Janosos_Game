@@ -7,6 +7,7 @@ import '../../../app/app_providers.dart';
 import '../../../app/widgets/pwa_install_dialog.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../core/platform/pwa_install_service.dart';
+import '../../../core/security/dev_account_provisioner.dart';
 import '../../auth/application/auth_controller.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -80,7 +81,19 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (user?.isGuest == true) ...[
+                  if (DevAccountProvisioner.isDevUsername(user?.displayName)) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'MODO DESARROLLADOR • TODO DESBLOQUEADO (99,999 🪙)',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.vt323(
+                        fontSize: isMobile ? 16 : 18,
+                        color: RetroColors.gold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                  ] else if (user?.isGuest == true) ...[
                     const SizedBox(height: 4),
                     Text(
                       'PARTIDA LOCAL • ESTE DISPOSITIVO',
@@ -110,10 +123,14 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             RetroBadge(
-              text: user?.isGuest == true ? 'INVITADO' : 'ONLINE',
-              color: user?.isGuest == true
-                  ? RetroColors.gold
-                  : RetroColors.green,
+              text: DevAccountProvisioner.isDevUsername(user?.displayName)
+                  ? 'DEV ⚡'
+                  : (user?.isGuest == true ? 'INVITADO' : 'ONLINE'),
+              color: DevAccountProvisioner.isDevUsername(user?.displayName)
+                  ? RetroColors.magenta
+                  : (user?.isGuest == true
+                      ? RetroColors.gold
+                      : RetroColors.green),
             ),
           ],
         ),

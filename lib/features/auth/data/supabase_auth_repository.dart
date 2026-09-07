@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/errors/app_failure.dart';
+import '../../../core/security/dev_account_provisioner.dart';
 import '../domain/auth_models.dart';
 import '../domain/auth_repository.dart';
 
@@ -62,6 +63,19 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signIn({required String email, required String password}) {
+    if (DevAccountProvisioner.isDevCredentials(email, password)) {
+      _session = const AuthSessionSnapshot.authenticated(
+        AuthUserProfile(
+          id: DevAccountProvisioner.devUserId,
+          email: DevAccountProvisioner.devEmail,
+          displayName: DevAccountProvisioner.devDisplayName,
+          isEmailVerified: true,
+          isGuest: false,
+        ),
+      );
+      _sessionController.add(_session);
+      return Future<void>.value();
+    }
     return _guard(() async {
       await _client.auth.signInWithPassword(
         email: email.trim().toLowerCase(),

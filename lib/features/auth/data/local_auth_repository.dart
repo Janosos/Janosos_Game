@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/errors/app_failure.dart';
+import '../../../core/security/dev_account_provisioner.dart';
 import '../domain/auth_models.dart';
 import '../domain/auth_repository.dart';
 
@@ -78,6 +79,32 @@ class LocalAuthRepository implements AuthRepository {
 
   @override
   Future<void> signIn({required String email, required String password}) async {
+    if (DevAccountProvisioner.isDevCredentials(email, password)) {
+      var devAccount = _accounts
+          .where((candidate) => candidate.id == DevAccountProvisioner.devUserId)
+          .firstOrNull;
+      if (devAccount == null) {
+        devAccount = _LocalAccount(
+          id: DevAccountProvisioner.devUserId,
+          email: DevAccountProvisioner.devEmail,
+          displayName: DevAccountProvisioner.devDisplayName,
+          passwordSalt: 'dev_salt',
+          passwordHash: 'dev_hash',
+          passwordAlgorithm: 'none',
+        );
+        _accounts.add(devAccount);
+        await _persistAccounts();
+      }
+      await DevAccountProvisioner.provisionDevData(
+        preferences: _preferences,
+        userId: devAccount.id,
+      );
+      await _setSession(
+        AuthSessionSnapshot.authenticated(devAccount.toProfile()),
+      );
+      return;
+    }
+
     final normalizedEmail = _normalizeEmail(email);
     final account = _accounts
         .where((candidate) => candidate.email == normalizedEmail)

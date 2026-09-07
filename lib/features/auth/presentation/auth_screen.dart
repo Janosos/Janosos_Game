@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../app/app_providers.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../core/config/app_environment.dart';
+import '../../../core/security/dev_account_provisioner.dart';
 import '../application/auth_controller.dart';
 import '../domain/auth_models.dart';
 
@@ -484,12 +485,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
+                      labelText: 'Correo electrónico o usuario',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
-                      final email = value?.trim() ?? '';
-                      return email.contains('@')
+                      final input = value?.trim() ?? '';
+                      if (DevAccountProvisioner.isDevUsername(input)) {
+                        return null;
+                      }
+                      return input.contains('@')
                           ? null
                           : 'Ingresa un correo válido.';
                     },
@@ -528,9 +532,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         ),
                       ),
                     ),
-                    validator: (value) => (value?.length ?? 0) >= 8
-                        ? null
-                        : 'Usa al menos 8 caracteres.',
+                    validator: (value) {
+                      final pwd = value ?? '';
+                      if (DevAccountProvisioner.isDevPassword(pwd)) {
+                        return null;
+                      }
+                      if (_mode == _AuthFormMode.signIn) {
+                        return pwd.length >= 6
+                            ? null
+                            : 'Usa al menos 6 caracteres.';
+                      }
+                      return pwd.length >= 8
+                          ? null
+                          : 'Usa al menos 8 caracteres.';
+                    },
                   ),
                   if (state.error != null) ...[
                     const SizedBox(height: 16),

@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_providers.dart';
 import '../../../core/errors/app_failure.dart';
+import '../../../core/security/dev_account_provisioner.dart';
+import '../../progression/application/progression_controller.dart';
 import '../domain/auth_models.dart';
 
 enum AuthOperation {
@@ -81,9 +83,17 @@ class AuthController extends Notifier<AuthViewState> {
   Future<bool> signIn({required String email, required String password}) {
     return _run(
       AuthOperation.signingIn,
-      () => ref
-          .read(authRepositoryProvider)
-          .signIn(email: email, password: password),
+      () async {
+        await ref
+            .read(authRepositoryProvider)
+            .signIn(email: email, password: password);
+        if (DevAccountProvisioner.isDevCredentials(email, password)) {
+          final prefs = ref.read(sharedPreferencesProvider);
+          await DevAccountProvisioner.provisionDevData(preferences: prefs);
+          ref.invalidate(localGameStateStoreProvider);
+          ref.invalidate(progressionControllerProvider);
+        }
+      },
     );
   }
 
