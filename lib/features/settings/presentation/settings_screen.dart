@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../app/widgets/pwa_install_dialog.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
+import '../../../core/platform/pwa_install_service.dart';
 import '../../auth/application/auth_controller.dart';
 import '../../auth/domain/auth_models.dart';
 import '../application/game_settings_controller.dart';
@@ -281,6 +283,67 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
 
+    final pwaCard = !PwaInstallService.isWeb
+        ? null
+        : RetroArcadeCard(
+            borderColor: RetroColors.cyan,
+            accentHeaderColor: RetroColors.cyan,
+            padding: EdgeInsets.all(isCompactHeight ? 12 : 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'INSTALACIÓN & PANTALLA COMPLETA',
+                  style: GoogleFonts.pressStart2p(
+                    fontSize: isCompactHeight ? 9 : 10,
+                    fontWeight: FontWeight.bold,
+                    color: RetroColors.cyan,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 8 : 12),
+                Text(
+                  PwaInstallService.isStandalone
+                      ? 'La aplicación ya está ejecutándose en modo app / pantalla completa.'
+                      : 'Instala Janosos Game como app en tu navegador Android o iPhone para jugar en pantalla completa horizontal sin marcos.',
+                  style: GoogleFonts.vt323(
+                    fontSize: isCompactHeight ? 15 : 17,
+                    color: RetroColors.textBright,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 10 : 14),
+                Row(
+                  children: [
+                    if (!PwaInstallService.isStandalone) ...[
+                      Expanded(
+                        child: RetroArcadeButton(
+                          text: 'INSTALAR APP',
+                          icon: Icons.install_mobile,
+                          primaryColor: RetroColors.cyan,
+                          textColor: Colors.black,
+                          fontSize: 8,
+                          onPressed: () => PwaInstallDialog.show(context),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      child: RetroArcadeButton(
+                        text: 'PANTALLA COMPLETA',
+                        icon: Icons.fullscreen,
+                        primaryColor: RetroColors.gold,
+                        textColor: Colors.black,
+                        fontSize: 8,
+                        onPressed: () => PwaInstallService.enterFullscreen(),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+
     final sessionCard = RetroArcadeCard(
       borderColor: const Color(0xFF1E354F),
       backgroundColor: const Color(0xFF0F141E),
@@ -374,6 +437,10 @@ class SettingsScreen extends ConsumerWidget {
                     gameSettingsCard,
                     const SizedBox(height: 14),
                     hudControlsCard,
+                    if (pwaCard != null) ...[
+                      const SizedBox(height: 14),
+                      pwaCard,
+                    ],
                   ],
                 ),
               ),
@@ -387,6 +454,10 @@ class SettingsScreen extends ConsumerWidget {
               gameSettingsCard,
               const SizedBox(height: 14),
               hudControlsCard,
+              if (pwaCard != null) ...[
+                const SizedBox(height: 14),
+                pwaCard,
+              ],
               const SizedBox(height: 14),
               sessionCard,
             ],

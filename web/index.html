@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
@@ -28,12 +15,13 @@
     content="Janosos Game: runner retro con campaña, jefes, progresión por personaje y Boss Rush."
   >
 
-  <!-- Mobile Fullscreen & Viewport -->
+  <!-- Mobile Fullscreen & PWA Meta Tags (Android & iOS Safari) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Janosos Game">
+  <meta name="theme-color" content="#070D16">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
@@ -49,28 +37,170 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #000000;
+      background-color: #070D16;
       touch-action: none;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
     }
+
+    /* Retro Arcade Web Loading Screen */
+    #app-loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at center, #0F1D32 0%, #070D16 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999999;
+      font-family: 'Courier New', Courier, monospace, sans-serif;
+      color: #FFFFFF;
+      transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+    }
+
+    .retro-card {
+      border: 3px solid #00F5FF;
+      box-shadow: 0 0 25px rgba(0, 245, 255, 0.45), inset 0 0 15px rgba(0, 245, 255, 0.2);
+      border-radius: 8px;
+      padding: 24px 32px;
+      background: rgba(10, 18, 30, 0.95);
+      text-align: center;
+      max-width: 90vw;
+      box-sizing: border-box;
+    }
+
+    .retro-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #FFD700;
+      letter-spacing: 2.5px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+      margin-bottom: 10px;
+    }
+
+    .retro-sub {
+      font-size: 12px;
+      color: #00F5FF;
+      letter-spacing: 1.5px;
+      margin-bottom: 18px;
+      font-weight: bold;
+    }
+
+    .progress-bar-container {
+      width: 240px;
+      max-width: 65vw;
+      height: 12px;
+      border: 2px solid #00F5FF;
+      border-radius: 6px;
+      padding: 2px;
+      margin: 0 auto;
+      background: #050B12;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #FF0055, #FF8800, #FFEE00, #00FF66, #00F5FF, #7928CA, #FF0055);
+      background-size: 200% 100%;
+      border-radius: 4px;
+      animation: rainbowGlow 1.8s linear infinite;
+    }
+
+    @keyframes rainbowGlow {
+      0% { background-position: 100% 0%; }
+      100% { background-position: 0% 0%; }
+    }
+
+    .retro-hint {
+      font-size: 11px;
+      color: #8CA0BA;
+      margin-top: 14px;
+      letter-spacing: 1px;
+    }
   </style>
 
   <script>
-    // Maximize viewport on mobile browsers upon first interaction
-    function enterFullscreenOnMobile() {
+    // PWA Install Prompt Capture
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      window.dispatchEvent(new CustomEvent('janosos-installable'));
+    });
+
+    window.janososPromptInstall = function() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        return deferredInstallPrompt.userChoice.then(function(choice) {
+          deferredInstallPrompt = null;
+          return choice.outcome === 'accepted';
+        });
+      }
+      return Promise.resolve(false);
+    };
+
+    window.janososEnterFullscreen = function() {
       const docEl = document.documentElement;
       const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-      if (requestFs && !document.fullscreenElement && !document.webkitFullscreenElement) {
-        requestFs.call(docEl).catch(function() {});
+      if (requestFs) {
+        return requestFs.call(docEl).then(function() {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(function() {});
+          }
+          return true;
+        }).catch(function() { return false; });
+      }
+      return Promise.resolve(false);
+    };
+
+    window.janososIsStandalone = function() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.matchMedia('(display-mode: fullscreen)').matches ||
+             navigator.standalone === true;
+    };
+
+    // Auto-enter fullscreen on mobile upon interaction if desired
+    function enterFullscreenOnMobile() {
+      if (!window.janososIsStandalone()) {
+        window.janososEnterFullscreen();
       }
     }
     window.addEventListener('touchstart', enterFullscreenOnMobile, { once: true, passive: true });
     window.addEventListener('click', enterFullscreenOnMobile, { once: true, passive: true });
+
+    // Hide arcade loading screen once Flutter renders
+    function hideLoadingScreen() {
+      const loader = document.getElementById('app-loading-screen');
+      if (loader) {
+        loader.style.opacity = '0';
+        loader.style.visibility = 'hidden';
+        setTimeout(function() {
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }, 500);
+      }
+    }
+    window.addEventListener('flutter-first-frame', hideLoadingScreen);
+    setTimeout(hideLoadingScreen, 12000);
   </script>
 </head>
 <body>
+  <!-- Retro Loading Screen shown before Flutter engine initializes -->
+  <div id="app-loading-screen">
+    <div class="retro-card">
+      <div class="retro-title">★ JANOSOS ARCADE ★</div>
+      <div class="retro-sub">CARGANDO SISTEMA DE JUEGO...</div>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <div class="retro-hint">OPTIMIZANDO RECURSOS Y SPRITES</div>
+    </div>
+  </div>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

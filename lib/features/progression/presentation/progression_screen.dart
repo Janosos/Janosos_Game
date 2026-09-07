@@ -99,15 +99,6 @@ class _LandscapeProgressionViewState
                       nextLevelXp: snapshot.nextLevelXp,
                       isCompact: isCompactHeight,
                     ),
-                    SizedBox(height: isCompactHeight ? 6 : 8),
-
-                    // Estado de Tienda (Abierta / Bloqueada)
-                    _StoreStatusBadge(
-                      isUnlocked: snapshot.storeUnlocked,
-                      isCompact: isCompactHeight,
-                    ),
-                    SizedBox(height: isCompactHeight ? 8 : 12),
-
                     // Selector de Categoría (Pestañas laterales)
                     _CategoryButton(
                       title: 'MEJORAS',
@@ -443,75 +434,6 @@ class _WalletCard extends StatelessWidget {
               minHeight: 4,
               backgroundColor: const Color(0xFF070D16),
               color: RetroColors.cyan,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StoreStatusBadge extends StatelessWidget {
-  const _StoreStatusBadge({
-    required this.isUnlocked,
-    required this.isCompact,
-  });
-
-  final bool isUnlocked;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isUnlocked) {
-      return Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 8,
-          vertical: isCompact ? 3 : 5,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0C241B),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: RetroColors.green, width: 1.2),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle, color: RetroColors.green, size: 12),
-            const SizedBox(width: 6),
-            Text(
-              'TIENDA DESBLOQUEADA',
-              style: GoogleFonts.pressStart2p(
-                fontSize: 6.5,
-                color: RetroColors.green,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: isCompact ? 4 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2B190F),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: RetroColors.gold, width: 1.2),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.lock_outline, color: RetroColors.gold, size: 13),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              'CATÁLOGO · SUPERA CAMPAÑA',
-              style: GoogleFonts.pressStart2p(
-                fontSize: 6.5,
-                color: RetroColors.gold,
-                height: 1.2,
-              ),
             ),
           ),
         ],
@@ -910,6 +832,20 @@ class _PalettesCatalog extends ConsumerWidget {
                               : Colors.white)),
                 ),
               ),
+              if (palette.isRainbow) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'MÍTICA · EFECTO ARCOÍRIS',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.vt323(
+                    fontSize: 13,
+                    color: RetroColors.gold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
 
               // Botón Equipar / Comprar (Siempre desbloqueado para compra)
@@ -1122,6 +1058,7 @@ class _SkinPreviewBoxState extends State<_SkinPreviewBox>
           child: Stack(
             alignment: Alignment.center,
             children: [
+              // Personaje base con filtro cromático
               Center(
                 child: ColorFiltered(
                   colorFilter: characterFilter,
@@ -1134,6 +1071,84 @@ class _SkinPreviewBoxState extends State<_SkinPreviewBox>
                   ),
                 ),
               ),
+
+              // Reflejo prismático holográfico sobre el personaje
+              if (widget.palette.isRainbow) ...[
+                Center(
+                  child: ShaderMask(
+                    blendMode: BlendMode.srcATop,
+                    shaderCallback: (bounds) {
+                      final beamOffset = -2.0 + (progress * 4.0);
+                      return LinearGradient(
+                        begin: Alignment(beamOffset - 0.7, -1.2),
+                        end: Alignment(beamOffset + 0.7, 1.2),
+                        colors: const [
+                          Colors.transparent,
+                          Color(0x88FF0055),
+                          Color(0xAAFF8800),
+                          Color(0xCCFFEE00),
+                          Color(0xAA00FF66),
+                          Color(0xAA00F5FF),
+                          Color(0x887928CA),
+                          Color(0xEEFFFFFF),
+                          Colors.transparent,
+                        ],
+                        stops: const [
+                          0.0,
+                          0.15,
+                          0.30,
+                          0.45,
+                          0.60,
+                          0.75,
+                          0.88,
+                          0.94,
+                          1.0,
+                        ],
+                      ).createShader(bounds);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CharacterIcon(
+                        assetName: widget.assetName,
+                        size: 54,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Destellos estelares que titilan en arcoíris
+                Positioned(
+                  top: 12,
+                  left: 18,
+                  child: _RainbowSparkle(
+                    progress: progress,
+                    phaseOffset: 0.0,
+                    size: 11,
+                    baseHue: rainbowHue,
+                  ),
+                ),
+                Positioned(
+                  bottom: 12,
+                  right: 16,
+                  child: _RainbowSparkle(
+                    progress: progress,
+                    phaseOffset: 0.38,
+                    size: 9,
+                    baseHue: (rainbowHue + 120) % 360,
+                  ),
+                ),
+                Positioned(
+                  top: 22,
+                  right: 14,
+                  child: _RainbowSparkle(
+                    progress: progress,
+                    phaseOffset: 0.72,
+                    size: 10,
+                    baseHue: (rainbowHue + 240) % 360,
+                  ),
+                ),
+              ],
+
               if (auraBadge != null)
                 Positioned(
                   top: 5,
@@ -1164,6 +1179,76 @@ class _SkinPreviewBoxState extends State<_SkinPreviewBox>
       ),
     );
   }
+}
+
+class _RainbowSparkle extends StatelessWidget {
+  const _RainbowSparkle({
+    required this.progress,
+    required this.phaseOffset,
+    required this.size,
+    required this.baseHue,
+  });
+
+  final double progress;
+  final double phaseOffset;
+  final double size;
+  final int baseHue;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ((progress + phaseOffset) % 1.0) * 2 * math.pi;
+    final scale = (math.sin(t) * 0.45 + 0.55).clamp(0.1, 1.0);
+    final color = HSVColor.fromAHSV(
+      1.0,
+      baseHue.toDouble(),
+      0.9,
+      1.0,
+    ).toColor();
+
+    return Transform.scale(
+      scale: scale,
+      child: Transform.rotate(
+        angle: progress * 2 * math.pi,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: CustomPaint(
+            painter: _SparklePainter(color: color),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SparklePainter extends CustomPainter {
+  const _SparklePainter({required this.color});
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final center = Offset(size.width / 2, size.height / 2);
+    final path = Path()
+      ..moveTo(center.dx, 0)
+      ..quadraticBezierTo(center.dx, center.dy, size.width, center.dy)
+      ..quadraticBezierTo(center.dx, center.dy, center.dx, size.height)
+      ..quadraticBezierTo(center.dx, center.dy, 0, center.dy)
+      ..quadraticBezierTo(center.dx, center.dy, center.dx, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+
+    final innerPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.85)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, size.width * 0.18, innerPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklePainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 // ---------------------------------------------------------------------------

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/app_providers.dart';
 import '../../features/campaign/domain/campaign_repository.dart';
@@ -707,18 +708,67 @@ class _PreflightLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
+      backgroundColor: const Color(0xFF070D16),
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Color(0xFF00E5FF)),
-            SizedBox(height: 18),
-            Text(
-              'Cargando...',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F1B2D),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFF00F5FF), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00F5FF).withValues(alpha: 0.35),
+                blurRadius: 20,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '★ JANOSOS ARCADE ★',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFFFFD700),
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'PREPARANDO ZONA DE COMBATE...',
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 8.5,
+                  color: const Color(0xFF00F5FF),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 220,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: const LinearProgressIndicator(
+                    backgroundColor: Color(0xFF070D16),
+                    color: Color(0xFF00F5FF),
+                    minHeight: 6,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'CONSEJO: USA GOLPE JEFE CUANDO EL BOSS ESTÉ CERCA',
+                style: GoogleFonts.vt323(
+                  fontSize: 15,
+                  color: const Color(0xFF8CA0BA),
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

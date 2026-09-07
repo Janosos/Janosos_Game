@@ -87,7 +87,7 @@ class CampaignResultCoordinator {
         return 'Resultado verificado. ¡Obtuviste la recompensa única ${reward.uniqueRewardName}!';
       }
       if (result.outcome == RunOutcome.defeat) {
-        return 'Derrota verificada. La moneda en riesgo se perdió; tu progreso permanente se conservó.';
+        return 'Has caído en combate contra el jefe. Tus mejoras y niveles desbloqueados se conservan. ¡Analiza sus patrones y vuelve a intentarlo!';
       }
       return 'Victoria verificada. Nivel ${receipt.nextLevel}/10 desbloqueado. '
           'No hubo recompensa única en este intento (probabilidad: 1%).';
@@ -145,7 +145,7 @@ class CampaignResultCoordinator {
       return 'Victoria local. ¡Obtuviste la recompensa única ${reward.uniqueRewardName}!';
     }
     if (result.outcome == RunOutcome.defeat) {
-      return 'Derrota local. Regresas al nivel 1 y pierdes la moneda temporal; el progreso permanente se conservó.';
+      return 'Has caído en combate contra el jefe. Tus mejoras y niveles desbloqueados se conservan. ¡Analiza sus patrones y vuelve a intentarlo!';
     }
     return 'Victoria local. Nivel ${receipt.nextLevel}/10 desbloqueado y ${receipt.temporaryCurrency} monedas siguen en riesgo.';
   }

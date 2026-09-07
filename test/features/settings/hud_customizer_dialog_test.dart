@@ -1,7 +1,5 @@
 import 'package:dino_run_flame/app/app_providers.dart';
-import 'package:dino_run_flame/features/settings/application/hud_settings_controller.dart';
 import 'package:dino_run_flame/features/settings/presentation/hud_customizer_dialog.dart';
-import 'package:dino_run_flame/game/domain/hud_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

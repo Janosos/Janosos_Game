@@ -3,11 +3,13 @@
     "short_name": "Janosos Game",
     "start_url": ".",
     "display": "fullscreen",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Juego oficial de Janosos. Corre y esquiva obstáculos.",
+    "display_override": ["fullscreen", "standalone"],
+    "background_color": "#070D16",
+    "theme_color": "#070D16",
+    "description": "Janosos Game: runner retro arcade con campaña, jefes y Boss Rush.",
     "orientation": "landscape",
     "prefer_related_applications": false,
+    "categories": ["games", "arcade"],
     "icons": [
         {
             "src": "icons/Icon-192.png",

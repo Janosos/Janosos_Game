@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/app_providers.dart';
+import '../../../app/widgets/pwa_install_dialog.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
+import '../../../core/platform/pwa_install_service.dart';
 import '../../auth/application/auth_controller.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -148,6 +150,55 @@ class HomeScreen extends ConsumerWidget {
                   fontSize: 8,
                   primaryColor: RetroColors.gold,
                   onPressed: () => context.go('/settings'),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        if (PwaInstallService.isWeb && !PwaInstallService.isStandalone) ...[
+          const SizedBox(height: 10),
+          RetroArcadeCard(
+            borderColor: RetroColors.cyan,
+            backgroundColor: const Color(0xFF0C1827),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            onTap: () => PwaInstallDialog.show(context),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.install_mobile,
+                  color: RetroColors.cyan,
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'INSTALAR APP · PANTALLA COMPLETA',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: isMobile ? 7.5 : 8.5,
+                          fontWeight: FontWeight.bold,
+                          color: RetroColors.cyan,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Instala el juego en tu navegador Android o iPhone para jugar en pantalla completa horizontal.',
+                        style: GoogleFonts.vt323(
+                          fontSize: 14,
+                          color: RetroColors.textBright,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const RetroBadge(
+                  text: 'INSTALAR',
+                  color: RetroColors.cyan,
+                  fontSize: 7.5,
                 ),
               ],
             ),
@@ -372,6 +423,16 @@ class HomeScreen extends ConsumerWidget {
               isFullWidth: screenWidth < 500,
               onTap: () => context.go('/characters'),
             ),
+            if (PwaInstallService.isWeb)
+              _HomeAction(
+                pixelAsset: PixelIconAsset.gamepad,
+                title: 'Instalar App',
+                subtitle: 'Pantalla completa en móvil.',
+                badgeText: 'PWA',
+                badgeColor: RetroColors.cyan,
+                isFullWidth: screenWidth < 500,
+                onTap: () => PwaInstallDialog.show(context),
+              ),
           ],
         ),
       ],
