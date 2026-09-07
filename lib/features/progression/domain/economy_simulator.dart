@@ -28,26 +28,14 @@ class EconomySimulator {
   static const _defeatMasteryXp = 500;
 
   static const _catalog = <_Purchase>[
-    _Purchase('speed_1', 200, 1),
-    _Purchase('speed_2', 450, 4),
-    _Purchase('speed_3', 800, 8),
-    _Purchase('speed_4', 1250, 14),
-    _Purchase('speed_5', 1800, 22),
-    _Purchase('jump_1', 200, 1),
-    _Purchase('jump_2', 450, 4),
-    _Purchase('jump_3', 800, 8),
-    _Purchase('jump_4', 1250, 14),
-    _Purchase('jump_5', 1800, 22),
-    _Purchase('damage_1', 250, 1),
-    _Purchase('damage_2', 500, 4),
-    _Purchase('damage_3', 900, 8),
-    _Purchase('damage_4', 1400, 14),
-    _Purchase('damage_5', 2000, 22),
-    _Purchase('vitality_1', 300, 2),
-    _Purchase('vitality_2', 600, 6),
-    _Purchase('vitality_3', 1000, 10),
-    _Purchase('vitality_4', 1600, 16),
-    _Purchase('vitality_5', 2400, 24),
+    _Purchase('speed_1', 150, 0),
+    _Purchase('speed_2', 350, 0),
+    _Purchase('speed_3', 650, 0),
+    _Purchase('speed_4', 1050, 0),
+    _Purchase('speed_5', 1550, 0),
+    _Purchase('vitality_1', 1500, 0),
+    _Purchase('vitality_2', 3500, 0),
+    _Purchase('vitality_3', 6500, 0),
     _Purchase('active_1', 1200, 5),
     _Purchase('active_2', 3200, 14),
     _Purchase('passive_1', 1800, 8),
@@ -57,11 +45,11 @@ class EconomySimulator {
   ];
 
   static const _fortune = <_Purchase>[
-    _Purchase('fortune_1', 250, 2, fortuneBasisPoints: 300),
-    _Purchase('fortune_2', 550, 6, fortuneBasisPoints: 300),
-    _Purchase('fortune_3', 950, 10, fortuneBasisPoints: 300),
-    _Purchase('fortune_4', 1500, 16, fortuneBasisPoints: 300),
-    _Purchase('fortune_5', 2200, 24, fortuneBasisPoints: 300),
+    _Purchase('fortune_1', 200, 0, fortuneBasisPoints: 1000),
+    _Purchase('fortune_2', 450, 0, fortuneBasisPoints: 1000),
+    _Purchase('fortune_3', 800, 0, fortuneBasisPoints: 1000),
+    _Purchase('fortune_4', 1250, 0, fortuneBasisPoints: 1000),
+    _Purchase('fortune_5', 1800, 0, fortuneBasisPoints: 1000),
   ];
 
   static int get totalCatalogCost => [
@@ -92,7 +80,6 @@ class EconomySimulator {
     var masteryXp = 0;
     var balance = 0;
     var fortuneBasisPoints = 0;
-    var hasCleared = false;
     var hours = 0.0;
     final owned = <String>{};
 
@@ -101,7 +88,6 @@ class EconomySimulator {
       final clearChance = min(0.90, 0.82 + masteryLevel * 0.003);
       final completed = random.nextDouble() <= clearChance;
       if (completed) {
-        hasCleared = true;
         masteryXp = min(masteryXpCap, masteryXp + _clearMasteryXp);
         final scoreNoise = 0.90 + random.nextDouble() * 0.20;
         final baseCurrency = (1000 * performance * scoreNoise).round();
@@ -113,7 +99,7 @@ class EconomySimulator {
         hours += (15 + random.nextDouble() * 15) / 60;
       }
 
-      if (hasCleared) {
+      {
         final level = _masteryLevel(masteryXp);
         for (final purchase in _fortune) {
           if (!owned.contains(purchase.id) &&

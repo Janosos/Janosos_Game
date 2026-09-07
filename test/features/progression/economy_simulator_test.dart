@@ -2,8 +2,8 @@ import 'package:dino_run_flame/features/progression/domain/economy_simulator.dar
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('canonical catalog totals 38,400 character currency', () {
-    expect(EconomySimulator.totalCatalogCost, 38400);
+  test('canonical catalog totals 32,750 character currency', () {
+    expect(EconomySimulator.totalCatalogCost, 32750);
   });
 
   test('deterministic median remains inside the 20–30 hour target', () {

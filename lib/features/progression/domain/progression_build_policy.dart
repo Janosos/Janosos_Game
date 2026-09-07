@@ -12,15 +12,22 @@ class ProgressionBuildPolicy {
     required AuthorizedBuild build,
   }) {
     final definition = characterId.definition;
-    if (mode == RunMode.standard) return RunStats.base(definition);
+    final isEndless = mode == RunMode.standard;
+    final extraLives = (build.vitalityBasisPoints ~/ 1000).clamp(0, 3);
+    final targetMaxLives = build.maxLives > definition.baseLives
+        ? build.maxLives
+        : definition.baseLives + extraLives;
+
     return RunStats(
-      speedMultiplier: 1 + build.speedBasisPoints.clamp(0, 1000) / 10000,
-      jumpMultiplier: 1 + build.jumpBasisPoints.clamp(0, 1000) / 10000,
-      damageMultiplier: 1 + build.damageBasisPoints.clamp(0, 5000) / 10000,
-      fortuneMultiplier: 1 + build.fortuneBasisPoints.clamp(0, 1500) / 10000,
-      maxLives: build.maxLives.clamp(
+      speedMultiplier: isEndless
+          ? (1 + build.speedBasisPoints.clamp(0, 5000) / 10000)
+          : 1.0,
+      jumpMultiplier: 1.0,
+      damageMultiplier: 1.0,
+      fortuneMultiplier: 1 + build.fortuneBasisPoints.clamp(0, 5000) / 10000,
+      maxLives: targetMaxLives.clamp(
         definition.baseLives,
-        definition.baseLives + 1,
+        definition.baseLives + 3,
       ),
     );
   }

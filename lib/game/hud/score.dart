@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../dino_run_game.dart';
 import '../domain/character_id.dart';
-
 import '../domain/level_runtime.dart';
+import '../domain/run_configuration.dart';
 
 class ScoreSystem extends TextComponent with HasGameReference<DinoRunGame> {
   ScoreSystem({int initialHighScore = 0}) : _highScore = initialHighScore;
@@ -49,6 +49,9 @@ class ScoreSystem extends TextComponent with HasGameReference<DinoRunGame> {
     if (game.dino.characterId == CharacterId.nanic &&
         game.dino.isSuperCharged) {
       multiplier = 2;
+    }
+    if (game.runConfiguration.mode == RunMode.standard) {
+      multiplier *= game.runConfiguration.stats.speedMultiplier;
     }
     advance(dt, multiplier: multiplier);
   }

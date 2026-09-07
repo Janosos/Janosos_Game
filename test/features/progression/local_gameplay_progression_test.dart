@@ -129,7 +129,7 @@ void main() {
         ),
       );
       snapshot = await _snapshot(reloaded, CharacterId.jano);
-      expect(snapshot.bankedCurrency, 7800);
+      expect(snapshot.bankedCurrency, 7850);
       expect(snapshot.stats.firstWhere((stat) => stat.id == 'speed').rank, 1);
       expect(snapshot.authorizedBuild.activeSkillId, firstActive.id);
       expect(snapshot.authorizedBuild.skinId, aurora.id);
@@ -226,7 +226,7 @@ void main() {
     final other = await _snapshot(otherProgression, CharacterId.jano);
     expect(other.masteryXp, 0);
     expect(other.bankedCurrency, 0);
-    expect(other.storeUnlocked, isFalse);
+    expect(other.storeUnlocked, isTrue);
   });
 
   test('an active Boss Rush freezes the store and any second run', () async {

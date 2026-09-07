@@ -81,7 +81,7 @@ class DinoRunGame extends FlameGame
   RunResult? get lastRunResult => _lastRunResult;
   LevelPhase? get levelPhase => _levelRuntime?.phase;
   int get livesRemaining =>
-      _levelRuntime?.livesRemaining ?? _configuration.stats.maxLives;
+      _levelRuntime?.livesRemaining ?? _standardLivesRemaining;
   int get bossHealthRemaining => _levelRuntime?.bossHealthRemaining ?? 0;
   double get bossHealthFraction => _levelRuntime?.bossHealthFraction ?? 0;
   int get bossPhase => _levelRuntime?.bossPhase ?? 0;
@@ -89,6 +89,7 @@ class DinoRunGame extends FlameGame
   LevelDefinition? get currentLevelDefinition => _levelRuntime?.definition;
   int get bossesDefeated => _bossRushProgress?.bossesDefeated ?? 0;
   int bossAttackOrdinal = 0;
+  int _standardLivesRemaining = 1;
   BossRushProgress? _bossRushProgress;
   final Map<String, int> _skillUses = {};
   int _precisionBonusAwarded = 0;
@@ -229,6 +230,7 @@ class DinoRunGame extends FlameGame
       _levelRuntime!.skipRunner();
     }
     bossAttackOrdinal = 0;
+    _standardLivesRemaining = configuration.stats.maxLives;
     _bossRushProgress = configuration.experience == RunExperience.bossRush
         ? BossRushProgress(maxLives: configuration.stats.maxLives)
         : null;
@@ -245,6 +247,21 @@ class DinoRunGame extends FlameGame
       camera.viewport.remove(_abilityButton!);
       _abilityButton = null;
     }
+    _abilityButton = AbilityButton(
+      dinoGame: this,
+      settings: hudSettings,
+    );
+    camera.viewport.add(_abilityButton!);
+
+    if (_bossActionButton != null) {
+      camera.viewport.remove(_bossActionButton!);
+      _bossActionButton = null;
+    }
+    if (configuration.experience != RunExperience.endlessRunner) {
+      _bossActionButton = BossActionButton(settings: hudSettings);
+      camera.viewport.add(_bossActionButton!);
+    }
+
     if (_hudIndicators != null) {
       camera.viewport.remove(_hudIndicators!);
       _hudIndicators = null;
@@ -252,11 +269,6 @@ class DinoRunGame extends FlameGame
 
     _hudIndicators = HudIndicators();
     camera.viewport.add(_hudIndicators!);
-
-    if (configuration.controlLayout.hasActiveAbilityControl) {
-      _abilityButton = AbilityButton(dinoGame: this, settings: hudSettings);
-      camera.viewport.add(_abilityButton!);
-    }
 
     if (_directionalPad != null) {
       camera.viewport.remove(_directionalPad!);
@@ -276,6 +288,7 @@ class DinoRunGame extends FlameGame
     _scoreSystem.reset(highScore: configuration.legacyHighScore);
     currentSpeed = startSpeed;
     speedMultiplier = 1;
+    _standardLivesRemaining = configuration.stats.maxLives;
     orbTimer = 2;
 
     if (configuration.musicEnabled) {
@@ -501,6 +514,12 @@ class DinoRunGame extends FlameGame
     final runtime = _levelRuntime;
     if (runtime == null) {
       playerDamaged(wasAbsorbed: false);
+      if (_standardLivesRemaining > 1) {
+        _standardLivesRemaining--;
+        _eventSink(LifeDepletedEvent(remainingLives: _standardLivesRemaining));
+        _dino.beginDamageInvulnerability(const Duration(milliseconds: 1500));
+        return;
+      }
       gameOver();
       return;
     }

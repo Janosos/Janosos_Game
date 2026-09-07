@@ -9,6 +9,10 @@ import '../../app/app_providers.dart';
 import '../../features/campaign/domain/campaign_repository.dart';
 import '../../features/boss_rush/domain/boss_rush_repository.dart';
 import '../../features/leaderboard/application/leaderboard_controller.dart';
+import '../../features/progression/application/progression_controller.dart';
+import '../../features/progression/data/local_progression_repository.dart';
+import '../../features/progression/domain/progression_build_policy.dart';
+import '../../features/progression/domain/progression_models.dart';
 import '../../features/settings/application/game_settings_controller.dart';
 import '../../features/settings/application/hud_settings_controller.dart';
 import '../domain/character_definition.dart';
@@ -207,6 +211,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
     final gameSettings = ref.watch(gameSettingsControllerProvider);
     final reduceMotion =
         gameSettings.reduceMotion || MediaQuery.disableAnimationsOf(context);
+    final localStore = ref.watch(localGameStateStoreProvider);
     return Scaffold(
       body: Stack(
         children: [
@@ -220,10 +225,33 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 preferences.setInt('high_score', score),
             configurationForCharacter: (CharacterId characterId) {
               final definition = characterId.definition;
+              final state = localStore.currentState;
+              final progress = state.character(characterId);
+              final speedBp = localEffectiveBasisPoints(progress, 'speed');
+              final vitalityRank =
+                  (progress.statRanks['vitality'] ?? 0).clamp(0, 3);
+              final fortuneBp = localEffectiveBasisPoints(progress, 'fortune');
+              final build = AuthorizedBuild(
+                speedBasisPoints: speedBp,
+                jumpBasisPoints: 0,
+                damageBasisPoints: 0,
+                vitalityBasisPoints: vitalityRank * 1000,
+                fortuneBasisPoints: fortuneBp,
+                maxLives: definition.baseLives + vitalityRank,
+                activeSkillId: progress.activeSkillId,
+                defaultActiveId: definition.defaultActive?.name,
+                passiveSkillIds: progress.passiveSkillIds,
+                skinId: progress.equippedPaletteId,
+              );
+              final stats = ProgressionBuildPolicy.statsFor(
+                characterId: characterId,
+                mode: RunMode.standard,
+                build: build,
+              );
               return RunConfiguration(
                 characterId: characterId,
                 mode: RunMode.standard,
-                stats: RunStats.base(definition),
+                stats: stats,
                 loadout: RunLoadout(activeAbility: definition.defaultActive),
                 level: 1,
                 contentVersion: environment.contentVersion,
@@ -246,8 +274,20 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
               } else {
                 await recorder.sealPending(result);
               }
+              final fortunePoints = localEffectiveBasisPoints(
+                localStore.currentState.character(result.characterId),
+                'fortune',
+              );
+              final fortuneMultiplier = 1.0 + fortunePoints / 10000.0;
+              final baseCoins = max(1, result.score ~/ 10);
+              final coinsEarned = (baseCoins * fortuneMultiplier).round();
+              await localStore.mutate((state) {
+                state.character(result.characterId).bankedCurrency +=
+                    coinsEarned;
+              });
+              ref.invalidate(progressionControllerProvider);
               ref.invalidate(leaderboardControllerProvider);
-              return 'Puntuación guardada';
+              return 'Puntuación guardada (+🪙 $coinsEarned)';
             },
           ),
           _RetroBackButton(onPressed: () => context.go('/home')),

@@ -198,8 +198,8 @@ class LocalProgressionRepository implements ProgressionRepository {
     final effective = {
       for (final stat in stats) stat.id: stat.effectiveBasisPoints,
     };
-    final vitalityRank = progress.statRanks['vitality'] ?? 0;
-    final bonusLives = vitalityRank >= 5 ? 1 : 0;
+    final vitalityRank = (progress.statRanks['vitality'] ?? 0).clamp(0, 3);
+    final bonusLives = vitalityRank;
     return ProgressionSnapshot(
       characterId: characterId,
       contentVersion: contentVersion,
@@ -211,7 +211,7 @@ class LocalProgressionRepository implements ProgressionRepository {
           : 100 * (masteryLevel + 1) * (masteryLevel + 2) ~/ 2,
       bankedCurrency: progress.bankedCurrency,
       temporaryCurrency: temporaryCurrency,
-      storeUnlocked: progress.storeUnlocked,
+      storeUnlocked: true,
       authorizedBuild: AuthorizedBuild(
         speedBasisPoints: effective['speed'] ?? 0,
         jumpBasisPoints: effective['jump'] ?? 0,
@@ -268,7 +268,7 @@ class LocalProgressionRepository implements ProgressionRepository {
     final rules = _rankRules[base.id]!;
     final safeRank = rank.clamp(0, rules.length);
     final purchased = safeRank == 0 ? 0 : rules[safeRank - 1].basisPoints;
-    final effective = (purchased + _baseline(base.id, masteryLevel)).clamp(
+    final effective = purchased.clamp(
       0,
       _statCaps[base.id]!,
     );
@@ -291,12 +291,6 @@ class LocalProgressionRepository implements ProgressionRepository {
     LocalGameState state,
     LocalCharacterProgress progress,
   ) {
-    if (!progress.storeUnlocked) {
-      throw const AppFailure(
-        AppFailureCode.conflict,
-        'Completa los 10 niveles con este personaje para comprar.',
-      );
-    }
     if (state.campaign != null || state.bossRush != null) {
       throw const AppFailure(
         AppFailureCode.conflict,
@@ -334,27 +328,17 @@ int localMasteryLevel(int xp) {
 }
 
 int localEffectiveBasisPoints(LocalCharacterProgress progress, String statId) {
-  final rank = (progress.statRanks[statId] ?? 0).clamp(0, 5);
-  final rules = _rankRules[statId]!;
+  final rules = _rankRules[statId];
+  if (rules == null) return 0;
+  final rank = (progress.statRanks[statId] ?? 0).clamp(0, rules.length);
   final purchased = rank == 0 ? 0 : rules[rank - 1].basisPoints;
-  return (purchased + _baseline(statId, localMasteryLevel(progress.masteryXp)))
-      .clamp(0, _statCaps[statId]!);
+  return purchased.clamp(0, _statCaps[statId] ?? 5000);
 }
 
-int _baseline(String statId, int masteryLevel) => switch (statId) {
-  'speed' => (masteryLevel >= 3 ? 100 : 0) + (masteryLevel >= 18 ? 100 : 0),
-  'jump' => (masteryLevel >= 6 ? 100 : 0) + (masteryLevel >= 22 ? 100 : 0),
-  'damage' => (masteryLevel >= 9 ? 500 : 0) + (masteryLevel >= 26 ? 500 : 0),
-  'fortune' => (masteryLevel >= 12 ? 100 : 0) + (masteryLevel >= 30 ? 200 : 0),
-  _ => 0,
-};
-
 const _statCaps = {
-  'speed': 1000,
-  'jump': 1000,
-  'damage': 5000,
-  'vitality': 1000,
-  'fortune': 1500,
+  'speed': 5000,
+  'vitality': 3000,
+  'fortune': 5000,
 };
 
 typedef _RankRule = ({
@@ -366,38 +350,22 @@ typedef _RankRule = ({
 
 const _rankRules = <String, List<_RankRule>>{
   'speed': [
-    (cost: 200, masteryLevel: 1, basisPoints: 200, bonusLives: 0),
-    (cost: 450, masteryLevel: 4, basisPoints: 400, bonusLives: 0),
-    (cost: 800, masteryLevel: 8, basisPoints: 600, bonusLives: 0),
-    (cost: 1250, masteryLevel: 14, basisPoints: 800, bonusLives: 0),
-    (cost: 1800, masteryLevel: 22, basisPoints: 1000, bonusLives: 0),
-  ],
-  'jump': [
-    (cost: 200, masteryLevel: 1, basisPoints: 200, bonusLives: 0),
-    (cost: 450, masteryLevel: 4, basisPoints: 400, bonusLives: 0),
-    (cost: 800, masteryLevel: 8, basisPoints: 600, bonusLives: 0),
-    (cost: 1250, masteryLevel: 14, basisPoints: 800, bonusLives: 0),
-    (cost: 1800, masteryLevel: 22, basisPoints: 1000, bonusLives: 0),
-  ],
-  'damage': [
-    (cost: 250, masteryLevel: 1, basisPoints: 1000, bonusLives: 0),
-    (cost: 500, masteryLevel: 4, basisPoints: 2000, bonusLives: 0),
-    (cost: 900, masteryLevel: 8, basisPoints: 3000, bonusLives: 0),
-    (cost: 1400, masteryLevel: 14, basisPoints: 4000, bonusLives: 0),
-    (cost: 2000, masteryLevel: 22, basisPoints: 5000, bonusLives: 0),
+    (cost: 150, masteryLevel: 0, basisPoints: 1000, bonusLives: 0),
+    (cost: 350, masteryLevel: 0, basisPoints: 2000, bonusLives: 0),
+    (cost: 650, masteryLevel: 0, basisPoints: 3000, bonusLives: 0),
+    (cost: 1050, masteryLevel: 0, basisPoints: 4000, bonusLives: 0),
+    (cost: 1550, masteryLevel: 0, basisPoints: 5000, bonusLives: 0),
   ],
   'vitality': [
-    (cost: 300, masteryLevel: 2, basisPoints: 200, bonusLives: 0),
-    (cost: 600, masteryLevel: 6, basisPoints: 400, bonusLives: 0),
-    (cost: 1000, masteryLevel: 10, basisPoints: 600, bonusLives: 0),
-    (cost: 1600, masteryLevel: 16, basisPoints: 800, bonusLives: 0),
-    (cost: 2400, masteryLevel: 24, basisPoints: 1000, bonusLives: 1),
+    (cost: 1500, masteryLevel: 0, basisPoints: 1000, bonusLives: 1),
+    (cost: 3500, masteryLevel: 0, basisPoints: 2000, bonusLives: 2),
+    (cost: 6500, masteryLevel: 0, basisPoints: 3000, bonusLives: 3),
   ],
   'fortune': [
-    (cost: 250, masteryLevel: 2, basisPoints: 300, bonusLives: 0),
-    (cost: 550, masteryLevel: 6, basisPoints: 600, bonusLives: 0),
-    (cost: 950, masteryLevel: 10, basisPoints: 900, bonusLives: 0),
-    (cost: 1500, masteryLevel: 16, basisPoints: 1200, bonusLives: 0),
-    (cost: 2200, masteryLevel: 24, basisPoints: 1500, bonusLives: 0),
+    (cost: 200, masteryLevel: 0, basisPoints: 1000, bonusLives: 0),
+    (cost: 450, masteryLevel: 0, basisPoints: 2000, bonusLives: 0),
+    (cost: 800, masteryLevel: 0, basisPoints: 3000, bonusLives: 0),
+    (cost: 1250, masteryLevel: 0, basisPoints: 4000, bonusLives: 0),
+    (cost: 1800, masteryLevel: 0, basisPoints: 5000, bonusLives: 0),
   ],
 };

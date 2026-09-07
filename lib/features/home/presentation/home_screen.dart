@@ -227,7 +227,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   RetroArcadeButton(
-                    text: 'INSERT COIN / JUGAR ENDLESS',
+                    text: 'JUGAR ENDLESS',
                     pixelIcon: const PixelIconAsset(
                       assetName: PixelIconAsset.coin,
                       size: 20,

@@ -834,10 +834,11 @@ class _StatsCatalog extends ConsumerWidget {
   }
 
   IconData _statIcon(String id) {
-    if (id.contains('life') || id.contains('health')) return Icons.favorite;
-    if (id.contains('jump')) return Icons.arrow_upward;
+    if (id.contains('vitality') || id.contains('life') || id.contains('health')) {
+      return Icons.favorite;
+    }
     if (id.contains('speed')) return Icons.flash_on;
-    if (id.contains('shield') || id.contains('armor')) return Icons.security;
+    if (id.contains('fortune') || id.contains('coin')) return Icons.monetization_on;
     return Icons.upgrade;
   }
 }

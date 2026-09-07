@@ -54,7 +54,7 @@ void main() {
       expect(find.text('MAESTRÍA LVL 30'), findsOneWidget);
       expect(find.text('VELOCIDAD'), findsOneWidget);
 
-      final firstUpgrade = find.text('200').first;
+      final firstUpgrade = find.text('150').first;
       await tester.ensureVisible(firstUpgrade);
       await tester.pumpAndSettle();
       await tester.tap(firstUpgrade);

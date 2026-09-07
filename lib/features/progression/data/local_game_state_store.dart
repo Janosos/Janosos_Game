@@ -30,6 +30,8 @@ class LocalGameStateStore {
     return _synchronized(() async => operation(_load()));
   }
 
+  LocalGameState get currentState => _load();
+
   Future<T> mutate<T>(T Function(LocalGameState state) operation) {
     return _synchronized(() async {
       final state = _load();

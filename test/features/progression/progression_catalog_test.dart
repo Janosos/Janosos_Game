@@ -104,11 +104,11 @@ void main() {
       build: build,
     );
 
-    expect(stats.speedMultiplier, 1);
+    expect(stats.speedMultiplier, 1.5);
     expect(stats.jumpMultiplier, 1);
     expect(stats.damageMultiplier, 1);
-    expect(stats.fortuneMultiplier, 1);
-    expect(stats.maxLives, CharacterId.jano.definition.baseLives);
+    expect(stats.fortuneMultiplier, 1.5);
+    expect(stats.maxLives, CharacterId.jano.definition.baseLives + 3);
     expect(loadout.activeAbility, ActiveAbilityId.pistolShot);
     expect(loadout.activeSkillId, isNull);
     expect(loadout.passiveSkillIds, isEmpty);
@@ -143,11 +143,12 @@ void main() {
       build: build,
     );
 
-    expect(stats.speedMultiplier, 1.10);
-    expect(stats.jumpMultiplier, 1.10);
-    expect(stats.damageMultiplier, 1.50);
-    expect(stats.fortuneMultiplier, 1.15);
-    expect(stats.maxLives, 3);
+    // Speed only affects endless mode, jump and damage are removed.
+    expect(stats.speedMultiplier, 1.0);
+    expect(stats.jumpMultiplier, 1.0);
+    expect(stats.damageMultiplier, 1.0);
+    expect(stats.fortuneMultiplier, 1.50);
+    expect(stats.maxLives, CharacterId.parker.definition.baseLives + 3);
     expect(loadout.activeSkillId, 'parker_guard_dash');
     expect(loadout.passiveSkillIds, hasLength(2));
   });

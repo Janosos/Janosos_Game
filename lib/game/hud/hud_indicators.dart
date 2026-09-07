@@ -329,7 +329,8 @@ class HudIndicators extends PositionComponent
     final heartSpacing = isCompact ? 25.0 : 34.0;
 
     final hasHeartsRow =
-        game.runConfiguration.experience != RunExperience.endlessRunner;
+        game.runConfiguration.experience != RunExperience.endlessRunner ||
+        game.livesRemaining > 1;
     if (hasHeartsRow) {
       for (var index = 0; index < game.livesRemaining; index++) {
         heartSprite.render(
