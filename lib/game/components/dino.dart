@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:math' as math;
 
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
@@ -6,7 +7,9 @@ import '../audio/app_audio_manager.dart';
 import '../dino_run_game.dart';
 import '../domain/character_definition.dart';
 import '../domain/character_id.dart';
+import '../domain/palette_transform.dart';
 import '../domain/run_configuration.dart';
+import 'dino_skin_aura.dart';
 import 'projectile.dart';
 import 'obstacle.dart';
 import 'orb.dart';
@@ -60,8 +63,9 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
   final double fantasmaCooldown = 10.0;
   final double dischargeDuration = 2.0;
 
-  // Aura
-  SpriteComponent? auraComponent;
+  // Aura & Skin
+  DinoSkinAuraComponent? auraComponent;
+  double _rainbowHueTimer = 0.0;
 
   @override
   Future<void> onLoad() async {
@@ -77,6 +81,9 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
 
   Future<void> setConfiguration(RunConfiguration configuration) async {
     _configuration = configuration;
+    if (auraComponent != null) {
+      auraComponent!.auraType = configuration.palette.auraType;
+    }
     await _loadCharacterSprite();
     _resetAbilities();
     _updateHitbox();
@@ -208,18 +215,16 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     }
 
     // Init Aura
+    final auraDiameter = (math.max(size.x, size.y) * 1.45).clamp(90.0, 140.0);
     if (auraComponent == null) {
+      auraComponent = DinoSkinAuraComponent(
+        auraType: _configuration.palette.auraType,
+      );
+      auraComponent!.size = Vector2(auraDiameter, auraDiameter);
+      auraComponent!.position = size / 2;
       try {
         final auraSprite = await game.loadSprite('aura.png');
-        auraComponent = SpriteComponent(
-          sprite: auraSprite,
-          size: Vector2(100, 100),
-          anchor: Anchor.center,
-          position: size / 2,
-        );
-        auraComponent!.priority = -1; // Keep behind
-        auraComponent!.opacity = 0.0;
-        add(auraComponent!);
+        auraComponent!.auraSprite = auraSprite;
       } on Object catch (error, stackTrace) {
         developer.log(
           'Unable to load aura sprite',
@@ -228,7 +233,10 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
           stackTrace: stackTrace,
         );
       }
+      add(auraComponent!);
     } else {
+      auraComponent!.auraType = _configuration.palette.auraType;
+      auraComponent!.size = Vector2(auraDiameter, auraDiameter);
       auraComponent!.position = size / 2;
     }
   }
@@ -283,14 +291,25 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
         opacity = 1.0;
       }
 
-      // Aura check
-      if (characterId == CharacterId.nanic &&
-          (isSuperCharged || isDischarging) &&
-          auraComponent != null) {
-        auraComponent!.opacity = 1.0;
-        auraComponent!.angle += dt * 10;
-      } else if (auraComponent != null) {
-        auraComponent!.opacity = 0.0;
+      // Rainbow palette real-time color shifting
+      if (_configuration.palette.isRainbow) {
+        _rainbowHueTimer += dt;
+        final currentHue = ((_rainbowHueTimer * 180) % 360).toInt();
+        paint.colorFilter = PaletteTransform(
+          hueShift: currentHue,
+          saturationBasisPoints: 12500,
+          valueBasisPoints: 11000,
+          isRainbow: true,
+          auraType: SkinAuraType.rainbow,
+        ).colorFilter;
+      }
+
+      // Aura check & update
+      if (auraComponent != null) {
+        final nanicActive = characterId == CharacterId.nanic &&
+            (isSuperCharged || isDischarging);
+        auraComponent!.isNanicDischarging = nanicActive;
+        auraComponent!.auraType = _configuration.palette.auraType;
       }
 
       if (horizontalInput != 0 && current != DinoState.hit) {

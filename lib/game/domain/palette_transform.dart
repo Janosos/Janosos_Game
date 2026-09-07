@@ -1,17 +1,28 @@
 import 'dart:math' as math;
 import 'dart:ui' show ColorFilter;
 
+enum SkinAuraType {
+  none,
+  aurora,
+  eclipse,
+  rainbow,
+}
+
 class PaletteTransform {
   const PaletteTransform._({
     required this.hueShift,
     required this.saturationBasisPoints,
     required this.valueBasisPoints,
+    this.isRainbow = false,
+    this.auraType = SkinAuraType.none,
   });
 
   factory PaletteTransform({
     required int hueShift,
     required int saturationBasisPoints,
     required int valueBasisPoints,
+    bool isRainbow = false,
+    SkinAuraType auraType = SkinAuraType.none,
   }) {
     if (hueShift < 0 || hueShift >= 360) {
       throw ArgumentError.value(hueShift, 'hueShift', 'Expected 0–359.');
@@ -34,6 +45,8 @@ class PaletteTransform {
       hueShift: hueShift,
       saturationBasisPoints: saturationBasisPoints,
       valueBasisPoints: valueBasisPoints,
+      isRainbow: isRainbow,
+      auraType: auraType,
     );
   }
 
@@ -41,19 +54,25 @@ class PaletteTransform {
     hueShift: 0,
     saturationBasisPoints: 10000,
     valueBasisPoints: 10000,
+    isRainbow: false,
+    auraType: SkinAuraType.none,
   );
 
   final int hueShift;
   final int saturationBasisPoints;
   final int valueBasisPoints;
+  final bool isRainbow;
+  final SkinAuraType auraType;
 
   bool get isIdentity =>
+      !isRainbow &&
+      auraType == SkinAuraType.none &&
       hueShift == 0 &&
       saturationBasisPoints == 10000 &&
       valueBasisPoints == 10000;
 
   ColorFilter? get colorFilter =>
-      isIdentity ? null : ColorFilter.matrix(colorMatrix);
+      (isIdentity && !isRainbow) ? null : ColorFilter.matrix(colorMatrix);
 
   List<double> get colorMatrix {
     final radians = hueShift * math.pi / 180;

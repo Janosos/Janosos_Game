@@ -62,24 +62,12 @@ void main() {
       expect(repository.upgradePurchases, 1);
       expect(find.textContaining('avanzó al rango 1'), findsOneWidget);
 
-      await tester.tap(find.text('HABILIDADES').first);
-      await tester.pumpAndSettle();
-      expect(find.text('BALA DE REBOTE'), findsOneWidget);
-      await tester.drag(find.byType(ListView).last, const Offset(0, -420));
-      await tester.pumpAndSettle();
-      expect(find.text('PROTOCOLO RÁFAGA'), findsOneWidget);
-      await tester.drag(find.byType(ListView).last, const Offset(0, -420));
-      await tester.pumpAndSettle();
-      expect(find.text('DESENFUNDE'), findsOneWidget);
-      await tester.drag(find.byType(ListView).last, const Offset(0, -420));
-      await tester.pumpAndSettle();
-      expect(find.text('MIRA OPORTUNISTA'), findsOneWidget);
-
-      await tester.tap(find.text('PALETAS').first);
+      await tester.tap(find.text('ASPECTOS').first);
       await tester.pumpAndSettle();
       expect(find.text('ORIGINAL'), findsOneWidget);
       expect(find.text('AURORA'), findsOneWidget);
       expect(find.text('ECLIPSE'), findsOneWidget);
+      expect(find.text('★ ARCOÍRIS ★'), findsOneWidget);
     },
   );
 
@@ -129,13 +117,12 @@ void main() {
 
       // Verify tabs are reachable and interactive in landscape
       expect(find.text('MEJORAS'), findsWidgets);
-      expect(find.text('HABILIDADES'), findsWidgets);
-      expect(find.text('PALETAS'), findsWidgets);
+      expect(find.text('ASPECTOS'), findsWidgets);
 
       // Test tapping tabs
-      await tester.tap(find.text('HABILIDADES').first);
+      await tester.tap(find.text('ASPECTOS').first);
       await tester.pumpAndSettle();
-      expect(find.textContaining('Habilidad innata'), findsOneWidget);
+      expect(find.text('★ ARCOÍRIS ★'), findsOneWidget);
     },
   );
 }

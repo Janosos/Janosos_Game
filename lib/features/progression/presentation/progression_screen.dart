@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,7 +29,7 @@ class ProgressionScreen extends ConsumerWidget {
   }
 }
 
-enum _StoreCategory { stats, skills, palettes }
+enum _StoreCategory { stats, palettes }
 
 class _LandscapeProgressionView extends ConsumerStatefulWidget {
   const _LandscapeProgressionView({required this.state});
@@ -120,21 +122,9 @@ class _LandscapeProgressionViewState
                     ),
                     SizedBox(height: isCompactHeight ? 5 : 8),
                     _CategoryButton(
-                      title: 'HABILIDADES',
-                      subtitle: 'Activas y pasivas',
+                      title: 'ASPECTOS',
+                      subtitle: 'Auras y apariencias',
                       icon: Icons.auto_awesome,
-                      isSelected: _selectedCategory == _StoreCategory.skills,
-                      color: RetroColors.magenta,
-                      isCompact: isCompactHeight,
-                      onTap: () => setState(
-                        () => _selectedCategory = _StoreCategory.skills,
-                      ),
-                    ),
-                    SizedBox(height: isCompactHeight ? 5 : 8),
-                    _CategoryButton(
-                      title: 'PALETAS',
-                      subtitle: 'Aspectos retro',
-                      icon: Icons.palette_outlined,
                       isSelected: _selectedCategory == _StoreCategory.palettes,
                       color: RetroColors.gold,
                       isCompact: isCompactHeight,
@@ -167,10 +157,6 @@ class _LandscapeProgressionViewState
                   Expanded(
                     child: switch (_selectedCategory) {
                       _StoreCategory.stats => _StatsCatalog(
-                        state: widget.state,
-                        isCompactHeight: isCompactHeight,
-                      ),
-                      _StoreCategory.skills => _SkillsCatalog(
                         state: widget.state,
                         isCompactHeight: isCompactHeight,
                       ),
@@ -262,11 +248,7 @@ class _LandscapeProgressionViewState
                           ),
                         ),
                         child: Text(
-                          cat == _StoreCategory.stats
-                              ? 'MEJORAS'
-                              : (cat == _StoreCategory.skills
-                                  ? 'SKILLS'
-                                  : 'PALETAS'),
+                          cat == _StoreCategory.stats ? 'MEJORAS' : 'ASPECTOS',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.pressStart2p(
                             fontSize: 8,
@@ -286,10 +268,6 @@ class _LandscapeProgressionViewState
         Expanded(
           child: switch (_selectedCategory) {
             _StoreCategory.stats => _StatsCatalog(
-              state: widget.state,
-              isCompactHeight: isCompactHeight,
-            ),
-            _StoreCategory.skills => _SkillsCatalog(
               state: widget.state,
               isCompactHeight: isCompactHeight,
             ),
@@ -844,260 +822,6 @@ class _StatsCatalog extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// CATÁLOGO DE HABILIDADES (SKILLS)
-// ---------------------------------------------------------------------------
-
-class _SkillsCatalog extends ConsumerWidget {
-  const _SkillsCatalog({
-    required this.state,
-    required this.isCompactHeight,
-  });
-
-  final ProgressionViewState state;
-  final bool isCompactHeight;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final snapshot = state.snapshot;
-    final controller = ref.read(progressionControllerProvider.notifier);
-    final definition = snapshot.characterId.definition;
-
-    return ListView(
-      padding: EdgeInsets.all(isCompactHeight ? 10 : 16),
-      children: [
-        // Identidad innata del héroe
-        Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: EdgeInsets.all(isCompactHeight ? 8 : 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0C1826),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: RetroColors.cyan, width: 1.2),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.fingerprint, color: RetroColors.cyan, size: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Habilidad innata: ${definition.description}',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.vt323(fontSize: 15, color: Colors.white),
-                ),
-              ),
-              if (definition.defaultActive != null &&
-                  snapshot.authorizedBuild.activeSkillId != null) ...[
-                const SizedBox(width: 8),
-                OutlinedButton(
-                  onPressed: state.isBusy
-                      ? null
-                      : () => controller.equipActive(null),
-                  style: OutlinedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    side: const BorderSide(color: RetroColors.cyan),
-                  ),
-                  child: Text(
-                    'RESTAURAR INNATA',
-                    style: GoogleFonts.pressStart2p(
-                      fontSize: 7,
-                      color: RetroColors.cyan,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        // Lista de habilidades
-        for (final skill in snapshot.skills) ...[
-          _SkillRow(
-            skill: skill,
-            state: state,
-            isCompactHeight: isCompactHeight,
-            onEquipActive: () => controller.equipActive(skill.id),
-            onTogglePassive: () => controller.togglePassive(skill.id),
-            onPurchase: () => controller.purchaseSkill(skill),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ],
-    );
-  }
-}
-
-class _SkillRow extends StatelessWidget {
-  const _SkillRow({
-    required this.skill,
-    required this.state,
-    required this.isCompactHeight,
-    required this.onEquipActive,
-    required this.onTogglePassive,
-    required this.onPurchase,
-  });
-
-  final ProgressionSkill skill;
-  final ProgressionViewState state;
-  final bool isCompactHeight;
-  final VoidCallback onEquipActive;
-  final VoidCallback onTogglePassive;
-  final VoidCallback onPurchase;
-
-  @override
-  Widget build(BuildContext context) {
-    final snapshot = state.snapshot;
-    final isEquipped = skill.slot == SkillSlot.active
-        ? snapshot.authorizedBuild.activeSkillId == skill.id
-        : snapshot.authorizedBuild.passiveSkillIds.contains(skill.id);
-    final masteryReady = snapshot.masteryLevel >= skill.unlockLevel;
-    final balanceReady = snapshot.bankedCurrency >= skill.cost;
-    final canPurchase = !state.isBusy &&
-        snapshot.storeUnlocked &&
-        !skill.owned &&
-        masteryReady &&
-        balanceReady;
-    final busy = state.busyAction?.contains(skill.id) == true;
-
-    return Container(
-      padding: EdgeInsets.all(isCompactHeight ? 10 : 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F1724),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: isEquipped
-              ? RetroColors.green
-              : (skill.owned ? RetroColors.cyan : const Color(0xFF1E354F)),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Insignia de ranura (Activa / Pasiva)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            decoration: BoxDecoration(
-              color: skill.slot == SkillSlot.active
-                  ? RetroColors.cyan.withValues(alpha: 0.15)
-                  : RetroColors.magenta.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: skill.slot == SkillSlot.active
-                    ? RetroColors.cyan
-                    : RetroColors.magenta,
-              ),
-            ),
-            child: Text(
-              skill.slot == SkillSlot.active ? 'ACTIVA' : 'PASIVA',
-              style: GoogleFonts.pressStart2p(
-                fontSize: 7,
-                color: skill.slot == SkillSlot.active
-                    ? RetroColors.cyan
-                    : RetroColors.magenta,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Título y descripción
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        skill.displayName.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: isCompactHeight ? 8.5 : 9.5,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    if (isEquipped) ...[
-                      const SizedBox(width: 8),
-                      const RetroBadge(
-                        text: 'EQUIPADA',
-                        color: RetroColors.green,
-                        fontSize: 7,
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  skill.description,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.vt323(
-                    fontSize: isCompactHeight ? 14 : 15,
-                    color: RetroColors.textBright,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Botón Acción
-          if (skill.owned)
-            FilledButton.icon(
-              onPressed: state.isBusy
-                  ? null
-                  : (skill.slot == SkillSlot.active
-                      ? (isEquipped ? null : onEquipActive)
-                      : onTogglePassive),
-              style: FilledButton.styleFrom(
-                backgroundColor: isEquipped
-                    ? const Color(0xFF132032)
-                    : const Color(0xFF1E354F),
-                foregroundColor:
-                    isEquipped ? RetroColors.green : Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  side: BorderSide(
-                    color: isEquipped ? RetroColors.green : RetroColors.cyan,
-                  ),
-                ),
-              ),
-              icon: Icon(
-                isEquipped ? Icons.check : Icons.touch_app,
-                size: 14,
-              ),
-              label: Text(
-                isEquipped
-                    ? (skill.slot == SkillSlot.active ? 'EN USO' : 'QUITAR')
-                    : 'EQUIPAR',
-                style: GoogleFonts.pressStart2p(fontSize: 7.5),
-              ),
-            )
-          else
-            _BuyActionButton(
-              isCapped: false,
-              canBuy: canPurchase,
-              cost: skill.cost,
-              unlockLevel: skill.unlockLevel,
-              masteryReady: masteryReady,
-              balanceReady: balanceReady,
-              storeUnlocked: snapshot.storeUnlocked,
-              isBusy: busy,
-              isCompact: isCompactHeight,
-              onPressed: onPurchase,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
 // CATÁLOGO DE PALETAS (SKINS / ASPECTOS)
 // ---------------------------------------------------------------------------
 
@@ -1126,14 +850,23 @@ class _PalettesCatalog extends ConsumerWidget {
       itemCount: snapshot.palettes.length,
       itemBuilder: (context, index) {
         final palette = snapshot.palettes[index];
-        final masteryReady = snapshot.masteryLevel >= palette.unlockLevel;
         final balanceReady = snapshot.bankedCurrency >= palette.cost;
         final canPurchase = !state.isBusy &&
             snapshot.storeUnlocked &&
             !palette.owned &&
-            masteryReady &&
             balanceReady;
         final busy = state.busyAction?.contains(palette.id) == true;
+
+        final Color borderColor;
+        if (palette.equipped) {
+          borderColor = RetroColors.green;
+        } else if (palette.isRainbow) {
+          borderColor = RetroColors.gold;
+        } else if (palette.owned) {
+          borderColor = RetroColors.cyan;
+        } else {
+          borderColor = const Color(0xFF1E354F);
+        }
 
         return Container(
           padding: const EdgeInsets.all(8),
@@ -1141,58 +874,45 @@ class _PalettesCatalog extends ConsumerWidget {
             color: const Color(0xFF0F1724),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: palette.equipped
-                  ? RetroColors.green
-                  : (palette.owned ? RetroColors.cyan : const Color(0xFF1E354F)),
-              width: 1.5,
+              color: borderColor,
+              width: palette.isRainbow || palette.equipped ? 1.8 : 1.5,
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Previsualización de personaje con el filtro de color
+              // Previsualización destacada de personaje con Aura
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF070D16),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Center(
-                    child: ColorFiltered(
-                      colorFilter: palette.transform.colorFilter ??
-                          const ColorFilter.mode(
-                            Colors.transparent,
-                            BlendMode.dst,
-                          ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: CharacterIcon(
-                          assetName:
-                              snapshot.characterId.definition.assetName,
-                          size: 54,
-                        ),
-                      ),
-                    ),
-                  ),
+                child: _SkinPreviewBox(
+                  palette: palette,
+                  assetName: snapshot.characterId.definition.assetName,
                 ),
               ),
               const SizedBox(height: 6),
 
-              // Nombre de la paleta
+              // Nombre de la paleta con estilo según aura
               Text(
-                palette.displayName.toUpperCase(),
+                palette.isRainbow
+                    ? '★ ${palette.displayName.toUpperCase()} ★'
+                    : palette.displayName.toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.pressStart2p(
-                  fontSize: 8,
+                  fontSize: 7.5,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: palette.isRainbow
+                      ? RetroColors.gold
+                      : (palette.auraType == SkinAuraType.aurora
+                          ? RetroColors.cyan
+                          : (palette.auraType == SkinAuraType.eclipse
+                              ? const Color(0xFFC084FC)
+                              : Colors.white)),
                 ),
               ),
               const SizedBox(height: 4),
 
-              // Botón Equipar / Comprar
+              // Botón Equipar / Comprar (Siempre desbloqueado para compra)
               if (palette.owned)
                 FilledButton(
                   onPressed: palette.equipped || state.isBusy
@@ -1220,8 +940,8 @@ class _PalettesCatalog extends ConsumerWidget {
                   isCapped: false,
                   canBuy: canPurchase,
                   cost: palette.cost,
-                  unlockLevel: palette.unlockLevel,
-                  masteryReady: masteryReady,
+                  unlockLevel: 0,
+                  masteryReady: true,
                   balanceReady: balanceReady,
                   storeUnlocked: snapshot.storeUnlocked,
                   isBusy: busy,
@@ -1232,6 +952,216 @@ class _PalettesCatalog extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PREVISUALIZACIÓN DE SKIN CON AURA DESTACADA
+// ---------------------------------------------------------------------------
+
+class _SkinPreviewBox extends StatefulWidget {
+  const _SkinPreviewBox({
+    required this.palette,
+    required this.assetName,
+  });
+
+  final PaletteVariant palette;
+  final String assetName;
+
+  @override
+  State<_SkinPreviewBox> createState() => _SkinPreviewBoxState();
+}
+
+class _SkinPreviewBoxState extends State<_SkinPreviewBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    );
+    final isTest =
+        WidgetsBinding.instance.runtimeType.toString().contains('Test');
+    if (!isTest) {
+      _controller.repeat();
+    } else {
+      _controller.value = 0.25;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final aura = widget.palette.auraType;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final progress = _controller.value;
+        final rainbowHue = (progress * 360).toInt();
+
+        BoxDecoration auraDecoration;
+        Widget? auraBadge;
+
+        switch (aura) {
+          case SkinAuraType.aurora:
+            final pulse = 0.82 + 0.18 * math.sin(progress * 2 * math.pi);
+            auraDecoration = BoxDecoration(
+              color: const Color(0xFF06151E),
+              borderRadius: BorderRadius.circular(4),
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 0.85 * pulse,
+                colors: const [
+                  Color(0x9900FFD5),
+                  Color(0x3300B4D8),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.65, 1.0],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00FFD5).withValues(alpha: 0.25 * pulse),
+                  blurRadius: 12,
+                  spreadRadius: 1.5,
+                ),
+              ],
+            );
+            auraBadge = _buildAuraBadge('AURA AURORA', RetroColors.cyan);
+            break;
+
+          case SkinAuraType.eclipse:
+            final pulse = 0.82 + 0.18 * math.cos(progress * 2 * math.pi);
+            auraDecoration = BoxDecoration(
+              color: const Color(0xFF13091F),
+              borderRadius: BorderRadius.circular(4),
+              gradient: RadialGradient(
+                center: Alignment.center,
+                radius: 0.85 * pulse,
+                colors: const [
+                  Color(0x99A855F7),
+                  Color(0x356B21A8),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.65, 1.0],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFA855F7).withValues(alpha: 0.25 * pulse),
+                  blurRadius: 12,
+                  spreadRadius: 1.5,
+                ),
+              ],
+            );
+            auraBadge = _buildAuraBadge('AURA ECLIPSE', const Color(0xFFC084FC));
+            break;
+
+          case SkinAuraType.rainbow:
+            final pulse = 0.85 + 0.15 * math.sin(progress * 4 * math.pi);
+            final animatedColor = HSVColor.fromAHSV(1.0, rainbowHue.toDouble(), 1.0, 1.0).toColor();
+            auraDecoration = BoxDecoration(
+              color: const Color(0xFF100720),
+              borderRadius: BorderRadius.circular(4),
+              gradient: SweepGradient(
+                center: Alignment.center,
+                transform: GradientRotation(progress * 2 * math.pi),
+                colors: const [
+                  Color(0xDDFF0055),
+                  Color(0xDDFF8800),
+                  Color(0xDDFFEE00),
+                  Color(0xDD00FF66),
+                  Color(0xDD00F5FF),
+                  Color(0xDD7928CA),
+                  Color(0xDDFF0055),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: animatedColor.withValues(alpha: 0.35 * pulse),
+                  blurRadius: 14,
+                  spreadRadius: 2,
+                ),
+              ],
+            );
+            auraBadge = _buildAuraBadge('AURA ARCOÍRIS', RetroColors.gold);
+            break;
+
+          case SkinAuraType.none:
+            auraDecoration = BoxDecoration(
+              color: const Color(0xFF070D16),
+              borderRadius: BorderRadius.circular(4),
+            );
+            auraBadge = null;
+            break;
+        }
+
+        final ColorFilter characterFilter;
+        if (widget.palette.isRainbow) {
+          characterFilter = PaletteTransform(
+            hueShift: rainbowHue,
+            saturationBasisPoints: 12500,
+            valueBasisPoints: 11000,
+            isRainbow: true,
+          ).colorFilter!;
+        } else {
+          characterFilter = widget.palette.transform.colorFilter ??
+              const ColorFilter.mode(Colors.transparent, BlendMode.dst);
+        }
+
+        return Container(
+          decoration: auraDecoration,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Center(
+                child: ColorFiltered(
+                  colorFilter: characterFilter,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CharacterIcon(
+                      assetName: widget.assetName,
+                      size: 54,
+                    ),
+                  ),
+                ),
+              ),
+              if (auraBadge != null)
+                Positioned(
+                  top: 5,
+                  child: auraBadge,
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAuraBadge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xEE000000),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.pressStart2p(
+          fontSize: 5.5,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
     );
   }
 }

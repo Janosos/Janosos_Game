@@ -1,5 +1,7 @@
 import '../../../game/domain/character_id.dart';
 import '../../../game/domain/palette_transform.dart';
+export '../../../game/domain/palette_transform.dart'
+    show SkinAuraType, PaletteTransform;
 import '../../../game/domain/run_configuration.dart';
 
 enum SkillSlot { active, passive }
@@ -85,6 +87,8 @@ class PaletteVariant {
     required this.cost,
     required this.owned,
     required this.equipped,
+    this.isRainbow = false,
+    this.auraType = SkinAuraType.none,
   });
 
   final String id;
@@ -97,11 +101,15 @@ class PaletteVariant {
   final int cost;
   final bool owned;
   final bool equipped;
+  final bool isRainbow;
+  final SkinAuraType auraType;
 
   PaletteTransform get transform => PaletteTransform(
     hueShift: hueShift,
     saturationBasisPoints: saturationBasisPoints,
     valueBasisPoints: valueBasisPoints,
+    isRainbow: isRainbow,
+    auraType: auraType,
   );
 }
 

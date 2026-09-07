@@ -121,11 +121,12 @@ class LocalProgressionRepository implements ProgressionRepository {
           'Esta paleta ya pertenece al personaje.',
         );
       }
-      _requireMasteryAndBalance(
-        progress,
-        canonical.unlockLevel,
-        canonical.cost,
-      );
+      if (progress.bankedCurrency < canonical.cost) {
+        throw const AppFailure(
+          AppFailureCode.conflict,
+          'Monedas insuficientes para adquirir este aspecto.',
+        );
+      }
       progress.bankedCurrency -= canonical.cost;
       progress.ownedPaletteIds.add(canonical.id);
     });

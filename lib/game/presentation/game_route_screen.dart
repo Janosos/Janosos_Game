@@ -12,6 +12,7 @@ import '../../features/leaderboard/application/leaderboard_controller.dart';
 import '../../features/progression/application/progression_controller.dart';
 import '../../features/progression/data/local_progression_repository.dart';
 import '../../features/progression/domain/progression_build_policy.dart';
+import '../../features/progression/domain/progression_catalog.dart';
 import '../../features/progression/domain/progression_models.dart';
 import '../../features/settings/application/game_settings_controller.dart';
 import '../../features/settings/application/hud_settings_controller.dart';
@@ -248,6 +249,13 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 mode: RunMode.standard,
                 build: build,
               );
+              final equippedPalette = ProgressionCatalog.preview(
+                characterId,
+                environment.contentVersion,
+              ).palettes
+                  .where((candidate) => candidate.id == progress.equippedPaletteId)
+                  .map((candidate) => candidate.transform)
+                  .firstOrNull;
               return RunConfiguration(
                 characterId: characterId,
                 mode: RunMode.standard,
@@ -257,6 +265,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 contentVersion: environment.contentVersion,
                 protocolVersion: 1,
                 seed: DateTime.now().microsecondsSinceEpoch & 0x7fffffff,
+                palette: equippedPalette ?? PaletteTransform.identity,
                 legacyHighScore: legacyHighScore,
                 audioEnabled: gameSettings.audioEnabled,
                 musicEnabled: gameSettings.musicEnabled,
