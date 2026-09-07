@@ -91,14 +91,14 @@ void main() {
       });
       expect(completion.accepted, isTrue);
       expect(completion.purchasePhaseUnlocked, isTrue);
-      expect(completion.bankedCurrency, 10000);
+      expect(completion.bankedCurrency, 2750);
       expect(await campaign.loadActiveCampaign(), isNull);
 
       var snapshot = await _snapshot(progression, CharacterId.jano);
       expect(snapshot.masteryXp, 1550);
       expect(snapshot.masteryLevel, 5);
       expect(snapshot.storeUnlocked, isTrue);
-      expect(snapshot.bankedCurrency, 10000);
+      expect(snapshot.bankedCurrency, 2750);
 
       final speed = snapshot.stats.firstWhere((stat) => stat.id == 'speed');
       await progression.purchaseUpgrade(snapshot: snapshot, stat: speed);
@@ -129,7 +129,7 @@ void main() {
         ),
       );
       snapshot = await _snapshot(reloaded, CharacterId.jano);
-      expect(snapshot.bankedCurrency, 7850);
+      expect(snapshot.bankedCurrency, 600);
       expect(snapshot.stats.firstWhere((stat) => stat.id == 'speed').rank, 1);
       expect(snapshot.authorizedBuild.activeSkillId, firstActive.id);
       expect(snapshot.authorizedBuild.skinId, aurora.id);
@@ -157,7 +157,7 @@ void main() {
     () async {
       await _completeCampaign(campaign, CharacterId.jano);
       final before = await _snapshot(progression, CharacterId.jano);
-      expect(before.bankedCurrency, 10000);
+      expect(before.bankedCurrency, 2750);
 
       var session = await campaign.startStage(
         configuration: _configuration(CharacterId.jano),
@@ -184,7 +184,7 @@ void main() {
         'score': 5000,
         'duration_ms': 60000,
       });
-      expect(victory.temporaryCurrency, 500);
+      expect(victory.temporaryCurrency, 30);
 
       session = await campaign.startStage(
         configuration: _configuration(CharacterId.jano, level: 2),
@@ -198,7 +198,7 @@ void main() {
         'score': 250,
         'duration_ms': 30000,
       });
-      expect(defeat.currencyLost, 500);
+      expect(defeat.currencyLost, 30);
       expect(await campaign.loadActiveCampaign(), isNull);
       final after = await _snapshot(progression, CharacterId.jano);
       expect(after.bankedCurrency, before.bankedCurrency);
@@ -289,7 +289,7 @@ void main() {
     expect(await campaign.loadActiveCampaign(), isNull);
     final recovered = await _snapshot(progression, CharacterId.jano);
     expect(recovered.storeUnlocked, isTrue);
-    expect(recovered.bankedCurrency, 10000);
+    expect(recovered.bankedCurrency, 2750);
   });
 
   test('all seven characters can clear the complete local campaign', () async {
@@ -298,7 +298,7 @@ void main() {
       final snapshot = await _snapshot(progression, character);
       expect(snapshot.storeUnlocked, isTrue, reason: character.serialized);
       expect(snapshot.masteryXp, 1550, reason: character.serialized);
-      expect(snapshot.bankedCurrency, 10000, reason: character.serialized);
+      expect(snapshot.bankedCurrency, 2750, reason: character.serialized);
     }
   });
 }

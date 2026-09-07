@@ -174,12 +174,13 @@ class LocalCharacterProgress {
     required this.passiveSkillIds,
     required this.uniqueRewardIds,
     required this.equippedPaletteId,
+    Set<int>? defeatedBossLevels,
     this.masteryXp = 0,
     this.bankedCurrency = 0,
     this.storeUnlocked = false,
     this.activeSkillId,
     this.highestUnlockedLevel = 1,
-  });
+  }) : defeatedBossLevels = defeatedBossLevels ?? <int>{};
 
   factory LocalCharacterProgress.empty(CharacterId characterId) =>
       LocalCharacterProgress(
@@ -196,6 +197,7 @@ class LocalCharacterProgress {
         uniqueRewardIds: <String>{},
         equippedPaletteId: '${characterId.serialized}_default',
         highestUnlockedLevel: 1,
+        defeatedBossLevels: <int>{},
       );
 
   factory LocalCharacterProgress.fromJson(
@@ -224,6 +226,17 @@ class LocalCharacterProgress {
     empty.equippedPaletteId =
         _nullableString(json['equippedPaletteId']) ??
         '${characterId.serialized}_default';
+
+    final savedLevels = (json['defeatedBossLevels'] as List<dynamic>?)
+        ?.map((e) => _integer(e))
+        .where((e) => e > 0);
+    if (savedLevels != null && savedLevels.isNotEmpty) {
+      empty.defeatedBossLevels.addAll(savedLevels);
+    } else {
+      for (var lvl = 1; lvl < empty.highestUnlockedLevel; lvl++) {
+        empty.defeatedBossLevels.add(lvl);
+      }
+    }
     return empty;
   }
 
@@ -238,6 +251,7 @@ class LocalCharacterProgress {
   final List<String> passiveSkillIds;
   String equippedPaletteId;
   final Set<String> uniqueRewardIds;
+  final Set<int> defeatedBossLevels;
 
   Map<String, Object?> toJson() => {
     'masteryXp': masteryXp,
@@ -251,6 +265,7 @@ class LocalCharacterProgress {
     'passiveSkillIds': passiveSkillIds,
     'equippedPaletteId': equippedPaletteId,
     'uniqueRewardIds': uniqueRewardIds.toList()..sort(),
+    'defeatedBossLevels': defeatedBossLevels.toList()..sort(),
   };
 }
 

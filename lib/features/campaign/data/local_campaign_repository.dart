@@ -138,7 +138,8 @@ class LocalCampaignRepository implements CampaignRepository {
 
       final masteryXp = victory ? 100 + sequence * 10 : 25 + sequence * 5;
       final fortuneBasisPoints = localEffectiveBasisPoints(progress, 'fortune');
-      final baseCurrency = max(10, min(100000, score ~/ 10));
+      final isFirstTime = !progress.defeatedBossLevels.contains(sequence);
+      final baseCurrency = isFirstTime ? (sequence * 50) : 30;
       final currencyEarned = victory
           ? baseCurrency * (10000 + fortuneBasisPoints) ~/ 10000
           : 0;
@@ -154,6 +155,8 @@ class LocalCampaignRepository implements CampaignRepository {
 
       if (isReplay) {
         if (victory) {
+          progress.defeatedBossLevels.add(sequence);
+          progress.bankedCurrency += currencyEarned;
           rewardId = campaignLevelDefinition(sequence).uniqueRewardId;
           if (!progress.uniqueRewardIds.contains(rewardId) &&
               _random.nextInt(100) == 0) {
@@ -163,6 +166,7 @@ class LocalCampaignRepository implements CampaignRepository {
         }
         nextLevel = campaign.level;
       } else if (victory) {
+        progress.defeatedBossLevels.add(sequence);
         campaign.temporaryCurrency += currencyEarned;
         rewardId = campaignLevelDefinition(sequence).uniqueRewardId;
         if (!progress.uniqueRewardIds.contains(rewardId) &&
@@ -193,7 +197,8 @@ class LocalCampaignRepository implements CampaignRepository {
         'accepted': true,
         'ranked': false,
         'mastery_xp_granted': masteryXp,
-        'temporary_currency': victory ? campaign.temporaryCurrency : 0,
+        'temporary_currency':
+            victory ? (isReplay ? currencyEarned : campaign.temporaryCurrency) : 0,
         'currency_lost': lostCurrency,
         'unique_drop_granted': dropGranted,
         'unique_reward_id': dropGranted ? rewardId : null,
