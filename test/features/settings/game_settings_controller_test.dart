@@ -11,6 +11,7 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues({});
       final preferences = await SharedPreferences.getInstance();
+      await preferences.clear();
       final first = ProviderContainer(
         overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
       );
