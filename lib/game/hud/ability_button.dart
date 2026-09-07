@@ -1,7 +1,10 @@
+import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../app/widgets/retro_pixel_widgets.dart';
 import '../dino_run_game.dart';
 import '../domain/hud_settings.dart';
 
@@ -11,23 +14,25 @@ class AbilityButton extends HudButtonComponent {
   Sprite? _buttonSprite;
 
   late final TextPaint _cooldownPaint = TextPaint(
-    style: const TextStyle(
-      color: Colors.white,
-      fontSize: 16,
-      fontWeight: FontWeight.w900,
-      shadows: [
-        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
+    style: GoogleFonts.pressStart2p(
+      color: RetroColors.cyan,
+      fontSize: 13,
+      fontWeight: FontWeight.bold,
+      shadows: const [
+        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(2, 2)),
+        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(-1, -1)),
       ],
     ),
   );
 
   late final TextPaint _cooldownPaintCompact = TextPaint(
-    style: const TextStyle(
-      color: Colors.white,
-      fontSize: 13,
-      fontWeight: FontWeight.w900,
-      shadows: [
-        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1, 1)),
+    style: GoogleFonts.pressStart2p(
+      color: RetroColors.cyan,
+      fontSize: 10,
+      fontWeight: FontWeight.bold,
+      shadows: const [
+        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(1.5, 1.5)),
+        Shadow(color: Colors.black, blurRadius: 4, offset: Offset(-1, -1)),
       ],
     ),
   );
@@ -100,11 +105,27 @@ class AbilityButton extends HudButtonComponent {
       final center = Offset(currentSize.x / 2, currentSize.y / 2);
       final radius = currentSize.x / 2;
 
-      // Dark translucent circular overlay
+      // Dark translucent circular backdrop
       canvas.drawCircle(
         center,
         radius,
-        Paint()..color = Colors.black.withValues(alpha: 0.65),
+        Paint()..color = Colors.black.withValues(alpha: 0.72),
+      );
+
+      // Cooldown progress ring / arc (assuming standard ~8-10s cooldown or clamp)
+      final sweepRatio = (dino.cooldownTimer / 10.0).clamp(0.0, 1.0);
+      final sweepAngle = 2 * math.pi * sweepRatio;
+      final arcRect = Rect.fromCircle(center: center, radius: radius - 3);
+      canvas.drawArc(
+        arcRect,
+        -math.pi / 2,
+        sweepAngle,
+        false,
+        Paint()
+          ..color = RetroColors.cyan
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = isCompact ? 3.0 : 4.0
+          ..strokeCap = StrokeCap.round,
       );
 
       // Cooldown timer countdown text

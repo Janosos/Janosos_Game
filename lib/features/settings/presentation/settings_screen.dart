@@ -249,24 +249,14 @@ class SettingsScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'CONTROLES HUD / BOTONES',
-                style: GoogleFonts.pressStart2p(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: RetroColors.green,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const RetroBadge(
-                text: 'LOCAL',
-                color: RetroColors.green,
-                fontSize: 8,
-              ),
-            ],
+          Text(
+            'CONTROLES HUD / BOTONES',
+            style: GoogleFonts.pressStart2p(
+              fontSize: isCompactHeight ? 9 : 10,
+              fontWeight: FontWeight.bold,
+              color: RetroColors.green,
+              letterSpacing: 1.2,
+            ),
           ),
           SizedBox(height: isCompactHeight ? 8 : 12),
           Text(

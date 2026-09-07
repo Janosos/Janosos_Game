@@ -47,23 +47,25 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
       final characterUnlocked =
           prefs.getInt('campaign_max_unlocked_level_${character.serialized}') ??
           1;
-      final globalUnlocked = prefs.getInt('campaign_max_unlocked_level') ?? 1;
-      final activeLevel = progress?.currentLevel ?? 1;
-      return max(
-        max(characterUnlocked, globalUnlocked),
-        activeLevel,
-      ).clamp(1, 10);
+      final activeLevel =
+          (progress != null && progress.characterId == character)
+              ? progress.currentLevel
+              : 1;
+      return max(characterUnlocked, activeLevel).clamp(1, 10);
     } catch (_) {
-      return (progress?.currentLevel ?? 1).clamp(1, 10);
+      final activeLevel =
+          (progress != null && progress.characterId == character)
+              ? progress.currentLevel
+              : 1;
+      return activeLevel.clamp(1, 10);
     }
   }
 
   bool _isCampaignCompleted(CharacterId character) {
     try {
       final prefs = ref.read(sharedPreferencesProvider);
-      return (prefs.getBool('campaign_completed_${character.serialized}') ??
-              false) ||
-          (prefs.getBool('campaign_completed') ?? false);
+      return prefs.getBool('campaign_completed_${character.serialized}') ??
+          false;
     } catch (_) {
       return false;
     }

@@ -348,7 +348,6 @@ class HudIndicators extends PositionComponent
       hasHeartsRow ? playerBase.y + (isCompact ? 24.0 : 34.0) : playerBase.y,
     );
 
-    final tPaint = isCompact ? timerPaintCompact : timerPaint;
     final tReadyPaint = isCompact ? timerPaintReadyCompact : timerPaintReady;
 
     // Vitalista: Show hearts (if in endless runner)
@@ -372,61 +371,21 @@ class HudIndicators extends PositionComponent
         );
       }
     }
-    // Tanque (Chema): Show Shield + Cooldown Timer
+    // Tanque (Chema): Show active Shield icon
     else if (dino.characterId == CharacterId.chema) {
       final shieldSize = isCompact ? Vector2(22, 22) : Vector2(30, 30);
-      final textOffset = isCompact ? 28.0 : 36.0;
-      final textY = isCompact ? abilityBase.y + 3 : abilityBase.y + 5;
       if (dino.hasShield) {
         shieldSprite.render(canvas, position: abilityBase, size: shieldSize);
-        tReadyPaint.render(
-          canvas,
-          'ESCUDO: READY',
-          Vector2(abilityBase.x + textOffset, textY),
-        );
-      } else {
-        final timeLeft = dino.cooldownTimer.toStringAsFixed(1);
-        shieldSprite.render(
-          canvas,
-          position: abilityBase,
-          size: shieldSize,
-          overridePaint: Paint()..color = Colors.grey.withValues(alpha: 0.5),
-        );
-        tPaint.render(
-          canvas,
-          'ESCUDO: ${timeLeft}s',
-          Vector2(abilityBase.x + textOffset, textY),
-        );
       }
     }
-    // Pistolero (Jano): Show Gun Cooldown
-    else if (dino.characterId == CharacterId.jano) {
-      if (dino.cooldownTimer > 0) {
-        tPaint.render(
-          canvas,
-          'DISPARO: ${dino.cooldownTimer.toStringAsFixed(1)}s',
-          abilityBase,
-        );
-      } else {
-        tReadyPaint.render(canvas, 'DISPARO: READY', abilityBase);
-      }
-    }
-    // Fantasma (Conra): Show Intangibility or Cooldown
+    // Fantasma (Conra): Show Intangibility active duration
     else if (dino.characterId == CharacterId.conra) {
       if (dino.isIntangible) {
         tReadyPaint.render(
           canvas,
-          'ACTIVO: ${dino.abilityDurationTimer.toStringAsFixed(1)}s',
+          'INTANGIBLE: ${dino.abilityDurationTimer.toStringAsFixed(1)}s',
           abilityBase,
         );
-      } else if (dino.cooldownTimer > 0) {
-        tPaint.render(
-          canvas,
-          'FANTASMA: ${dino.cooldownTimer.toStringAsFixed(1)}s',
-          abilityBase,
-        );
-      } else {
-        tReadyPaint.render(canvas, 'FANTASMA: READY', abilityBase);
       }
     }
     // Nanic: Show Energy Bar
@@ -471,18 +430,6 @@ class HudIndicators extends PositionComponent
           'MAX POWER!',
           Vector2(abilityBase.x, abilityBase.y + barHeight + 3),
         );
-      }
-    }
-    // Other active skills
-    else if (dino.activeSkillId != null) {
-      if (dino.cooldownTimer > 0) {
-        tPaint.render(
-          canvas,
-          'HABILIDAD: ${dino.cooldownTimer.toStringAsFixed(1)}s',
-          abilityBase,
-        );
-      } else {
-        tReadyPaint.render(canvas, 'HABILIDAD: READY', abilityBase);
       }
     }
   }

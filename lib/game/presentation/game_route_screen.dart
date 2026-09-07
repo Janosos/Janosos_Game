@@ -283,7 +283,6 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                     preferences.getInt(
                       'campaign_max_unlocked_level_$character',
                     ) ??
-                    preferences.getInt('campaign_max_unlocked_level') ??
                     1;
                 final nextUnlocked = max(
                   currentUnlocked,

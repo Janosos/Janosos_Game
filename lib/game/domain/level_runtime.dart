@@ -24,6 +24,12 @@ enum BossAttackKind {
   chainSweep,
   decoyTrap,
   clockworkBurst,
+  chandelierDrop,
+  frostSpike,
+  bloodScythe,
+  poisonBrew,
+  teslaBall,
+  ironAnchor,
 }
 
 class LevelDefinition {
@@ -121,7 +127,7 @@ const campaignLevelDefinitions = <LevelDefinition>[
     uniqueRewardName: 'Máscara fantasma',
     attackPattern: [
       BossAttackKind.echoPulse,
-      BossAttackKind.darknessBlade,
+      BossAttackKind.chandelierDrop,
       BossAttackKind.echoPulse,
     ],
   ),
@@ -138,7 +144,7 @@ const campaignLevelDefinitions = <LevelDefinition>[
     uniqueRewardName: 'Corazón de escarcha',
     attackPattern: [
       BossAttackKind.iceShard,
-      BossAttackKind.frozenFloor,
+      BossAttackKind.frostSpike,
       BossAttackKind.iceShard,
     ],
   ),
@@ -155,7 +161,7 @@ const campaignLevelDefinitions = <LevelDefinition>[
     uniqueRewardName: 'Capa carmesí',
     attackPattern: [
       BossAttackKind.batSwarm,
-      BossAttackKind.mistStep,
+      BossAttackKind.bloodScythe,
       BossAttackKind.batSwarm,
     ],
   ),
@@ -172,7 +178,7 @@ const campaignLevelDefinitions = <LevelDefinition>[
     uniqueRewardName: 'Zapatos plateados',
     attackPattern: [
       BossAttackKind.cyclone,
-      BossAttackKind.toxicZone,
+      BossAttackKind.poisonBrew,
       BossAttackKind.cyclone,
     ],
   ),
@@ -189,7 +195,7 @@ const campaignLevelDefinitions = <LevelDefinition>[
     uniqueRewardName: 'Núcleo galvánico',
     attackPattern: [
       BossAttackKind.lightningColumn,
-      BossAttackKind.armoredCharge,
+      BossAttackKind.teslaBall,
       BossAttackKind.lightningColumn,
     ],
   ),
@@ -206,7 +212,7 @@ const campaignLevelDefinitions = <LevelDefinition>[
     uniqueRewardName: 'Brújula abisal',
     attackPattern: [
       BossAttackKind.tideWave,
-      BossAttackKind.chainSweep,
+      BossAttackKind.ironAnchor,
       BossAttackKind.tideWave,
     ],
   ),
@@ -215,17 +221,23 @@ const campaignLevelDefinitions = <LevelDefinition>[
     scenario: 'Londres Mecánico',
     bossId: 'moriarty',
     bossName: 'Profesor Moriarty',
-    mechanic: 'Trampas, señuelos y mecánicas combinadas',
+    mechanic: 'Arsenal supremo: ataca con las habilidades de todos los jefes',
     runnerDuration: Duration(minutes: 3),
     bossHealth: 9000,
     bossActionCooldown: Duration(milliseconds: 900),
     uniqueRewardId: 'moriarty.strategist_crown',
     uniqueRewardName: 'Corona del estratega',
     attackPattern: [
-      BossAttackKind.decoyTrap,
       BossAttackKind.clockworkBurst,
-      BossAttackKind.sideCharge,
-      BossAttackKind.lightningColumn,
+      BossAttackKind.chemicalRush,
+      BossAttackKind.chandelierDrop,
+      BossAttackKind.frostSpike,
+      BossAttackKind.bloodScythe,
+      BossAttackKind.poisonBrew,
+      BossAttackKind.teslaBall,
+      BossAttackKind.ironAnchor,
+      BossAttackKind.cardVolley,
+      BossAttackKind.warningCharge,
     ],
   ),
 ];

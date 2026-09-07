@@ -271,7 +271,10 @@ class CampaignBossHazard extends PositionComponent
           cue.kind == BossAttackKind.chemicalRush ||
           cue.kind == BossAttackKind.cyclone ||
           cue.kind == BossAttackKind.echoPulse ||
-          cue.kind == BossAttackKind.armoredCharge;
+          cue.kind == BossAttackKind.armoredCharge ||
+          cue.kind == BossAttackKind.teslaBall ||
+          cue.kind == BossAttackKind.poisonBrew ||
+          cue.kind == BossAttackKind.bloodScythe;
       if (isCircular) {
         add(
           CircleHitbox(
@@ -442,25 +445,31 @@ String _bossAsset(int level) => switch (level) {
 
 String _hazardAsset(BossAttackKind kind) => switch (kind) {
   BossAttackKind.warningCharge ||
-  BossAttackKind.sideCharge ||
-  BossAttackKind.armoredCharge => 'hazard_spectral_pixel.png',
+  BossAttackKind.sideCharge => 'hazard_spectral_pixel.png',
   BossAttackKind.spectralHazard => 'hazard_ghost_pixel.png',
   BossAttackKind.cardVolley => 'hazard_card_pixel.png',
   BossAttackKind.heartPlatform => 'hazard_heart_pixel.png',
   BossAttackKind.shockwave => 'hazard_shockwave_pixel.png',
   BossAttackKind.chemicalRush => 'hazard_chemical_pixel.png',
   BossAttackKind.echoPulse => 'hazard_echo_pixel.png',
-  BossAttackKind.darknessBlade => 'hazard_darkness_pixel.png',
+  BossAttackKind.darknessBlade ||
+  BossAttackKind.chandelierDrop => 'hazard_chandelier_pixel.png',
   BossAttackKind.iceShard => 'hazard_ice_shard_pixel.png',
-  BossAttackKind.frozenFloor => 'hazard_ice_shard_pixel.png',
+  BossAttackKind.frozenFloor ||
+  BossAttackKind.frostSpike => 'hazard_frost_spike_pixel.png',
   BossAttackKind.batSwarm => 'hazard_bat_pixel.png',
-  BossAttackKind.mistStep => 'hazard_bat_pixel.png',
+  BossAttackKind.mistStep ||
+  BossAttackKind.bloodScythe => 'hazard_blood_scythe_pixel.png',
   BossAttackKind.cyclone => 'hazard_cyclone_pixel.png',
-  BossAttackKind.toxicZone => 'hazard_chemical_pixel.png',
+  BossAttackKind.toxicZone ||
+  BossAttackKind.poisonBrew => 'hazard_poison_brew_pixel.png',
   BossAttackKind.lightningColumn => 'hazard_lightning_pixel.png',
+  BossAttackKind.armoredCharge ||
+  BossAttackKind.teslaBall => 'hazard_tesla_ball_pixel.png',
   BossAttackKind.tideWave => 'hazard_tide_pixel.png',
-  BossAttackKind.chainSweep => 'hazard_tide_pixel.png',
-  BossAttackKind.decoyTrap => 'hazard_clockwork_pixel.png',
+  BossAttackKind.chainSweep ||
+  BossAttackKind.ironAnchor => 'hazard_anchor_pixel.png',
+  BossAttackKind.decoyTrap ||
   BossAttackKind.clockworkBurst => 'hazard_clockwork_pixel.png',
 };
 
@@ -487,21 +496,27 @@ _AttackProfile _profileFor(BossAttackKind kind) => switch (kind) {
   BossAttackKind.cardVolley => _fall('CARTAS', const Color(0xFFE53371)),
   BossAttackKind.heartPlatform => _wave('CORAZÓN', const Color(0xFFFF5B99)),
   BossAttackKind.shockwave => _wave('ONDA', const Color(0xFFFFD166)),
-  BossAttackKind.chemicalRush => _charge('QUÍMICO', const Color(0xFF72E06A)),
-  BossAttackKind.echoPulse => _wave('ECO', const Color(0xFF9B7BFF)),
-  BossAttackKind.darknessBlade => _fall('SOMBRA', const Color(0xFF4C3F78)),
+  BossAttackKind.chemicalRush => _charge('ÁCIDO HYDE', const Color(0xFF72E06A)),
+  BossAttackKind.echoPulse => _wave('ECO SÓNICO', const Color(0xFF9B7BFF)),
+  BossAttackKind.darknessBlade ||
+  BossAttackKind.chandelierDrop => _fall('LÁMPARA ÓPERA', const Color(0xFFFFD700)),
   BossAttackKind.iceShard => _fall('HIELO', const Color(0xFF66D9FF)),
-  BossAttackKind.frozenFloor => _zone('SUELO HELADO', const Color(0xFFB8F2FF)),
+  BossAttackKind.frozenFloor ||
+  BossAttackKind.frostSpike => _zone('ESTACAS HIELO', const Color(0xFFB8F2FF)),
   BossAttackKind.batSwarm => _wave('MURCIÉLAGOS', const Color(0xFF722F45)),
-  BossAttackKind.mistStep => _charge('NIEBLA', const Color(0xFF9AA7B8)),
+  BossAttackKind.mistStep ||
+  BossAttackKind.bloodScythe => _charge('GUADAÑA SANGRE', const Color(0xFFFF1A40)),
   BossAttackKind.cyclone => _wave('CICLÓN', const Color(0xFF86C766)),
-  BossAttackKind.toxicZone => _zone('TÓXICO', const Color(0xFF63C132)),
-  BossAttackKind.lightningColumn => _fall('RAYO', const Color(0xFFFFE45C)),
-  BossAttackKind.armoredCharge => _charge('ARMADURA', const Color(0xFF89939E)),
-  BossAttackKind.tideWave => _wave('MAREA', const Color(0xFF23A7C9)),
-  BossAttackKind.chainSweep => _charge('CADENA', const Color(0xFFB8A48A)),
-  BossAttackKind.decoyTrap => _zone('TRAMPA', const Color(0xFFC99858)),
-  BossAttackKind.clockworkBurst => _fall('RELOJ', const Color(0xFFE3A857)),
+  BossAttackKind.toxicZone ||
+  BossAttackKind.poisonBrew => _wave('POCIÓN BRUJA', const Color(0xFF63C132)),
+  BossAttackKind.lightningColumn => _fall('RAYO TESLA', const Color(0xFFFFE45C)),
+  BossAttackKind.armoredCharge ||
+  BossAttackKind.teslaBall => _charge('ORBE ELÉCTRICO', const Color(0xFF66B3FF)),
+  BossAttackKind.tideWave => _wave('MAREA ABISAL', const Color(0xFF23A7C9)),
+  BossAttackKind.chainSweep ||
+  BossAttackKind.ironAnchor => _fall('ANCLA DE HIERRO', const Color(0xFFB8A48A)),
+  BossAttackKind.decoyTrap => _zone('TRAMPA ENGRANAJE', const Color(0xFFC99858)),
+  BossAttackKind.clockworkBurst => _fall('RELOJERÍA', const Color(0xFFE3A857)),
 };
 
 _AttackProfile _charge(String label, Color color) => _AttackProfile(
