@@ -382,12 +382,9 @@ class _Filters extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SizedBox(
-                          width: isCompact ? 20 : 24,
-                          height: isCompact ? 20 : 24,
-                          child: CharacterRunningSprite(
-                            assetName: character.definition.assetName,
-                          ),
+                        CharacterIcon(
+                          assetName: character.definition.assetName,
+                          size: isCompact ? 20 : 24,
                         ),
                         const SizedBox(width: 8),
                         Text(

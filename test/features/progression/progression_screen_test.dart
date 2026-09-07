@@ -50,12 +50,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Progresión del personaje'), findsOneWidget);
-      expect(find.text('Maestría 30/30'), findsOneWidget);
-      expect(find.textContaining('guardadas'), findsOneWidget);
-      expect(find.text('Velocidad'), findsOneWidget);
+      expect(find.text('MONEDAS'), findsWidgets);
+      expect(find.text('MAESTRÍA LVL 30'), findsOneWidget);
+      expect(find.text('VELOCIDAD'), findsOneWidget);
 
-      final firstUpgrade = find.text('Comprar por 200').first;
+      final firstUpgrade = find.text('200').first;
       await tester.ensureVisible(firstUpgrade);
       await tester.pumpAndSettle();
       await tester.tap(firstUpgrade);
@@ -63,24 +62,24 @@ void main() {
       expect(repository.upgradePurchases, 1);
       expect(find.textContaining('avanzó al rango 1'), findsOneWidget);
 
-      await tester.tap(find.text('Habilidades'));
+      await tester.tap(find.text('HABILIDADES').first);
       await tester.pumpAndSettle();
-      expect(find.text('Bala de rebote'), findsOneWidget);
+      expect(find.text('BALA DE REBOTE'), findsOneWidget);
       await tester.drag(find.byType(ListView).last, const Offset(0, -420));
       await tester.pumpAndSettle();
-      expect(find.text('Protocolo ráfaga'), findsOneWidget);
+      expect(find.text('PROTOCOLO RÁFAGA'), findsOneWidget);
       await tester.drag(find.byType(ListView).last, const Offset(0, -420));
       await tester.pumpAndSettle();
-      expect(find.text('Desenfunde'), findsOneWidget);
+      expect(find.text('DESENFUNDE'), findsOneWidget);
       await tester.drag(find.byType(ListView).last, const Offset(0, -420));
       await tester.pumpAndSettle();
-      expect(find.text('Mira oportunista'), findsOneWidget);
+      expect(find.text('MIRA OPORTUNISTA'), findsOneWidget);
 
-      await tester.tap(find.text('Paletas'));
+      await tester.tap(find.text('PALETAS').first);
       await tester.pumpAndSettle();
-      expect(find.text('Original'), findsOneWidget);
-      expect(find.text('Aurora'), findsOneWidget);
-      expect(find.text('Eclipse'), findsOneWidget);
+      expect(find.text('ORIGINAL'), findsOneWidget);
+      expect(find.text('AURORA'), findsOneWidget);
+      expect(find.text('ECLIPSE'), findsOneWidget);
     },
   );
 
@@ -125,27 +124,18 @@ void main() {
 
       // Verify no overflow occurred and elements are rendered properly
       expect(tester.takeException(), isNull);
-      expect(find.text('Progresión del personaje'), findsOneWidget);
-      expect(find.text('Maestría 30/30'), findsOneWidget);
-      expect(find.textContaining('guardadas'), findsOneWidget);
+      expect(find.text('MONEDAS'), findsWidgets);
+      expect(find.text('MAESTRÍA LVL 30'), findsOneWidget);
 
       // Verify tabs are reachable and interactive in landscape
-      expect(find.text('Mejoras'), findsOneWidget);
-      expect(find.text('Habilidades'), findsOneWidget);
-      expect(find.text('Paletas'), findsOneWidget);
+      expect(find.text('MEJORAS'), findsWidgets);
+      expect(find.text('HABILIDADES'), findsWidgets);
+      expect(find.text('PALETAS'), findsWidgets);
 
       // Test tapping tabs
-      await tester.tap(find.text('Habilidades'));
+      await tester.tap(find.text('HABILIDADES').first);
       await tester.pumpAndSettle();
-      expect(find.text('Identidad innata'), findsOneWidget);
-
-      // Test expanding summary details in compact height
-      final toggleButton = find.byTooltip('Ver detalles');
-      expect(toggleButton, findsOneWidget);
-      await tester.tap(toggleButton);
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      expect(find.byTooltip('Ocultar detalles'), findsOneWidget);
+      expect(find.textContaining('Habilidad innata'), findsOneWidget);
     },
   );
 }

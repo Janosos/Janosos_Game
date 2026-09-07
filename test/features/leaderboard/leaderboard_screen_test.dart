@@ -44,15 +44,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Leaderboard por personaje'), findsOneWidget);
+    expect(find.text('LEADERBOARD POR PERSONAJE'), findsOneWidget);
     expect(find.text('Alpha'), findsOneWidget);
     expect(find.text('777'), findsOneWidget);
 
     await tester.tap(find.text('Mi historial'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pendiente'), findsOneWidget);
-    expect(find.text('Sólo en este dispositivo'), findsOneWidget);
+    expect(find.text('PENDIENTE'), findsOneWidget);
+    expect(find.text('SÓLO EN ESTE DISPOSITIVO'), findsOneWidget);
     expect(find.textContaining('todavía no aparece'), findsOneWidget);
   });
 
@@ -96,14 +96,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Leaderboard por personaje'), findsOneWidget);
+    expect(find.text('LEADERBOARD POR PERSONAJE'), findsOneWidget);
     expect(find.text('Alpha'), findsOneWidget);
 
     await tester.tap(find.text('Mi historial'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Pendiente'), findsOneWidget);
+    expect(find.text('PENDIENTE'), findsOneWidget);
   });
 }
 

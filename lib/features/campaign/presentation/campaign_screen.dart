@@ -229,13 +229,10 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                                     value: character,
                                     child: Row(
                                       children: [
-                                        SizedBox(
-                                          width: isCompactHeight ? 22 : 26,
-                                          height: isCompactHeight ? 22 : 26,
-                                          child: CharacterRunningSprite(
-                                            assetName:
-                                                character.definition.assetName,
-                                          ),
+                                        CharacterIcon(
+                                          assetName:
+                                              character.definition.assetName,
+                                          size: isCompactHeight ? 22 : 26,
                                         ),
                                         const SizedBox(width: 10),
                                         Expanded(

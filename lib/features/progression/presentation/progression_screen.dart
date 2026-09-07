@@ -343,12 +343,9 @@ class _CharacterSelector extends StatelessWidget {
                 value: character,
                 child: Row(
                   children: [
-                    SizedBox(
-                      width: isCompact ? 22 : 26,
-                      height: isCompact ? 22 : 26,
-                      child: CharacterRunningSprite(
-                        assetName: character.definition.assetName,
-                      ),
+                    CharacterIcon(
+                      assetName: character.definition.assetName,
+                      size: isCompact ? 22 : 26,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -788,7 +785,9 @@ class _StatsCatalog extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 2,
                       children: [
                         Text(
                           'Bono actual: +${_percent(stat.effectiveBasisPoints)}',
@@ -1166,9 +1165,10 @@ class _PalettesCatalog extends ConsumerWidget {
                           ),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: CharacterRunningSprite(
+                        child: CharacterIcon(
                           assetName:
                               snapshot.characterId.definition.assetName,
+                          size: 54,
                         ),
                       ),
                     ),
