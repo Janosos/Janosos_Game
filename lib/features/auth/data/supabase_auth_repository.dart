@@ -105,12 +105,22 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> signInWithProvider(AuthProviderId provider) {
     return _guard(() async {
       if (_supportsNativeProviderFlow) {
-        await _nativeProviderFlow(provider, linkIdentity: false);
-        return;
+        try {
+          await _nativeProviderFlow(provider, linkIdentity: false);
+          return;
+        } on Object catch (error, stackTrace) {
+          developer.log(
+            'Native provider flow failed, falling back to browser OAuth',
+            name: 'auth.google',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
       }
+      final effectiveRedirect = kIsWeb ? null : _redirectUri.toString();
       final launched = await _client.auth.signInWithOAuth(
         _oauthProvider(provider),
-        redirectTo: _redirectUri.toString(),
+        redirectTo: effectiveRedirect,
       );
       if (!launched) {
         throw const AppFailure(
@@ -125,12 +135,22 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> linkProvider(AuthProviderId provider) {
     return _guard(() async {
       if (_supportsNativeProviderFlow) {
-        await _nativeProviderFlow(provider, linkIdentity: true);
-        return;
+        try {
+          await _nativeProviderFlow(provider, linkIdentity: true);
+          return;
+        } on Object catch (error, stackTrace) {
+          developer.log(
+            'Native provider link failed, falling back to browser OAuth',
+            name: 'auth.google',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
       }
+      final effectiveRedirect = kIsWeb ? null : _redirectUri.toString();
       final launched = await _client.auth.linkIdentity(
         _oauthProvider(provider),
-        redirectTo: _redirectUri.toString(),
+        redirectTo: effectiveRedirect,
       );
       if (!launched) {
         throw const AppFailure(

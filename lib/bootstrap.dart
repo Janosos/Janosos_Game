@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,6 +97,7 @@ Future<AuthRepository> _createAuthRepository({
       localStorage: sessionStorage,
       persistSession: protectedAvailability.isAvailable,
       detectSessionInUriPredicate: (uri) {
+        if (kIsWeb) return true;
         final redirect = environment.authRedirectUri;
         return uri.scheme == redirect.scheme &&
             uri.host == redirect.host &&
