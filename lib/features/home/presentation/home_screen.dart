@@ -440,6 +440,15 @@ class HomeScreen extends ConsumerWidget {
               isFullWidth: screenWidth < 500,
               onTap: () => context.go('/characters'),
             ),
+            _HomeAction(
+              pixelAsset: PixelIconAsset.coin,
+              title: 'Tienda Arcade',
+              subtitle: 'Mejoras, habilidades y skins.',
+              badgeText: 'TIENDA',
+              badgeColor: RetroColors.gold,
+              isFullWidth: screenWidth < 500,
+              onTap: () => context.go('/store'),
+            ),
             if (PwaInstallService.isWeb)
               _HomeAction(
                 pixelAsset: PixelIconAsset.gamepad,

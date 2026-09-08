@@ -93,42 +93,59 @@ class JanososAppShell extends StatelessWidget {
       body: wide
           ? Row(
               children: [
-                NavigationRail(
-                  minWidth: isCompactHeight ? 56 : 72,
-                  backgroundColor: const Color(0xFF070D16),
-                  selectedIndex: _selectedIndex,
-                  labelType: NavigationRailLabelType.all,
-                  selectedIconTheme: const IconThemeData(color: cyan),
-                  unselectedIconTheme: const IconThemeData(
-                    color: Color(0xFF7A9BB8),
-                  ),
-                  selectedLabelTextStyle: GoogleFonts.pressStart2p(
-                    fontSize: isCompactHeight ? 6 : 8,
-                    fontWeight: FontWeight.bold,
-                    color: cyan,
-                  ),
-                  unselectedLabelTextStyle: GoogleFonts.pressStart2p(
-                    fontSize: isCompactHeight ? 6 : 8,
-                    color: const Color(0xFF7A9BB8),
-                  ),
-                  indicatorColor: cyan.withValues(alpha: 0.15),
-                  indicatorShape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.zero,
-                    side: BorderSide(color: cyan, width: 1.5),
-                  ),
-                  onDestinationSelected: (index) {
-                    context.go(_destinations[index].path);
-                  },
-                  destinations: [
-                    for (final destination in _destinations)
-                      NavigationRailDestination(
-                        icon: Icon(
-                          destination.icon,
-                          size: isCompactHeight ? 16 : 22,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
                         ),
-                        label: Text(destination.label),
+                        child: IntrinsicHeight(
+                          child: NavigationRail(
+                            minWidth: isCompactHeight ? 56 : 72,
+                            backgroundColor: const Color(0xFF070D16),
+                            selectedIndex: _selectedIndex,
+                            labelType: NavigationRailLabelType.all,
+                            groupAlignment: 0.0,
+                            selectedIconTheme: const IconThemeData(color: cyan),
+                            unselectedIconTheme: const IconThemeData(
+                              color: Color(0xFF7A9BB8),
+                            ),
+                            selectedLabelTextStyle: GoogleFonts.pressStart2p(
+                              fontSize: isCompactHeight ? 6 : 8,
+                              fontWeight: FontWeight.bold,
+                              color: cyan,
+                            ),
+                            unselectedLabelTextStyle: GoogleFonts.pressStart2p(
+                              fontSize: isCompactHeight ? 6 : 8,
+                              color: const Color(0xFF7A9BB8),
+                            ),
+                            indicatorColor: cyan.withValues(alpha: 0.15),
+                            indicatorShape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                              side: BorderSide(color: cyan, width: 1.5),
+                            ),
+                            onDestinationSelected: (index) {
+                              context.go(_destinations[index].path);
+                            },
+                            destinations: [
+                              for (final destination in _destinations)
+                                NavigationRailDestination(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isCompactHeight ? 3 : 6,
+                                  ),
+                                  icon: Icon(
+                                    destination.icon,
+                                    size: isCompactHeight ? 16 : 22,
+                                  ),
+                                  label: Text(destination.label),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                  ],
+                    );
+                  },
                 ),
                 const VerticalDivider(width: 1, color: Color(0xFF1E354F)),
                 Expanded(child: child),
