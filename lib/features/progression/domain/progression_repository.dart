@@ -26,4 +26,9 @@ abstract interface class ProgressionRepository {
     required ProgressionSnapshot snapshot,
     required LoadoutSelection selection,
   });
+
+  Future<void> creditCurrency({
+    required CharacterId characterId,
+    required int amount,
+  });
 }

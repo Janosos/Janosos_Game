@@ -184,6 +184,18 @@ class LocalProgressionRepository implements ProgressionRepository {
     });
   }
 
+  @override
+  Future<void> creditCurrency({
+    required CharacterId characterId,
+    required int amount,
+  }) {
+    if (amount <= 0) return Future.value();
+    return _store.mutate((state) {
+      final progress = state.character(characterId);
+      progress.bankedCurrency += amount;
+    });
+  }
+
   static ProgressionSnapshot _snapshot(
     CharacterId characterId,
     String contentVersion,
@@ -292,12 +304,7 @@ class LocalProgressionRepository implements ProgressionRepository {
     LocalGameState state,
     LocalCharacterProgress progress,
   ) {
-    if (state.campaign != null || state.bossRush != null) {
-      throw const AppFailure(
-        AppFailureCode.conflict,
-        'Las compras y el equipamiento se bloquean durante una partida activa.',
-      );
-    }
+    // Las compras y equipamiento están permitidos en el menú y la tienda.
   }
 
   static void _requireMasteryAndBalance(

@@ -158,6 +158,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 session,
                 result,
               );
+              ref.invalidate(progressionControllerProvider);
               ref.invalidate(leaderboardControllerProvider);
               return message;
             },
@@ -295,6 +296,14 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 state.character(result.characterId).bankedCurrency +=
                     coinsEarned;
               });
+              await ref.read(progressionRepositoryProvider).creditCurrency(
+                characterId: result.characterId,
+                amount: coinsEarned,
+              );
+              await preferences.setString(
+                'selected_character',
+                result.characterId.serialized,
+              );
               ref.invalidate(progressionControllerProvider);
               ref.invalidate(leaderboardControllerProvider);
               return 'Puntuación guardada (+🪙 $coinsEarned)';
@@ -326,8 +335,9 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             hudSettings: ref.watch(hudSettingsControllerProvider),
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
+              final character = session.configuration.characterId.serialized;
+              await preferences.setString('selected_character', character);
               if (result.outcome == RunOutcome.victory) {
-                final character = session.configuration.characterId.serialized;
                 final beatenLevel = session.configuration.level;
                 final currentUnlocked =
                     preferences.getInt(
@@ -358,6 +368,7 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 session,
                 result,
               );
+              ref.invalidate(progressionControllerProvider);
               ref.invalidate(leaderboardControllerProvider);
               return message;
             },

@@ -64,7 +64,7 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
       entries: [],
       nextCursor: null,
       availabilityMessage:
-          'El ranking global requiere conexión a Supabase. '
+          'El ranking global requiere iniciar sesión con una cuenta. '
           'Tus partidas locales se registrarán aquí automáticamente.',
     );
   }

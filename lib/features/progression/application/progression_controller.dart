@@ -48,10 +48,21 @@ class ProgressionController extends AsyncNotifier<ProgressionViewState> {
   @override
   Future<ProgressionViewState> build() async {
     ref.watch(authControllerProvider.select((auth) => auth.session.user?.id));
-    return _load(CharacterId.jano);
+    ref.watch(progressionRepositoryProvider);
+    final preferences = ref.watch(sharedPreferencesProvider);
+    final savedCharacter = preferences.getString('selected_character');
+    final initialCharacter = savedCharacter != null
+        ? CharacterId.values
+                .where((c) => c.serialized == savedCharacter)
+                .firstOrNull ??
+            CharacterId.jano
+        : CharacterId.jano;
+    return _load(initialCharacter);
   }
 
   Future<void> selectCharacter(CharacterId characterId) async {
+    final preferences = ref.read(sharedPreferencesProvider);
+    await preferences.setString('selected_character', characterId.serialized);
     final current = state.value;
     if (current?.snapshot.characterId == characterId) return;
     state = const AsyncLoading();

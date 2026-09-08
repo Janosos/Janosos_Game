@@ -115,6 +115,22 @@ class SupabaseProgressionRepository implements ProgressionRepository {
     });
   }
 
+  @override
+  Future<void> creditCurrency({
+    required CharacterId characterId,
+    required int amount,
+  }) async {
+    if (amount <= 0) return;
+    try {
+      await _client.rpc('credit_character_currency', params: {
+        'p_character_id': characterId.serialized,
+        'p_amount': amount,
+      });
+    } catch (_) {
+      // Non-fatal if remote RPC is not yet applied
+    }
+  }
+
   Future<void> _invoke(String functionName, Map<String, Object?> body) async {
     try {
       final response = await _client.functions.invoke(functionName, body: body);

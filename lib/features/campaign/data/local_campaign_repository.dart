@@ -58,7 +58,8 @@ class LocalCampaignRepository implements CampaignRepository {
       ).clamp(1, 10);
       final effectiveLevel = configuration.level.clamp(1, maxAllowedLevel);
 
-      if (campaign == null) {
+      if (campaign == null ||
+          campaign.characterId != configuration.characterId) {
         campaign = LocalCampaignState(
           id: _uuid.v4(),
           characterId: configuration.characterId,
@@ -70,12 +71,6 @@ class LocalCampaignRepository implements CampaignRepository {
           startedAt: DateTime.now().toUtc(),
         );
         state.campaign = campaign;
-      }
-      if (campaign.characterId != configuration.characterId) {
-        throw const AppFailure(
-          AppFailureCode.conflict,
-          'Termina o abandona la campaña activa antes de cambiar personaje.',
-        );
       }
 
       final isReplay = effectiveLevel < campaign.expectedSequence;
@@ -167,7 +162,9 @@ class LocalCampaignRepository implements CampaignRepository {
         nextLevel = campaign.level;
       } else if (victory) {
         progress.defeatedBossLevels.add(sequence);
+        progress.bankedCurrency += currencyEarned;
         campaign.temporaryCurrency += currencyEarned;
+        progress.storeUnlocked = true;
         rewardId = campaignLevelDefinition(sequence).uniqueRewardId;
         if (!progress.uniqueRewardIds.contains(rewardId) &&
             _random.nextInt(100) == 0) {
@@ -180,6 +177,8 @@ class LocalCampaignRepository implements CampaignRepository {
           campaign.level = 10;
           campaign.expectedSequence = 11;
           progress.highestUnlockedLevel = 10;
+          progress.storeUnlocked = true;
+          state.campaign = null;
         } else {
           campaign.level = sequence + 1;
           campaign.expectedSequence = sequence + 1;

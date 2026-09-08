@@ -98,6 +98,6 @@ void main() {
 
     expect(page.entries, isEmpty);
     expect(page.nextCursor, isNull);
-    expect(page.availabilityMessage, contains('Supabase'));
+    expect(page.availabilityMessage, contains('iniciar sesión'));
   });
 }

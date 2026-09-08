@@ -178,4 +178,10 @@ class _FixtureProgressionRepository implements ProgressionRepository {
     required ProgressionSnapshot snapshot,
     required LoadoutSelection selection,
   }) async {}
+
+  @override
+  Future<void> creditCurrency({
+    required CharacterId characterId,
+    required int amount,
+  }) async {}
 }

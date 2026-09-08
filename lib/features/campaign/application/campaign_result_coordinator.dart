@@ -14,14 +14,17 @@ class CampaignResultCoordinator {
     required CampaignRepository repository,
     required EncryptedOutbox outbox,
     required RunResultRecorder recorder,
+    CampaignRepository? localRepository,
   }) : _repository = repository,
        _outbox = outbox,
-       _recorder = recorder;
+       _recorder = recorder,
+       _localRepository = localRepository ?? repository;
 
   static const _uuid = Uuid();
   final CampaignRepository _repository;
   final EncryptedOutbox _outbox;
   final RunResultRecorder _recorder;
+  final CampaignRepository _localRepository;
 
   Future<String> sealAndSynchronize(
     CampaignStageSession session,
@@ -105,13 +108,25 @@ class CampaignResultCoordinator {
           validationStatus: 'rejected',
           isSynced: true,
         );
-        return 'El servidor rechazó el resultado. No se otorgaron recompensas.';
+        return await _finishLocal(session, result);
       }
       await _outbox.recordTransientFailure(
         id: outboxId,
         errorCode: error.code.name,
       );
-      return 'Resultado sellado y pendiente de sincronización. Las recompensas aún no están disponibles.';
+      try {
+        await _finishLocal(session, result);
+      } catch (_) {}
+      return 'Resultado sellado y pendiente de sincronización. Las recompensas se guardaron localmente.';
+    } on Object {
+      await _outbox.recordTransientFailure(
+        id: outboxId,
+        errorCode: 'network_exception',
+      );
+      try {
+        await _finishLocal(session, result);
+      } catch (_) {}
+      return 'Resultado sellado y pendiente de sincronización. Las recompensas se guardaron localmente.';
     }
   }
 
@@ -120,7 +135,7 @@ class CampaignResultCoordinator {
     RunResult result,
   ) async {
     if (result.outcome == RunOutcome.abandoned) {
-      await _repository.abandonCampaign(session);
+      await _localRepository.abandonCampaign(session);
       await _recorder.save(result, validationStatus: 'limited', isSynced: true);
       return 'Campaña local abandonada. La moneda en riesgo se perdió; tus compras y recompensas permanentes se conservaron.';
     }
@@ -131,14 +146,14 @@ class CampaignResultCoordinator {
       'score': result.score,
       'duration_ms': result.duration.inMilliseconds.clamp(1000, 21600000),
     };
-    final receipt = await _repository.finishStage(payload);
+    final receipt = await _localRepository.finishStage(payload);
     await _recorder.save(result, validationStatus: 'limited', isSynced: true);
     if (receipt.readyToComplete && session.campaignId != null) {
-      final completion = await _repository.completeCampaign({
+      final completion = await _localRepository.completeCampaign({
         'campaign_id': session.campaignId,
         'idempotency_key': _uuid.v4(),
       });
-      return '¡Campaña local completada! Se guardaron ${completion.bankedCurrency} monedas y se desbloquearon la tienda y Boss Rush.';
+      return '¡Campaña completada! Se guardaron ${completion.bankedCurrency} monedas y se desbloquearon la tienda y Boss Rush.';
     }
     if (receipt.uniqueDropGranted) {
       final reward = campaignLevelDefinition(result.levelReached);
@@ -147,7 +162,7 @@ class CampaignResultCoordinator {
     if (result.outcome == RunOutcome.defeat) {
       return 'Has caído en combate contra el jefe. Tus mejoras y niveles desbloqueados se conservan. ¡Analiza sus patrones y vuelve a intentarlo!';
     }
-    return 'Victoria local. Nivel ${receipt.nextLevel}/10 desbloqueado y ${receipt.temporaryCurrency} monedas siguen en riesgo.';
+    return 'Victoria local. Nivel ${receipt.nextLevel}/10 desbloqueado (+🪙 ${receipt.temporaryCurrency} monedas añadidas a tu billetera).';
   }
 
   Future<int> synchronizePending() async {

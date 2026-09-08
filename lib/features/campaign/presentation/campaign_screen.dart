@@ -30,6 +30,14 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
   @override
   void initState() {
     super.initState();
+    final savedCharacter =
+        ref.read(sharedPreferencesProvider).getString('selected_character');
+    if (savedCharacter != null) {
+      _selectedCharacter = CharacterId.values
+              .where((c) => c.serialized == savedCharacter)
+              .firstOrNull ??
+          CharacterId.jano;
+    }
     _progress = _loadProgress();
     _bossRushUnlocked = _loadBossRushEntitlement(_selectedCharacter);
     Future<void>.microtask(_synchronizePending);
@@ -254,23 +262,26 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                                     ),
                                   ),
                               ],
-                              onChanged: progress == null
-                                  ? (character) {
-                                      if (character != null) {
-                                        setState(() {
-                                          _selectedCharacter = character;
-                                          _bossRushUnlocked =
-                                              _loadBossRushEntitlement(
-                                                character,
-                                              );
-                                        });
-                                      }
-                                    }
-                                  : null,
+                              onChanged: (character) {
+                                if (character != null) {
+                                  ref
+                                      .read(sharedPreferencesProvider)
+                                      .setString(
+                                        'selected_character',
+                                        character.serialized,
+                                      );
+                                  setState(() {
+                                    _selectedCharacter = character;
+                                    _bossRushUnlocked =
+                                        _loadBossRushEntitlement(character);
+                                  });
+                                }
+                              },
                             ),
                           ),
                         ),
-                        if (progress != null) ...[
+                        if (progress != null &&
+                            progress.characterId == _selectedCharacter) ...[
                           const SizedBox(width: 8),
                           const RetroBadge(
                             text: 'EN CURSO',
@@ -377,7 +388,7 @@ class _BossRushCard extends StatelessWidget {
       fontSize: 9,
       primaryColor: RetroColors.magenta,
       icon: Icons.whatshot,
-      onPressed: unlocked && !hasActiveCampaign
+      onPressed: unlocked
           ? () => context.go(
               '/game?experience=boss_rush&character=${selectedCharacter.serialized}',
             )

@@ -125,6 +125,9 @@ final campaignResultCoordinatorProvider = Provider<CampaignResultCoordinator>((
 ) {
   return CampaignResultCoordinator(
     repository: ref.watch(campaignRepositoryProvider),
+    localRepository: LocalCampaignRepository(
+      store: ref.watch(localGameStateStoreProvider),
+    ),
     outbox: ref.watch(encryptedOutboxProvider),
     recorder: ref.watch(runResultRecorderProvider),
   );
