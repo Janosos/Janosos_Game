@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/persistence/app_database.dart';
@@ -113,10 +116,21 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
               localList.where((e) => e.userId == user.id).firstOrNull;
           if (userLocal != null) {
             final existingIdx = entries.indexWhere((e) => e.userId == user.id);
-            if (existingIdx == -1) {
-              entries.add(userLocal);
-            } else if (userLocal.score > entries[existingIdx].score) {
-              entries[existingIdx] = userLocal;
+            if (existingIdx == -1 || userLocal.score > entries[existingIdx].score) {
+              // Automatically sync unsynced local best run to online database
+              unawaited(
+                recordEndlessRun(
+                  characterId: userLocal.characterId,
+                  score: userLocal.score,
+                  duration: Duration(milliseconds: userLocal.durationMs),
+                ),
+              );
+
+              if (existingIdx == -1) {
+                entries.add(userLocal);
+              } else {
+                entries[existingIdx] = userLocal;
+              }
             }
             entries.sort((a, b) {
               final cmp = b.score.compareTo(a.score);
@@ -142,7 +156,13 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
         return entries.take(limit).toList();
       }
       return await _localRepository.fetchEndlessLeaderboard(limit: limit);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to fetch online endless leaderboard, falling back to local',
+        name: 'leaderboard',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return _localRepository.fetchEndlessLeaderboard(limit: limit);
     }
   }
@@ -188,11 +208,17 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
               localList.where((e) => e.userId == user.id).firstOrNull;
           if (userLocal != null) {
             final existingIdx = entries.indexWhere((e) => e.userId == user.id);
-            if (existingIdx == -1) {
-              entries.add(userLocal);
-            } else if (userLocal.completionsCount >
-                entries[existingIdx].completionsCount) {
-              entries[existingIdx] = userLocal;
+            if (existingIdx == -1 ||
+                userLocal.completionsCount >
+                    entries[existingIdx].completionsCount) {
+              // Auto-sync
+              unawaited(recordBossRushCompletion());
+
+              if (existingIdx == -1) {
+                entries.add(userLocal);
+              } else {
+                entries[existingIdx] = userLocal;
+              }
             }
             entries.sort((a, b) {
               final cmp = b.completionsCount.compareTo(a.completionsCount);
@@ -216,7 +242,13 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
         return entries.take(limit).toList();
       }
       return await _localRepository.fetchBossRushLeaderboard(limit: limit);
-    } catch (_) {
+    } catch (error, stackTrace) {
+      developer.log(
+        'Failed to fetch online boss rush leaderboard, falling back to local',
+        name: 'leaderboard',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return _localRepository.fetchBossRushLeaderboard(limit: limit);
     }
   }
@@ -244,7 +276,14 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
         'p_score': score,
         'p_duration_ms': duration.inMilliseconds,
       });
-    } catch (_) {
+      developer.log('record_endless_score RPC successful', name: 'leaderboard');
+    } catch (error, stackTrace) {
+      developer.log(
+        'record_endless_score RPC failed, attempting direct upsert',
+        name: 'leaderboard',
+        error: error,
+        stackTrace: stackTrace,
+      );
       try {
         final existing = await _client
             .from('leaderboard_endless')
@@ -262,9 +301,18 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
             'duration_ms': duration.inMilliseconds,
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           });
+          developer.log(
+            'leaderboard_endless direct upsert successful',
+            name: 'leaderboard',
+          );
         }
-      } catch (_) {
-        // Fallback recorded in localRepository
+      } catch (error2, stackTrace2) {
+        developer.log(
+          'leaderboard_endless direct upsert failed',
+          name: 'leaderboard',
+          error: error2,
+          stackTrace: stackTrace2,
+        );
       }
     }
   }
@@ -280,7 +328,17 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
     // Try online RPC or table upsert
     try {
       await _client.rpc('record_boss_rush_clear');
-    } catch (_) {
+      developer.log(
+        'record_boss_rush_clear RPC successful',
+        name: 'leaderboard',
+      );
+    } catch (error, stackTrace) {
+      developer.log(
+        'record_boss_rush_clear RPC failed, attempting direct upsert',
+        name: 'leaderboard',
+        error: error,
+        stackTrace: stackTrace,
+      );
       try {
         final existing = await _client
             .from('leaderboard_boss_rush')
@@ -295,8 +353,17 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
           'completions_count': count + 1,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         });
-      } catch (_) {
-        // Fallback recorded in localRepository
+        developer.log(
+          'leaderboard_boss_rush direct upsert successful',
+          name: 'leaderboard',
+        );
+      } catch (error2, stackTrace2) {
+        developer.log(
+          'leaderboard_boss_rush direct upsert failed',
+          name: 'leaderboard',
+          error: error2,
+          stackTrace: stackTrace2,
+        );
       }
     }
   }

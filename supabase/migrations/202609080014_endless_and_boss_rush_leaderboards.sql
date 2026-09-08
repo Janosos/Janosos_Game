@@ -7,7 +7,7 @@ create table if not exists public.leaderboard_endless (
     char_length(display_name) between 1 and 32
     and display_name = btrim(display_name)
   ),
-  character_id text not null references public.characters(id),
+  character_id text not null,
   score bigint not null check (score >= 0),
   duration_ms bigint not null check (duration_ms >= 0),
   content_version text not null default 'v6-preview-1',
@@ -42,31 +42,37 @@ on public.leaderboard_boss_rush (completions_count desc, updated_at asc);
 alter table public.leaderboard_endless enable row level security;
 alter table public.leaderboard_boss_rush enable row level security;
 
--- 4. RLS policies: anyone can read, owner can insert/update
+-- 4. RLS policies (idempotent): anyone can read, owner can insert/update
+drop policy if exists leaderboard_endless_select_all on public.leaderboard_endless;
 create policy leaderboard_endless_select_all
 on public.leaderboard_endless for select
 using (true);
 
+drop policy if exists leaderboard_endless_insert_owner on public.leaderboard_endless;
 create policy leaderboard_endless_insert_owner
 on public.leaderboard_endless for insert
 to authenticated
 with check ((select auth.uid()) = user_id);
 
+drop policy if exists leaderboard_endless_update_owner on public.leaderboard_endless;
 create policy leaderboard_endless_update_owner
 on public.leaderboard_endless for update
 to authenticated
 using ((select auth.uid()) = user_id)
 with check ((select auth.uid()) = user_id);
 
+drop policy if exists leaderboard_boss_rush_select_all on public.leaderboard_boss_rush;
 create policy leaderboard_boss_rush_select_all
 on public.leaderboard_boss_rush for select
 using (true);
 
+drop policy if exists leaderboard_boss_rush_insert_owner on public.leaderboard_boss_rush;
 create policy leaderboard_boss_rush_insert_owner
 on public.leaderboard_boss_rush for insert
 to authenticated
 with check ((select auth.uid()) = user_id);
 
+drop policy if exists leaderboard_boss_rush_update_owner on public.leaderboard_boss_rush;
 create policy leaderboard_boss_rush_update_owner
 on public.leaderboard_boss_rush for update
 to authenticated
@@ -96,9 +102,27 @@ as $$
 declare
   player_name text;
 begin
-  select display_name into player_name
-  from public.profiles
-  where user_id = auth.uid();
+  -- Try to get display_name from public.profiles
+  begin
+    select display_name into player_name
+    from public.profiles
+    where user_id = auth.uid();
+  exception when others then
+    player_name := null;
+  end;
+
+  -- Fallback to auth.users raw_user_meta_data
+  if player_name is null or btrim(player_name) = '' then
+    select coalesce(
+      raw_user_meta_data->>'display_name',
+      raw_user_meta_data->>'full_name',
+      raw_user_meta_data->>'name',
+      'Jugador'
+    )
+    into player_name
+    from auth.users
+    where id = auth.uid();
+  end if;
 
   if player_name is null or btrim(player_name) = '' then
     player_name := 'Jugador';
@@ -141,9 +165,27 @@ as $$
 declare
   player_name text;
 begin
-  select display_name into player_name
-  from public.profiles
-  where user_id = auth.uid();
+  -- Try to get display_name from public.profiles
+  begin
+    select display_name into player_name
+    from public.profiles
+    where user_id = auth.uid();
+  exception when others then
+    player_name := null;
+  end;
+
+  -- Fallback to auth.users raw_user_meta_data
+  if player_name is null or btrim(player_name) = '' then
+    select coalesce(
+      raw_user_meta_data->>'display_name',
+      raw_user_meta_data->>'full_name',
+      raw_user_meta_data->>'name',
+      'Jugador'
+    )
+    into player_name
+    from auth.users
+    where id = auth.uid();
+  end if;
 
   if player_name is null or btrim(player_name) = '' then
     player_name := 'Jugador';
