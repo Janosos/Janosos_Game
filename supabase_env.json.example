@@ -1,0 +1,9 @@
+{
+  "APP_BACKEND": "supabase",
+  "SUPABASE_URL": "https://TU_PROJECT_ID.supabase.co",
+  "SUPABASE_PUBLISHABLE_KEY": "TU_ANON_PUBLISHABLE_KEY",
+  "AUTH_REDIRECT_URI": "io.janosos.game://auth/callback",
+  "CONTENT_VERSION": "v6-preview-1",
+  "GOOGLE_WEB_CLIENT_ID": "TU_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com",
+  "GOOGLE_APPLE_CLIENT_ID": ""
+}

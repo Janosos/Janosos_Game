@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Janosos Game (Windows - Supabase Cloud)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows",
+      "args": [
+        "--dart-define-from-file=supabase_env.json"
+      ]
+    },
+    {
+      "name": "Janosos Game (Android - Supabase Cloud)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "android",
+      "args": [
+        "--dart-define-from-file=supabase_env.json"
+      ]
+    },
+    {
+      "name": "Janosos Game (Chrome - Supabase Cloud)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "args": [
+        "--dart-define-from-file=supabase_env.json",
+        "--dart-define=AUTH_REDIRECT_URI=http://localhost:3000/"
+      ]
+    },
+    {
+      "name": "Janosos Game (Windows - Local Mode)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows"
+    }
+  ]
+}

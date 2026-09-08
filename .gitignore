@@ -52,6 +52,11 @@ app.*.map.json
 /supabase/.env.local
 /supabase/.temp/
 
+# Local Supabase Environment Defines
+supabase_env.json
+supabase_env.*.json
+!supabase_env.json.example
+
 # Native release signing material
 /android/key.properties
 *.jks
