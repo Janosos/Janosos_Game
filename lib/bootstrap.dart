@@ -88,14 +88,16 @@ Future<AuthRepository> _createAuthRepository({
 
   final sessionStorage = protectedAvailability.isAvailable
       ? ProtectedSessionStorage(protectedStore)
-      : const EmptyLocalStorage();
+      : (kIsWeb
+          ? SharedPreferencesLocalStorage(persistSessionKey: 'supabase.session')
+          : const EmptyLocalStorage());
   await Supabase.initialize(
     url: environment.supabaseUrl,
     publishableKey: environment.supabasePublishableKey,
     authOptions: FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce,
       localStorage: sessionStorage,
-      persistSession: protectedAvailability.isAvailable,
+      persistSession: protectedAvailability.isAvailable || kIsWeb,
       detectSessionInUriPredicate: (uri) {
         if (kIsWeb) return true;
         final redirect = environment.authRedirectUri;

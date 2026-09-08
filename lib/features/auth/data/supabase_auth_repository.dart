@@ -117,7 +117,9 @@ class SupabaseAuthRepository implements AuthRepository {
           );
         }
       }
-      final effectiveRedirect = kIsWeb ? null : _redirectUri.toString();
+      final effectiveRedirect = kIsWeb
+          ? '${Uri.base.origin}${Uri.base.path}'
+          : _redirectUri.toString();
       final launched = await _client.auth.signInWithOAuth(
         _oauthProvider(provider),
         redirectTo: effectiveRedirect,
@@ -147,7 +149,9 @@ class SupabaseAuthRepository implements AuthRepository {
           );
         }
       }
-      final effectiveRedirect = kIsWeb ? null : _redirectUri.toString();
+      final effectiveRedirect = kIsWeb
+          ? '${Uri.base.origin}${Uri.base.path}'
+          : _redirectUri.toString();
       final launched = await _client.auth.linkIdentity(
         _oauthProvider(provider),
         redirectTo: effectiveRedirect,
