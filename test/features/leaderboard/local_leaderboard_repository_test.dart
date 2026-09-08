@@ -1,8 +1,6 @@
 import 'package:dino_run_flame/core/persistence/app_database.dart';
 import 'package:dino_run_flame/features/leaderboard/data/local_leaderboard_repository.dart';
-import 'package:dino_run_flame/features/leaderboard/domain/leaderboard_models.dart';
 import 'package:dino_run_flame/game/domain/character_id.dart';
-import 'package:dino_run_flame/game/domain/run_configuration.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,7 +13,10 @@ void main() {
 
   setUp(() {
     database = AppDatabase.forTesting(NativeDatabase.memory());
-    authRepository = FakeAuthRepository.signedIn(userId: 'user-a');
+    authRepository = FakeAuthRepository.signedIn(
+      userId: 'user-a',
+      displayName: 'Player A',
+    );
     repository = LocalLeaderboardRepository(
       database: database,
       authRepository: authRepository,
@@ -27,77 +28,67 @@ void main() {
     await authRepository.dispose();
   });
 
-  test('local history is isolated by user, character, and mode', () async {
-    final now = DateTime.utc(2026, 8, 31, 12);
-    await database.saveResultProjection(
-      id: 'matching',
-      userId: 'user-a',
-      characterId: 'jano',
-      mode: 'progression',
-      outcome: 'defeat',
-      validationStatus: 'pending',
-      contentVersion: 'v6-preview-1',
-      score: 120,
-      durationMs: 5000,
-      levelReached: 1,
-      endedAt: now,
-      isSynced: false,
-    );
-    await database.saveResultProjection(
-      id: 'other-character',
-      userId: 'user-a',
-      characterId: 'parker',
-      mode: 'progression',
-      outcome: 'defeat',
-      validationStatus: 'pending',
-      contentVersion: 'v6-preview-1',
-      score: 900,
-      durationMs: 1000,
-      levelReached: 1,
-      endedAt: now,
-      isSynced: false,
-    );
-    await database.saveResultProjection(
-      id: 'other-user',
-      userId: 'user-b',
-      characterId: 'jano',
-      mode: 'progression',
-      outcome: 'defeat',
-      validationStatus: 'pending',
-      contentVersion: 'v6-preview-1',
-      score: 800,
-      durationMs: 1000,
-      levelReached: 1,
-      endedAt: now,
-      isSynced: false,
+  test('endless keeps single record per user and updates on higher score', () async {
+    // 1st run
+    await repository.recordEndlessRun(
+      characterId: CharacterId.jano,
+      score: 500,
+      duration: const Duration(seconds: 45),
     );
 
-    final history = await repository.fetchPersonalHistory(
-      filter: const LeaderboardFilter(
-        characterId: CharacterId.jano,
-        mode: RunMode.progression,
-        contentVersion: 'v6-preview-1',
-      ),
+    var endless = await repository.fetchEndlessLeaderboard();
+    expect(endless, hasLength(1));
+    expect(endless.first.displayName, 'Player A');
+    expect(endless.first.score, 500);
+    expect(endless.first.characterId, CharacterId.jano);
+
+    // 2nd run with LOWER score - should not decrease
+    await repository.recordEndlessRun(
+      characterId: CharacterId.parker,
+      score: 300,
+      duration: const Duration(seconds: 20),
     );
 
-    expect(history, hasLength(1));
-    expect(history.single.id, 'matching');
-    expect(history.single.validation, ResultValidation.pending);
-    expect(history.single.contentVersion, 'v6-preview-1');
-    expect(history.single.isLocalOnly, isTrue);
+    endless = await repository.fetchEndlessLeaderboard();
+    expect(endless, hasLength(1)); // Still only 1 record, no duplicates!
+    expect(endless.first.score, 500);
+    expect(endless.first.characterId, CharacterId.jano);
+
+    // 3rd run with HIGHER score - should update record
+    await repository.recordEndlessRun(
+      characterId: CharacterId.chema,
+      score: 1200,
+      duration: const Duration(seconds: 90),
+    );
+
+    endless = await repository.fetchEndlessLeaderboard();
+    expect(endless, hasLength(1)); // Still only 1 record
+    expect(endless.first.score, 1200);
+    expect(endless.first.characterId, CharacterId.chema);
+    expect(endless.first.durationMs, 90000);
   });
 
-  test('local mode never presents pending data as a global ranking', () async {
-    final page = await repository.fetchGlobalPage(
-      filter: const LeaderboardFilter(
-        characterId: CharacterId.jano,
-        mode: RunMode.progression,
-        contentVersion: 'v6-preview-1',
-      ),
-    );
+  test('boss rush increments completions without duplicate records', () async {
+    // 1st clear
+    await repository.recordBossRushCompletion();
 
-    expect(page.entries, isEmpty);
-    expect(page.nextCursor, isNull);
-    expect(page.availabilityMessage, contains('iniciar sesión'));
+    var bossRush = await repository.fetchBossRushLeaderboard();
+    expect(bossRush, hasLength(1));
+    expect(bossRush.first.displayName, 'Player A');
+    expect(bossRush.first.completionsCount, 1);
+
+    // 2nd clear tomorrow
+    await repository.recordBossRushCompletion();
+
+    bossRush = await repository.fetchBossRushLeaderboard();
+    expect(bossRush, hasLength(1)); // Still only 1 record for this player
+    expect(bossRush.first.completionsCount, 2);
+
+    // 3rd clear
+    await repository.recordBossRushCompletion();
+
+    bossRush = await repository.fetchBossRushLeaderboard();
+    expect(bossRush, hasLength(1));
+    expect(bossRush.first.completionsCount, 3);
   });
 }

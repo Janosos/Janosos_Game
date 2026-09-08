@@ -72,16 +72,19 @@ final localGameStateStoreProvider = Provider<LocalGameStateStore>((ref) {
 final leaderboardRepositoryProvider = Provider<LeaderboardRepository>((ref) {
   final environment = ref.watch(appEnvironmentProvider);
   final isGuest = ref.watch(isGuestSessionProvider);
+  final local = LocalLeaderboardRepository(
+    database: ref.watch(appDatabaseProvider),
+    authRepository: ref.watch(authRepositoryProvider),
+    preferences: ref.watch(sharedPreferencesProvider),
+  );
   if (environment.usesLocalBackend || isGuest) {
-    return LocalLeaderboardRepository(
-      database: ref.watch(appDatabaseProvider),
-      authRepository: ref.watch(authRepositoryProvider),
-    );
+    return local;
   }
   return SupabaseLeaderboardRepository(
     client: Supabase.instance.client,
     database: ref.watch(appDatabaseProvider),
     authRepository: ref.watch(authRepositoryProvider),
+    localRepository: local,
   );
 });
 

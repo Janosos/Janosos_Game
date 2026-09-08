@@ -154,6 +154,17 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
             hudSettings: ref.watch(hudSettingsControllerProvider),
             configurationForCharacter: (_) => configuration,
             onRunFinished: (result) async {
+              if (result.outcome == RunOutcome.victory &&
+                  result.levelReached >= 10) {
+                final isGuest = ref.read(isGuestSessionProvider);
+                if (!isGuest) {
+                  try {
+                    await ref
+                        .read(leaderboardRepositoryProvider)
+                        .recordBossRushCompletion();
+                  } catch (_) {}
+                }
+              }
               final message = await coordinator.sealAndSynchronize(
                 session,
                 result,
@@ -304,6 +315,18 @@ class _GameRouteScreenState extends ConsumerState<GameRouteScreen> {
                 'selected_character',
                 result.characterId.serialized,
               );
+              final isGuest = ref.read(isGuestSessionProvider);
+              if (!isGuest) {
+                try {
+                  await ref
+                      .read(leaderboardRepositoryProvider)
+                      .recordEndlessRun(
+                        characterId: result.characterId,
+                        score: result.score,
+                        duration: result.duration,
+                      );
+                } catch (_) {}
+              }
               ref.invalidate(progressionControllerProvider);
               ref.invalidate(leaderboardControllerProvider);
               return 'Puntuación guardada (+🪙 $coinsEarned)';

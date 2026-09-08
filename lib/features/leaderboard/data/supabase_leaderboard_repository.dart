@@ -1,208 +1,181 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/errors/app_failure.dart';
 import '../../../core/persistence/app_database.dart';
 import '../../../game/domain/character_id.dart';
-import '../../../game/domain/run_configuration.dart';
 import '../../auth/domain/auth_repository.dart';
 import '../domain/leaderboard_models.dart';
 import '../domain/leaderboard_repository.dart';
+import 'local_leaderboard_repository.dart';
 
 class SupabaseLeaderboardRepository implements LeaderboardRepository {
   const SupabaseLeaderboardRepository({
     required SupabaseClient client,
     required AppDatabase database,
     required AuthRepository authRepository,
+    required LocalLeaderboardRepository localRepository,
   }) : _client = client,
-       _database = database,
-       _authRepository = authRepository;
+       _authRepository = authRepository,
+       _localRepository = localRepository;
 
   final SupabaseClient _client;
-  final AppDatabase _database;
   final AuthRepository _authRepository;
+  final LocalLeaderboardRepository _localRepository;
 
   @override
-  Future<LeaderboardPage> fetchGlobalPage({
-    required LeaderboardFilter filter,
-    LeaderboardCursor? after,
-    int pageSize = 25,
+  Future<List<EndlessLeaderboardEntry>> fetchEndlessLeaderboard({
+    int limit = 50,
   }) async {
     try {
-      final parameters = <String, Object?>{
-        'p_character_id': filter.characterId.serialized,
-        'p_mode': filter.mode.serialized,
-        'p_content_version': filter.contentVersion,
-        'p_limit': pageSize.clamp(1, 25),
-      };
-      if (after != null) {
-        parameters.addAll({
-          'p_after_completed': after.completed,
-          'p_after_level': after.levelReached,
-          'p_after_score': after.totalScore,
-          'p_after_duration_ms': after.durationMs,
-          'p_after_ended_at': after.endedAt.toUtc().toIso8601String(),
-          'p_after_id': after.id,
+      final response = await _client
+          .from('leaderboard_endless')
+          .select('user_id, display_name, character_id, score, duration_ms, updated_at')
+          .order('score', ascending: false)
+          .order('duration_ms', ascending: false)
+          .limit(limit);
+
+      final rows = (response as List<Object?>).cast<Map<String, Object?>>();
+      final entries = <EndlessLeaderboardEntry>[];
+      var position = 1;
+      for (final row in rows) {
+        entries.add(
+          EndlessLeaderboardEntry(
+            position: position++,
+            userId: row['user_id'] as String,
+            displayName:
+                (row['display_name'] as String?)?.trim().isNotEmpty == true
+                    ? row['display_name'] as String
+                    : 'Jugador',
+            characterId: CharacterIdSerialization.parse(
+              row['character_id'] as String? ?? 'jano',
+            ),
+            score: (row['score'] as num?)?.toInt() ?? 0,
+            durationMs: (row['duration_ms'] as num?)?.toInt() ?? 0,
+            updatedAt:
+                DateTime.tryParse(row['updated_at'] as String? ?? '') ??
+                DateTime.now(),
+          ),
+        );
+      }
+      return entries;
+    } catch (_) {
+      return _localRepository.fetchEndlessLeaderboard(limit: limit);
+    }
+  }
+
+  @override
+  Future<List<BossRushLeaderboardEntry>> fetchBossRushLeaderboard({
+    int limit = 50,
+  }) async {
+    try {
+      final response = await _client
+          .from('leaderboard_boss_rush')
+          .select('user_id, display_name, completions_count, updated_at')
+          .order('completions_count', ascending: false)
+          .order('updated_at', ascending: true)
+          .limit(limit);
+
+      final rows = (response as List<Object?>).cast<Map<String, Object?>>();
+      final entries = <BossRushLeaderboardEntry>[];
+      var position = 1;
+      for (final row in rows) {
+        entries.add(
+          BossRushLeaderboardEntry(
+            position: position++,
+            userId: row['user_id'] as String,
+            displayName:
+                (row['display_name'] as String?)?.trim().isNotEmpty == true
+                    ? row['display_name'] as String
+                    : 'Jugador',
+            completionsCount: (row['completions_count'] as num?)?.toInt() ?? 1,
+            updatedAt:
+                DateTime.tryParse(row['updated_at'] as String? ?? '') ??
+                DateTime.now(),
+          ),
+        );
+      }
+      return entries;
+    } catch (_) {
+      return _localRepository.fetchBossRushLeaderboard(limit: limit);
+    }
+  }
+
+  @override
+  Future<void> recordEndlessRun({
+    required CharacterId characterId,
+    required int score,
+    required Duration duration,
+  }) async {
+    final user = _authRepository.currentSession.user;
+    if (user == null || user.isGuest) return;
+
+    // Always update local cache first
+    await _localRepository.recordEndlessRun(
+      characterId: characterId,
+      score: score,
+      duration: duration,
+    );
+
+    // Try online RPC or table upsert
+    try {
+      await _client.rpc('record_endless_score', params: {
+        'p_character_id': characterId.serialized,
+        'p_score': score,
+        'p_duration_ms': duration.inMilliseconds,
+      });
+    } catch (_) {
+      try {
+        final existing = await _client
+            .from('leaderboard_endless')
+            .select('score')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        final currentScore = (existing?['score'] as num?)?.toInt() ?? -1;
+        if (score > currentScore) {
+          await _client.from('leaderboard_endless').upsert({
+            'user_id': user.id,
+            'display_name': user.displayName,
+            'character_id': characterId.serialized,
+            'score': score,
+            'duration_ms': duration.inMilliseconds,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          });
+        }
+      } catch (_) {
+        // Fallback recorded in localRepository
+      }
+    }
+  }
+
+  @override
+  Future<void> recordBossRushCompletion() async {
+    final user = _authRepository.currentSession.user;
+    if (user == null || user.isGuest) return;
+
+    // Always update local cache first
+    await _localRepository.recordBossRushCompletion();
+
+    // Try online RPC or table upsert
+    try {
+      await _client.rpc('record_boss_rush_clear');
+    } catch (_) {
+      try {
+        final existing = await _client
+            .from('leaderboard_boss_rush')
+            .select('completions_count')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        final count = (existing?['completions_count'] as num?)?.toInt() ?? 0;
+        await _client.from('leaderboard_boss_rush').upsert({
+          'user_id': user.id,
+          'display_name': user.displayName,
+          'completions_count': count + 1,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         });
+      } catch (_) {
+        // Fallback recorded in localRepository
       }
-      final response = await _client.rpc(
-        'get_leaderboard_page',
-        params: parameters,
-      );
-      final rows = (response as List<Object?>).cast<Map<String, Object?>>();
-      final entries = rows.map(_parseLeaderboardEntry).toList(growable: false);
-      return LeaderboardPage(
-        entries: entries,
-        nextCursor: entries.length == pageSize && entries.last.position < 100
-            ? entries.last.cursor
-            : null,
-      );
-    } on PostgrestException catch (error) {
-      throw AppFailure(
-        AppFailureCode.unavailable,
-        'No se pudo cargar la clasificación verificada.',
-        cause: error,
-      );
-    } on Object catch (error) {
-      throw AppFailure(
-        AppFailureCode.network,
-        'No se pudo conectar al leaderboard.',
-        cause: error,
-      );
     }
   }
-
-  @override
-  Future<List<RunHistoryEntry>> fetchPersonalHistory({
-    required LeaderboardFilter filter,
-    int limit = 100,
-  }) async {
-    final userId = _authRepository.currentSession.user?.id;
-    final localRows = userId == null
-        ? const <ResultProjection>[]
-        : await _database.personalResultHistory(
-            userId: userId,
-            characterId: filter.characterId.serialized,
-            mode: filter.mode.serialized,
-            limit: limit,
-          );
-    final localEntries = localRows.map(_parseLocalHistoryEntry).toList();
-    try {
-      final response = await _client.rpc(
-        'get_personal_history',
-        params: <String, Object?>{
-          'p_character_id': filter.characterId.serialized,
-          'p_mode': filter.mode.serialized,
-          'p_content_version': filter.contentVersion,
-          'p_limit': limit.clamp(1, 100),
-        },
-      );
-      final rows = (response as List<Object?>).cast<Map<String, Object?>>();
-      final serverEntries = rows.map(_parseHistoryEntry);
-      final merged = <RunHistoryEntry>[...serverEntries, ...localEntries]
-        ..sort((left, right) => right.endedAt.compareTo(left.endedAt));
-      return merged.take(limit.clamp(1, 100)).toList(growable: false);
-    } on PostgrestException catch (error) {
-      if (localEntries.isNotEmpty) {
-        return localEntries;
-      }
-      throw AppFailure(
-        AppFailureCode.unavailable,
-        'No se pudo cargar tu historial de partidas.',
-        cause: error,
-      );
-    } on Object catch (error) {
-      throw AppFailure(
-        AppFailureCode.network,
-        'No se pudo conectar para recuperar tu historial.',
-        cause: error,
-      );
-    }
-  }
-
-  static LeaderboardEntry _parseLeaderboardEntry(Map<String, Object?> row) {
-    return LeaderboardEntry(
-      position: _readInt(row, 'position'),
-      id: _readString(row, 'id'),
-      displayName: _readString(row, 'display_name'),
-      characterId: CharacterIdSerialization.parse(
-        _readString(row, 'character_id'),
-      ),
-      mode: RunModeSerialization.parse(_readString(row, 'mode')),
-      contentVersion: _readString(row, 'content_version'),
-      completed: row['completed'] == true,
-      levelReached: _readInt(row, 'level_reached'),
-      totalScore: _readInt(row, 'total_score'),
-      durationMs: _readInt(row, 'duration_ms'),
-      endedAt: DateTime.parse(_readString(row, 'ended_at')).toUtc(),
-    );
-  }
-
-  static RunHistoryEntry _parseHistoryEntry(Map<String, Object?> row) {
-    final outcome = _parseOutcome(_readString(row, 'outcome'));
-    return RunHistoryEntry(
-      id: _readString(row, 'id'),
-      characterId: CharacterIdSerialization.parse(
-        _readString(row, 'character_id'),
-      ),
-      mode: RunModeSerialization.parse(_readString(row, 'mode')),
-      outcome: outcome,
-      validation: _parseValidation(_readString(row, 'validation')),
-      completed: row['completed'] == true,
-      levelReached: _readInt(row, 'level_reached'),
-      totalScore: _readInt(row, 'total_score'),
-      durationMs: _readInt(row, 'duration_ms'),
-      endedAt: DateTime.parse(_readString(row, 'ended_at')).toUtc(),
-      contentVersion: _readString(row, 'content_version'),
-      rejectionCode: row['rejection_code'] as String?,
-    );
-  }
-
-  static RunHistoryEntry _parseLocalHistoryEntry(ResultProjection row) {
-    return RunHistoryEntry(
-      id: row.id,
-      characterId: CharacterIdSerialization.parse(row.characterId),
-      mode: RunModeSerialization.parse(row.mode),
-      outcome: _parseOutcome(row.outcome),
-      validation: _parseValidation(row.validationStatus),
-      completed: row.outcome == 'victory',
-      levelReached: row.levelReached,
-      totalScore: row.score,
-      durationMs: row.durationMs,
-      endedAt: row.endedAt,
-      contentVersion: row.contentVersion,
-      isLocalOnly: true,
-    );
-  }
-
-  static int _readInt(Map<String, Object?> row, String key) {
-    final value = row[key];
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    return int.parse(value.toString());
-  }
-
-  static String _readString(Map<String, Object?> row, String key) {
-    final value = row[key];
-    if (value is! String || value.isEmpty) {
-      throw FormatException('Invalid $key in leaderboard response.');
-    }
-    return value;
-  }
-
-  static HistoryOutcome _parseOutcome(String value) => switch (value) {
-    'victory' => HistoryOutcome.victory,
-    'defeat' => HistoryOutcome.defeat,
-    _ => HistoryOutcome.abandoned,
-  };
-
-  static ResultValidation _parseValidation(String value) => switch (value) {
-    'verified' => ResultValidation.verified,
-    'limited' => ResultValidation.limited,
-    'rejected' => ResultValidation.rejected,
-    _ => ResultValidation.pending,
-  };
 }

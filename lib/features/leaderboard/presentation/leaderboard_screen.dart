@@ -7,8 +7,6 @@ import '../../../app/app_providers.dart';
 import '../../../app/widgets/character_sprite_preview.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
-import '../../../game/domain/character_id.dart';
-import '../../../game/domain/run_configuration.dart';
 import '../../auth/application/auth_controller.dart';
 import '../application/leaderboard_controller.dart';
 import '../domain/leaderboard_models.dart';
@@ -25,7 +23,9 @@ class LeaderboardScreen extends ConsumerWidget {
 
     final asyncState = ref.watch(leaderboardControllerProvider);
     return asyncState.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: RetroColors.cyan),
+      ),
       error: (error, stackTrace) => _LoadFailure(
         onRetry: () => ref.invalidate(leaderboardControllerProvider),
       ),
@@ -34,437 +34,275 @@ class LeaderboardScreen extends ConsumerWidget {
   }
 }
 
-class _LeaderboardContent extends ConsumerStatefulWidget {
+class _LeaderboardContent extends ConsumerWidget {
   const _LeaderboardContent({required this.state});
 
   final LeaderboardViewState state;
 
   @override
-  ConsumerState<_LeaderboardContent> createState() => _LeaderboardContentState();
-}
-
-class _LeaderboardContentState extends ConsumerState<_LeaderboardContent>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(_onTabChanged);
-  }
-
-  void _onTabChanged() {
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _tabController.removeListener(_onTabChanged);
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = widget.state;
+  Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(leaderboardControllerProvider.notifier);
     final media = MediaQuery.sizeOf(context);
     final isCompactHeight = media.height < 520;
-    final isGlobalTab = _tabController.index == 0;
+    final horizontalPadding = isCompactHeight ? 14.0 : 24.0;
+    final isEndless = state.selectedCategory == LeaderboardCategory.endless;
 
-    return DefaultTabController(
-      length: 2,
-      child: RefreshIndicator(
-        onRefresh: controller.refresh,
-        color: RetroColors.cyan,
-        backgroundColor: const Color(0xFF0C1420),
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  isCompactHeight ? 14 : 24,
-                  isCompactHeight ? 8 : 18,
-                  isCompactHeight ? 14 : 24,
-                  isCompactHeight ? 6 : 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        'LEADERBOARD POR PERSONAJE',
-                        style: GoogleFonts.pressStart2p(
-                          fontSize: isCompactHeight ? 12 : 15,
-                          fontWeight: FontWeight.bold,
-                          color: RetroColors.cyan,
-                          letterSpacing: 1.5,
-                        ),
+    return RefreshIndicator(
+      onRefresh: controller.refresh,
+      color: RetroColors.cyan,
+      backgroundColor: const Color(0xFF0C1420),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                isCompactHeight ? 10 : 20,
+                horizontalPadding,
+                isCompactHeight ? 8 : 14,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'RANKING ONLINE',
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: isCompactHeight ? 12 : 16,
+                        fontWeight: FontWeight.bold,
+                        color: RetroColors.cyan,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                    SizedBox(height: isCompactHeight ? 2 : 4),
-                    Text(
-                      'Compara resultados verificados o revisa tus últimas partidas.',
-                      style: GoogleFonts.vt323(
-                        fontSize: isCompactHeight ? 15 : 17,
-                        color: RetroColors.textMuted,
-                      ),
+                  ),
+                  SizedBox(height: isCompactHeight ? 4 : 6),
+                  Text(
+                    'Los mejores récords globales en Modo Endless y Boss Rush.',
+                    style: GoogleFonts.vt323(
+                      fontSize: isCompactHeight ? 16 : 18,
+                      color: RetroColors.textMuted,
                     ),
-                    SizedBox(height: isCompactHeight ? 8 : 14),
-                    _Filters(
-                      filter: state.filter,
-                      onCharacterChanged: controller.selectCharacter,
-                      onModeChanged: controller.selectMode,
-                      isCompact: isCompactHeight,
-                    ),
-                    if (state.errorMessage != null) ...[
-                      SizedBox(height: isCompactHeight ? 6 : 10),
-                      _MessageBanner(
-                        icon: Icons.sync_problem_outlined,
-                        message: state.errorMessage!,
-                      ),
-                    ],
-                    if (state.availabilityMessage != null &&
-                        state.errorMessage == null) ...[
-                      SizedBox(height: isCompactHeight ? 6 : 10),
-                      _InfoBanner(
-                        icon: Icons.info_outline,
-                        message: state.availabilityMessage!,
-                      ),
-                    ],
-                  ],
+                  ),
+                  SizedBox(height: isCompactHeight ? 10 : 16),
+                  _CategorySelector(
+                    selected: state.selectedCategory,
+                    onSelected: controller.selectCategory,
+                    isCompact: isCompactHeight,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isEndless)
+            ..._buildEndlessSlivers(state.endlessEntries, horizontalPadding, isCompactHeight)
+          else
+            ..._buildBossRushSlivers(state.bossRushEntries, horizontalPadding, isCompactHeight),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildEndlessSlivers(
+    List<EndlessLeaderboardEntry> entries,
+    double horizontalPadding,
+    bool isCompact,
+  ) {
+    if (entries.isEmpty) {
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: isCompact ? 20 : 36,
+            ),
+            child: const _EmptyState(
+              icon: Icons.emoji_events_outlined,
+              title: 'Sin récords en Modo Endless',
+              message:
+                  '¡Juega una partida en Modo Endless con tu cuenta iniciada para liderar el ranking!',
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: isCompact ? 8 : 14,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _EndlessCard(entry: entries[index]),
+            childCount: entries.length,
+          ),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildBossRushSlivers(
+    List<BossRushLeaderboardEntry> entries,
+    double horizontalPadding,
+    bool isCompact,
+  ) {
+    if (entries.isEmpty) {
+      return [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: isCompact ? 20 : 36,
+            ),
+            child: const _EmptyState(
+              icon: Icons.military_tech_outlined,
+              title: 'Sin victorias en Boss Rush todavía',
+              message:
+                  '¡Derrota a los 10 jefes consecutivos en Boss Rush para inscribir tu nombre en la gloria!',
+            ),
+          ),
+        ),
+      ];
+    }
+
+    return [
+      SliverPadding(
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontalPadding,
+          vertical: isCompact ? 8 : 14,
+        ),
+        sliver: SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _BossRushCard(entry: entries[index]),
+            childCount: entries.length,
+          ),
+        ),
+      ),
+    ];
+  }
+}
+
+class _CategorySelector extends StatelessWidget {
+  const _CategorySelector({
+    required this.selected,
+    required this.onSelected,
+    required this.isCompact,
+  });
+
+  final LeaderboardCategory selected;
+  final ValueChanged<LeaderboardCategory> onSelected;
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _CategoryButton(
+            title: 'MODO ENDLESS',
+            icon: Icons.all_inclusive,
+            isSelected: selected == LeaderboardCategory.endless,
+            activeColor: RetroColors.cyan,
+            onPressed: () => onSelected(LeaderboardCategory.endless),
+            isCompact: isCompact,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _CategoryButton(
+            title: 'BOSS RUSH',
+            icon: Icons.whatshot,
+            isSelected: selected == LeaderboardCategory.bossRush,
+            activeColor: RetroColors.magenta,
+            onPressed: () => onSelected(LeaderboardCategory.bossRush),
+            isCompact: isCompact,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CategoryButton extends StatelessWidget {
+  const _CategoryButton({
+    required this.title,
+    required this.icon,
+    required this.isSelected,
+    required this.activeColor,
+    required this.onPressed,
+    required this.isCompact,
+  });
+
+  final String title;
+  final IconData icon;
+  final bool isSelected;
+  final Color activeColor;
+  final VoidCallback onPressed;
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = isSelected ? activeColor : const Color(0xFF1E354F);
+    final bgColor = isSelected
+        ? activeColor.withValues(alpha: 0.15)
+        : const Color(0xFF0C1420);
+
+    return InkWell(
+      onTap: onPressed,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          vertical: isCompact ? 8 : 12,
+          horizontal: 10,
+        ),
+        decoration: BoxDecoration(
+          color: bgColor,
+          border: Border.all(color: borderColor, width: isSelected ? 2 : 1.5),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: isCompact ? 16 : 20,
+              color: isSelected ? activeColor : RetroColors.textMuted,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.pressStart2p(
+                  fontSize: isCompact ? 8.5 : 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? activeColor : RetroColors.textMuted,
+                  letterSpacing: 1,
                 ),
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _LeaderboardTabBarDelegate(
-                tabBar: TabBar(
-                  controller: _tabController,
-                  indicatorColor: RetroColors.cyan,
-                  indicatorWeight: 3,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  labelStyle: GoogleFonts.pressStart2p(
-                    fontSize: isCompactHeight ? 8 : 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  unselectedLabelStyle: GoogleFonts.pressStart2p(
-                    fontSize: isCompactHeight ? 8 : 9,
-                  ),
-                  labelColor: RetroColors.cyan,
-                  unselectedLabelColor: RetroColors.textMuted,
-                  tabs: const [
-                    Tab(
-                      icon: PixelIconAsset(
-                        assetName: PixelIconAsset.trophy,
-                        size: 18,
-                      ),
-                      text: 'Top global',
-                    ),
-                    Tab(
-                      icon: PixelIconAsset(
-                        assetName: PixelIconAsset.coin,
-                        size: 18,
-                      ),
-                      text: 'Mi historial',
-                    ),
-                  ],
-                ),
-                height: isCompactHeight ? 56 : 64,
-              ),
-            ),
-            if (isGlobalTab)
-              ..._buildGlobalSlivers(
-                context,
-                state,
-                controller,
-                isCompactHeight,
-              )
-            else
-              ..._buildHistorySlivers(context, state, isCompactHeight),
           ],
         ),
       ),
     );
   }
-
-  List<Widget> _buildGlobalSlivers(
-    BuildContext context,
-    LeaderboardViewState state,
-    LeaderboardController controller,
-    bool isCompact,
-  ) {
-    final horizontalPadding = isCompact ? 14.0 : 24.0;
-    if (state.globalEntries.isEmpty) {
-      return [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: isCompact ? 16 : 28,
-            ),
-            child: _EmptyState(
-              icon: Icons.emoji_events_outlined,
-              title: 'Todavía no hay resultados verificados',
-              message: state.availabilityMessage ??
-                  'Sé la primera persona en completar una partida con este personaje.',
-            ),
-          ),
-        ),
-      ];
-    }
-    return [
-      SliverPadding(
-        padding: EdgeInsets.symmetric(
-          horizontal: horizontalPadding,
-          vertical: isCompact ? 10 : 16,
-        ),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              if (index == state.globalEntries.length) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Center(
-                    child: FilledButton.tonalIcon(
-                      onPressed: state.canLoadMore ? controller.loadMore : null,
-                      icon: state.isLoadingMore
-                          ? const SizedBox.square(
-                              dimension: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: RetroColors.cyan,
-                              ),
-                            )
-                          : const Icon(Icons.expand_more),
-                      label: const Text('Cargar 25 más'),
-                    ),
-                  ),
-                );
-              }
-              return _LeaderboardCard(entry: state.globalEntries[index]);
-            },
-            childCount:
-                state.globalEntries.length + (state.nextCursor == null ? 0 : 1),
-          ),
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _buildHistorySlivers(
-    BuildContext context,
-    LeaderboardViewState state,
-    bool isCompact,
-  ) {
-    final horizontalPadding = isCompact ? 14.0 : 24.0;
-    if (state.personalHistory.isEmpty) {
-      return [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: horizontalPadding,
-              vertical: isCompact ? 16 : 28,
-            ),
-            child: const _EmptyState(
-              icon: Icons.history_toggle_off_outlined,
-              title: 'Sin partidas para este filtro',
-              message:
-                  'Tus resultados aparecerán aquí, incluidos los pendientes o rechazados.',
-            ),
-          ),
-        ),
-      ];
-    }
-    return [
-      SliverPadding(
-        padding: EdgeInsets.symmetric(
-          horizontal: horizontalPadding,
-          vertical: isCompact ? 10 : 16,
-        ),
-        sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, index) =>
-                _HistoryCard(entry: state.personalHistory[index]),
-            childCount: state.personalHistory.length,
-          ),
-        ),
-      ),
-    ];
-  }
 }
 
-class _LeaderboardTabBarDelegate extends SliverPersistentHeaderDelegate {
-  _LeaderboardTabBarDelegate({
-    required this.tabBar,
-    required this.height,
-  });
+class _EndlessCard extends StatelessWidget {
+  const _EndlessCard({required this.entry});
 
-  final Widget tabBar;
-  final double height;
-
-  @override
-  double get minExtent => height;
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(
-      height: height,
-      decoration: const BoxDecoration(
-        color: Color(0xFF070D16),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF1E354F), width: 1.5),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: tabBar,
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _LeaderboardTabBarDelegate oldDelegate) {
-    return oldDelegate.height != height || oldDelegate.tabBar != tabBar;
-  }
-}
-
-class _Filters extends StatelessWidget {
-  const _Filters({
-    required this.filter,
-    required this.onCharacterChanged,
-    required this.onModeChanged,
-    this.isCompact = false,
-  });
-
-  final LeaderboardFilter filter;
-  final ValueChanged<CharacterId> onCharacterChanged;
-  final ValueChanged<RunMode> onModeChanged;
-  final bool isCompact;
-
-  @override
-  Widget build(BuildContext context) {
-    return RetroArcadeCard(
-      borderColor: const Color(0xFF1E354F),
-      backgroundColor: const Color(0xFF0C1420),
-      padding: EdgeInsets.symmetric(
-        horizontal: isCompact ? 10 : 16,
-        vertical: isCompact ? 6 : 12,
-      ),
-      child: Wrap(
-        spacing: isCompact ? 10 : 16,
-        runSpacing: isCompact ? 6 : 10,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(
-            width: isCompact ? 200 : 250,
-            child: DropdownButtonFormField<CharacterId>(
-              key: ValueKey(filter.characterId),
-              initialValue: filter.characterId,
-              isDense: true,
-              dropdownColor: const Color(0xFF0F1724),
-              decoration: InputDecoration(
-                labelText: 'Personaje',
-                labelStyle: GoogleFonts.vt323(fontSize: 16, color: RetroColors.cyan),
-                prefixIcon: const Icon(Icons.person_outline, size: 18, color: RetroColors.cyan),
-                border: const OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: isCompact ? 8 : 12,
-                ),
-              ),
-              items: [
-                for (final character in CharacterId.values)
-                  DropdownMenuItem(
-                    value: character,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CharacterIcon(
-                          assetName: character.definition.assetName,
-                          size: isCompact ? 20 : 24,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          character.definition.displayName.toUpperCase(),
-                          style: GoogleFonts.pressStart2p(
-                            fontSize: isCompact ? 7.5 : 8.5,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  onCharacterChanged(value);
-                }
-              },
-            ),
-          ),
-          SegmentedButton<RunMode>(
-            style: SegmentedButton.styleFrom(
-              visualDensity: isCompact ? VisualDensity.compact : VisualDensity.standard,
-              padding: EdgeInsets.symmetric(
-                horizontal: isCompact ? 6 : 12,
-                vertical: isCompact ? 4 : 8,
-              ),
-            ),
-            segments: const [
-              ButtonSegment(
-                value: RunMode.progression,
-                icon: Icon(Icons.map_outlined, size: 16),
-                label: Text('Progresión'),
-              ),
-              ButtonSegment(
-                value: RunMode.standard,
-                icon: Icon(Icons.speed_outlined, size: 16),
-                label: Text('Estándar'),
-              ),
-              ButtonSegment(
-                value: RunMode.bossRush,
-                icon: Icon(Icons.whatshot_outlined, size: 16),
-                label: Text('Boss Rush'),
-              ),
-            ],
-            selected: {filter.mode},
-            onSelectionChanged: (selection) {
-              onModeChanged(selection.single);
-            },
-          ),
-          Chip(
-            visualDensity: isCompact ? VisualDensity.compact : VisualDensity.standard,
-            backgroundColor: const Color(0xFF132032),
-            side: const BorderSide(color: Color(0xFF1E354F)),
-            avatar: const Icon(Icons.layers_outlined, size: 16, color: RetroColors.cyan),
-            label: Text(
-              'Versión ${filter.contentVersion}',
-              style: GoogleFonts.vt323(fontSize: 15, color: RetroColors.textBright),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-class _LeaderboardCard extends StatelessWidget {
-  const _LeaderboardCard({required this.entry});
-
-  final LeaderboardEntry entry;
+  final EndlessLeaderboardEntry entry;
 
   @override
   Widget build(BuildContext context) {
@@ -473,64 +311,89 @@ class _LeaderboardCard extends StatelessWidget {
     final borderColor = isTop1
         ? RetroColors.gold
         : isTop3
-        ? RetroColors.cyan
-        : const Color(0xFF1E354F);
+            ? RetroColors.cyan
+            : const Color(0xFF1E354F);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: RetroArcadeCard(
         borderColor: borderColor,
         glow: isTop1,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
+            // Posición #
             SizedBox(
-              width: 44,
+              width: 38,
               child: Center(
                 child: isTop1
                     ? const PixelIconAsset(
                         assetName: PixelIconAsset.trophy,
-                        size: 32,
+                        size: 28,
                       )
                     : Text(
                         '#${entry.position}',
                         style: GoogleFonts.pressStart2p(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: isTop3 ? RetroColors.cyan : Colors.white60,
                         ),
                       ),
               ),
             ),
+            const SizedBox(width: 10),
+
+            // Personaje avatar preview
+            CharacterIcon(
+              assetName: entry.characterId.definition.assetName,
+              size: 36,
+            ),
             const SizedBox(width: 12),
+
+            // Jugador y Personaje utilizado
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     entry.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.pressStart2p(
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${entry.completed ? 'Completada' : 'Fallida'} · '
-                    'Nivel ${entry.levelReached}/10 · ${_formatDuration(entry.durationMs)}\n'
-                    '${_formatDate(entry.endedAt)} · ${entry.contentVersion}',
-                    style: GoogleFonts.vt323(
-                      fontSize: 16,
-                      color: RetroColors.textMuted,
-                      height: 1.15,
-                    ),
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Text(
+                        entry.characterId.definition.displayName.toUpperCase(),
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: 7.5,
+                          color: RetroColors.cyan,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.timer_outlined, size: 13, color: RetroColors.textMuted),
+                      const SizedBox(width: 3),
+                      Text(
+                        _formatDuration(entry.durationMs),
+                        style: GoogleFonts.vt323(
+                          fontSize: 16,
+                          color: RetroColors.textMuted,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+
+            // Puntuación
             Semantics(
-              label: '${entry.totalScore} puntos',
+              label: '${entry.score} puntos',
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -540,9 +403,9 @@ class _LeaderboardCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${entry.totalScore}',
+                    '${entry.score}',
                     style: GoogleFonts.pressStart2p(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: RetroColors.gold,
                     ),
@@ -557,129 +420,98 @@ class _LeaderboardCard extends StatelessWidget {
   }
 }
 
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({required this.icon, required this.message});
+class _BossRushCard extends StatelessWidget {
+  const _BossRushCard({required this.entry});
 
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C1929),
-        border: Border.all(color: RetroColors.cyan, width: 1.5),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, offset: Offset(2, 2)),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: RetroColors.cyan),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.vt323(fontSize: 16, color: RetroColors.textBright),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({required this.entry});
-
-  final RunHistoryEntry entry;
+  final BossRushLeaderboardEntry entry;
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (entry.validation) {
-      ResultValidation.verified => RetroColors.green,
-      ResultValidation.pending => RetroColors.gold,
-      ResultValidation.limited => Colors.amber,
-      ResultValidation.rejected => RetroColors.magenta,
-    };
+    final isTop1 = entry.position == 1;
+    final isTop3 = entry.position <= 3;
+    final borderColor = isTop1
+        ? RetroColors.gold
+        : isTop3
+            ? RetroColors.magenta
+            : const Color(0xFF1E354F);
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: RetroArcadeCard(
-        borderColor: color.withValues(alpha: 0.7),
-        accentHeaderColor: color,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        borderColor: borderColor,
+        glow: isTop1,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${entry.outcome.label.toUpperCase()} · NIVEL ${entry.levelReached}/10',
+            // Posición #
+            SizedBox(
+              width: 38,
+              child: Center(
+                child: isTop1
+                    ? const PixelIconAsset(
+                        assetName: PixelIconAsset.trophy,
+                        size: 28,
+                      )
+                    : Text(
+                        '#${entry.position}',
+                        style: GoogleFonts.pressStart2p(
+                          fontSize: 11,
+                          color: isTop3 ? RetroColors.magenta : Colors.white60,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Nombre del jugador
+            Expanded(
+              child: Text(
+                entry.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.pressStart2p(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            // Cantidad de veces completado
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isTop1
+                    ? RetroColors.gold.withValues(alpha: 0.2)
+                    : const Color(0xFF1A1F2C),
+                border: Border.all(
+                  color: isTop1 ? RetroColors.gold : RetroColors.magenta,
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.emoji_events,
+                    size: 14,
+                    color: isTop1 ? RetroColors.gold : RetroColors.magenta,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    entry.completionsCount == 1
+                        ? '1 VICTORIA'
+                        : '${entry.completionsCount} VICTORIAS',
                     style: GoogleFonts.pressStart2p(
-                      fontSize: 9.5,
+                      fontSize: 8.5,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: isTop1 ? RetroColors.gold : RetroColors.magenta,
+                      letterSpacing: 0.8,
                     ),
                   ),
-                ),
-                RetroBadge(
-                  text: entry.validation.label,
-                  color: color,
-                  fontSize: 7.5,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const PixelIconAsset(assetName: PixelIconAsset.coin, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  '${entry.totalScore} PTS',
-                  style: GoogleFonts.pressStart2p(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: RetroColors.gold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '· ${_formatDuration(entry.durationMs)} · ${_formatDate(entry.endedAt)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.vt323(
-                      fontSize: 16,
-                      color: RetroColors.textMuted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              entry.validation.explanation,
-              style: GoogleFonts.vt323(
-                fontSize: 15,
-                color: RetroColors.textBright,
-                height: 1.15,
+                ],
               ),
             ),
-            if (entry.isLocalOnly) ...[
-              const SizedBox(height: 8),
-              const RetroBadge(
-                text: 'SÓLO EN ESTE DISPOSITIVO',
-                color: RetroColors.cyan,
-                fontSize: 7,
-                icon: Icon(
-                  Icons.phone_android_outlined,
-                  size: 11,
-                  color: RetroColors.cyan,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -701,66 +533,27 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 40),
-          child: Column(
-            children: [
-              Icon(icon, size: 52, color: RetroColors.textMuted),
-              const SizedBox(height: 14),
-              Text(
-                title.toUpperCase(),
-                textAlign: TextAlign.center,
-                style: GoogleFonts.pressStart2p(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.vt323(
-                  fontSize: 16,
-                  color: RetroColors.textMuted,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MessageBanner extends StatelessWidget {
-  const _MessageBanner({required this.icon, required this.message});
-
-  final IconData icon;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF160B11),
-        border: Border.all(color: RetroColors.magenta, width: 1.5),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, offset: Offset(2, 2)),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: RetroColors.magenta),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: GoogleFonts.vt323(fontSize: 16, color: Colors.white),
+          Icon(icon, size: 48, color: RetroColors.textMuted),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.pressStart2p(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: RetroColors.cyan,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.vt323(
+              fontSize: 17,
+              color: RetroColors.textMuted,
             ),
           ),
         ],
@@ -811,20 +604,6 @@ class _LoadFailure extends ConsumerWidget {
       ),
     );
   }
-}
-
-String _formatDuration(int milliseconds) {
-  final duration = Duration(milliseconds: milliseconds);
-  final minutes = duration.inMinutes;
-  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-  return '$minutes:$seconds';
-}
-
-String _formatDate(DateTime value) {
-  final local = value.toLocal();
-  String two(int part) => part.toString().padLeft(2, '0');
-  return '${two(local.day)}/${two(local.month)}/${local.year} '
-      '${two(local.hour)}:${two(local.minute)}';
 }
 
 class _LeaderboardAuthRequiredView extends ConsumerWidget {
@@ -878,7 +657,7 @@ class _LeaderboardAuthRequiredView extends ConsumerWidget {
                 ),
                 SizedBox(height: isCompactHeight ? 6 : 10),
                 Text(
-                  'Inicia sesión con tu cuenta para desbloquear el Top Global por personaje, comparar tus récords contra otros jugadores y sincronizar tu historial.',
+                  'Inicia sesión con tu cuenta para desbloquear los rankings mundiales de Modo Endless y Boss Rush, y registrar tus marcas.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.vt323(
                     fontSize: isCompactHeight ? 15 : 17,
@@ -920,4 +699,11 @@ class _LeaderboardAuthRequiredView extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _formatDuration(int milliseconds) {
+  final duration = Duration(milliseconds: milliseconds);
+  final minutes = duration.inMinutes;
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return '$minutes:$seconds';
 }
