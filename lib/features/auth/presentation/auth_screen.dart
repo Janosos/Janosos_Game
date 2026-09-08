@@ -590,14 +590,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       icon: const Icon(Icons.account_circle_outlined),
                       label: const Text('Continuar con Google'),
                     ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: state.isBusy
-                          ? null
-                          : () => _openProvider(AuthProviderId.apple),
-                      icon: const Icon(Icons.apple),
-                      label: const Text('Continuar con Apple'),
-                    ),
                   ] else ...[
                     const Divider(height: 32),
                     OutlinedButton.icon(

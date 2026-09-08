@@ -159,15 +159,6 @@ class SettingsScreen extends ConsumerWidget {
                         ? null
                         : () => _link(ref, AuthProviderId.google),
                   ),
-                  RetroArcadeButton(
-                    text: 'VINCULAR APPLE',
-                    icon: Icons.apple,
-                    primaryColor: RetroColors.cyan,
-                    fontSize: 7.5,
-                    onPressed: auth.isBusy
-                        ? null
-                        : () => _link(ref, AuthProviderId.apple),
-                  ),
                 ],
                 RetroArcadeButton(
                   text: 'CAMBIAR PASSWORD',

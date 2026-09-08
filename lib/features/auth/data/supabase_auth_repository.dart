@@ -232,13 +232,25 @@ class SupabaseAuthRepository implements AuthRepository {
 
     final account = await signIn.authenticate();
     final authentication = account.authentication;
-    final authorization = await account.authorizationClient
-        .authorizationForScopes(const []);
     final idToken = authentication.idToken;
-    if (idToken == null || authorization == null) {
+    if (idToken == null || idToken.isEmpty) {
       throw const AppFailure(
         AppFailureCode.unauthorized,
-        'Google no entregó credenciales válidas. Revisa la configuración OAuth.',
+        'Google no entregó credenciales válidas (idToken nulo). Revisa la configuración OAuth.',
+      );
+    }
+
+    String? accessToken;
+    try {
+      final authorization = await account.authorizationClient
+          .authorizationForScopes(const ['openid', 'email', 'profile']);
+      accessToken = authorization?.accessToken;
+    } on Object catch (error, stackTrace) {
+      developer.log(
+        'Optional access token retrieval skipped/failed',
+        name: 'auth.google',
+        error: error,
+        stackTrace: stackTrace,
       );
     }
 
@@ -247,13 +259,13 @@ class SupabaseAuthRepository implements AuthRepository {
         await _client.auth.linkIdentityWithIdToken(
           provider: OAuthProvider.google,
           idToken: idToken,
-          accessToken: authorization.accessToken,
+          accessToken: accessToken,
         );
       } else {
         await _client.auth.signInWithIdToken(
           provider: OAuthProvider.google,
           idToken: idToken,
-          accessToken: authorization.accessToken,
+          accessToken: accessToken,
         );
       }
     } finally {
@@ -352,10 +364,25 @@ class SupabaseAuthRepository implements AuthRepository {
         _friendlyFunctionMessage(error),
         cause: error,
       );
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
+      developer.log(
+        'Authentication operation failed',
+        name: 'auth.guard',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      final errorString = error.toString();
+      final isGooglePlayError = errorString.contains('ApiException') ||
+          errorString.contains('sign_in_failed') ||
+          errorString.contains('10:');
+      final message = isGooglePlayError
+          ? 'Error de Google (ApiException 10): falta registrar la huella SHA-1 de la app en Google Cloud Console.'
+          : (kDebugMode
+              ? 'Error de autenticación: $error'
+              : 'No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.');
       throw AppFailure(
         AppFailureCode.network,
-        'No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.',
+        message,
         cause: error,
       );
     }
@@ -372,7 +399,9 @@ class SupabaseAuthRepository implements AuthRepository {
     if (message.contains('email not confirmed')) {
       return 'Confirma tu correo antes de iniciar sesión.';
     }
-    return 'No se pudo completar la autenticación.';
+    return error.message.isNotEmpty
+        ? error.message
+        : 'No se pudo completar la autenticación.';
   }
 
   static String _friendlyFunctionMessage(FunctionException error) {
