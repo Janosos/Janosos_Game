@@ -88,7 +88,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         const SizedBox(height: 12),
         const Center(
           child: RetroBadge(
-            text: 'JANOSOS V6 • RETRO RUNNER',
+            text: 'ANOTHER RETRO RUNNER GAME • V6.2',
             color: RetroColors.cyan,
             fontSize: 9,
           ),

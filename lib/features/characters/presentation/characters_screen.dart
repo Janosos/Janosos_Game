@@ -71,7 +71,7 @@ class CharactersScreen extends StatelessWidget {
             padding: EdgeInsets.all(isCompactHeight ? 10 : (isMobile ? 14 : 20)),
             gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: isCompactHeight ? 360 : (isMobile ? 500 : 380),
-              mainAxisExtent: isCompactHeight ? 210 : (isMobile ? 290 : 310),
+              mainAxisExtent: isCompactHeight ? 250 : (isMobile ? 320 : 330),
               crossAxisSpacing: isCompactHeight ? 10 : 14,
               mainAxisSpacing: isCompactHeight ? 10 : 14,
             ),
@@ -113,36 +113,53 @@ class CharactersScreen extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: isCompactHeight ? 6 : 10),
-                    Expanded(
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF070B12),
-                          border: Border.all(
-                            color: const Color(0xFF162537),
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
+                    Container(
+                      height: isCompactHeight ? 70 : 88,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF070B12),
+                        border: Border.all(
+                          color: const Color(0xFF162537),
+                          width: 1.5,
                         ),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: CharacterRunningSprite(
-                              assetName: definition.assetName,
-                            ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(6.0),
+                          child: CharacterRunningSprite(
+                            assetName: definition.assetName,
                           ),
                         ),
                       ),
                     ),
                     SizedBox(height: isCompactHeight ? 6 : 8),
-                    Text(
-                      definition.description,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.vt323(
-                        fontSize: isCompactHeight ? 14 : 15,
-                        color: RetroColors.textMuted,
-                        height: 1.1,
+                    Expanded(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF070B12),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: const Color(0xFF162537),
+                          ),
+                        ),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: Text(
+                            definition.description,
+                            style: GoogleFonts.vt323(
+                              fontSize: isCompactHeight ? 14 : 16,
+                              color: RetroColors.textBright,
+                              height: 1.15,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],

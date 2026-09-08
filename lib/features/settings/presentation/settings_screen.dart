@@ -453,6 +453,34 @@ class SettingsScreen extends ConsumerWidget {
               sessionCard,
             ],
           ),
+        const SizedBox(height: 20),
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Version 6.2 made by Jano and Chema',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.pressStart2p(
+                  fontSize: isCompactHeight ? 8 : 9.5,
+                  color: RetroColors.cyan,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '★ ANOTHER RETRO RUNNER GAME ★',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.vt323(
+                  fontSize: isCompactHeight ? 13 : 15,
+                  color: RetroColors.gold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: isCompactHeight ? 12 : 24),
       ],
     );
   }

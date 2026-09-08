@@ -763,12 +763,13 @@ class _PreflightLoading extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '★ JANOSOS ARCADE ★',
+                '★ ANOTHER RETRO RUNNER GAME ★',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.pressStart2p(
-                  fontSize: 13,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFFFFD700),
-                  letterSpacing: 2,
+                  letterSpacing: 1.5,
                 ),
               ),
               const SizedBox(height: 12),

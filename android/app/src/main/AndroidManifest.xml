@@ -2,7 +2,7 @@
     package="io.janosos.game">
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="Janosos Game"
+        android:label="Another retro runner game"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity

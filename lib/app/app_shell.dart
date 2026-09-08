@@ -51,12 +51,12 @@ class JanososAppShell extends StatelessWidget {
             ),
             SizedBox(width: isCompactHeight ? 6 : 10),
             Text(
-              'JANOSOS V6',
+              'ANOTHER RETRO RUNNER',
               style: GoogleFonts.pressStart2p(
-                fontSize: isCompactHeight ? 10 : 13,
+                fontSize: isCompactHeight ? 8.5 : 11,
                 fontWeight: FontWeight.bold,
                 color: cyan,
-                letterSpacing: isCompactHeight ? 1.2 : 2,
+                letterSpacing: isCompactHeight ? 1.0 : 1.5,
                 shadows: [
                   Shadow(color: cyan.withValues(alpha: 0.8), blurRadius: 10),
                 ],

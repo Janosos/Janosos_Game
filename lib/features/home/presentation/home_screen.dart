@@ -46,10 +46,10 @@ class HomeScreen extends ConsumerWidget {
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.medium,
                 errorBuilder: (_, _, _) => Text(
-                  '★ JANOSOS ARCADE ★',
+                  '★ ANOTHER RETRO RUNNER GAME ★',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.pressStart2p(
-                    fontSize: isShort ? 13 : (isMobile ? 16 : 20),
+                    fontSize: isShort ? 12 : (isMobile ? 14 : 18),
                     color: RetroColors.cyan,
                     letterSpacing: 2,
                   ),

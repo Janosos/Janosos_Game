@@ -101,10 +101,11 @@ class _StartMenuOverlayState extends State<StartMenuOverlay>
                           height: titleHeight,
                           fit: BoxFit.contain,
                           errorBuilder: (_, _, _) => const Text(
-                            '★ JANOSOS ARCADE ★',
+                            '★ ANOTHER RETRO RUNNER GAME ★',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Color(0xFF29FFE4),
-                              fontSize: 24,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
                             ),

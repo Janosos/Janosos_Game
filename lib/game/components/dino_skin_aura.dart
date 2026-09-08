@@ -144,8 +144,8 @@ class DinoSkinAuraComponent extends PositionComponent {
 
     if (auraSprite != null) {
       final spriteAlpha = isNanicDischarging
-          ? 0.75
-          : (auraType != SkinAuraType.none ? 0.38 * pulse : 0.0);
+          ? 0.85 * opacity
+          : (auraType != SkinAuraType.none ? 0.40 * pulse * opacity : 0.0);
       if (spriteAlpha > 0.01) {
         final spritePaint = Paint()
           ..color = Color.fromRGBO(255, 255, 255, spriteAlpha.clamp(0.0, 1.0));

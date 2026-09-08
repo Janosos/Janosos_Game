@@ -143,7 +143,11 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
     isSuperCharged = false;
     isDischarging = false;
     _firstOrbBonusUsed = false;
-    if (auraComponent != null) auraComponent!.opacity = 0.0;
+    if (auraComponent != null) {
+      auraComponent!.isNanicDischarging = false;
+      auraComponent!.opacity =
+          _configuration.palette.auraType != SkinAuraType.none ? 1.0 : 0.0;
+    }
 
     final definition = characterId.definition;
     if (definition.hasTrait(CharacterCoreTrait.regeneratingShield) ||
@@ -216,12 +220,15 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
 
     // Init Aura
     final auraDiameter = (math.max(size.x, size.y) * 1.45).clamp(90.0, 140.0);
+    final hasAura = _configuration.palette.auraType != SkinAuraType.none ||
+        (characterId == CharacterId.nanic && (isSuperCharged || isDischarging));
     if (auraComponent == null) {
       auraComponent = DinoSkinAuraComponent(
         auraType: _configuration.palette.auraType,
       );
       auraComponent!.size = Vector2(auraDiameter, auraDiameter);
       auraComponent!.position = size / 2;
+      auraComponent!.opacity = hasAura ? 1.0 : 0.0;
       try {
         final auraSprite = await game.loadSprite('aura.png');
         auraComponent!.auraSprite = auraSprite;
@@ -238,6 +245,7 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
       auraComponent!.auraType = _configuration.palette.auraType;
       auraComponent!.size = Vector2(auraDiameter, auraDiameter);
       auraComponent!.position = size / 2;
+      auraComponent!.opacity = hasAura ? 1.0 : 0.0;
     }
   }
 
@@ -310,6 +318,10 @@ class DinoComponent extends SpriteAnimationGroupComponent<DinoState>
             (isSuperCharged || isDischarging);
         auraComponent!.isNanicDischarging = nanicActive;
         auraComponent!.auraType = _configuration.palette.auraType;
+        auraComponent!.opacity =
+            (nanicActive || _configuration.palette.auraType != SkinAuraType.none)
+                ? 1.0
+                : 0.0;
       }
 
       if (horizontalInput != 0 && current != DinoState.hit) {

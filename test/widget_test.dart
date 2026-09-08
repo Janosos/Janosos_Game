@@ -8,6 +8,6 @@ void main() {
       const MaterialApp(home: Scaffold(body: JanososVersionLabel())),
     );
 
-    expect(find.text('V6 PREVIEW'), findsOneWidget);
+    expect(find.text('V6.2'), findsOneWidget);
   });
 }

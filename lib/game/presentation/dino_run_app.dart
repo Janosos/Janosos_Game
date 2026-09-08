@@ -470,7 +470,7 @@ class JanososVersionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return const IgnorePointer(
       child: Text(
-        'V6 PREVIEW',
+        'V6.2',
         style: TextStyle(
           color: Colors.white,
           fontFamily: 'Courier',
@@ -508,10 +508,11 @@ class _ArcadeGameLoadingOverlay extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '★ JANOSOS ARCADE ★',
+              '★ ANOTHER RETRO RUNNER GAME ★',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color(0xFFFFD700),
-                fontSize: 15,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2,
               ),
