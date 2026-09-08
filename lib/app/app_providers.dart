@@ -52,6 +52,18 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   throw UnimplementedError('AuthRepository must be provided by bootstrap.');
 });
 
+final authSessionProvider = StreamProvider<AuthSessionSnapshot>((ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  return repository.sessionChanges;
+});
+
+final isGuestSessionProvider = Provider<bool>((ref) {
+  final authAsync = ref.watch(authSessionProvider);
+  final session =
+      authAsync.valueOrNull ?? ref.watch(authRepositoryProvider).currentSession;
+  return session.user?.isGuest == true || !session.isAuthenticated;
+});
+
 final localGameStateStoreProvider = Provider<LocalGameStateStore>((ref) {
   return LocalGameStateStore(
     preferences: ref.watch(sharedPreferencesProvider),
@@ -61,7 +73,8 @@ final localGameStateStoreProvider = Provider<LocalGameStateStore>((ref) {
 
 final leaderboardRepositoryProvider = Provider<LeaderboardRepository>((ref) {
   final environment = ref.watch(appEnvironmentProvider);
-  if (environment.usesLocalBackend) {
+  final isGuest = ref.watch(isGuestSessionProvider);
+  if (environment.usesLocalBackend || isGuest) {
     return LocalLeaderboardRepository(
       database: ref.watch(appDatabaseProvider),
       authRepository: ref.watch(authRepositoryProvider),
@@ -83,7 +96,8 @@ final runResultRecorderProvider = Provider<RunResultRecorder>((ref) {
 
 final campaignRepositoryProvider = Provider<CampaignRepository>((ref) {
   final environment = ref.watch(appEnvironmentProvider);
-  if (environment.usesLocalBackend) {
+  final isGuest = ref.watch(isGuestSessionProvider);
+  if (environment.usesLocalBackend || isGuest) {
     return LocalCampaignRepository(
       store: ref.watch(localGameStateStoreProvider),
     );
@@ -117,7 +131,8 @@ final campaignResultCoordinatorProvider = Provider<CampaignResultCoordinator>((
 
 final bossRushRepositoryProvider = Provider<BossRushRepository>((ref) {
   final environment = ref.watch(appEnvironmentProvider);
-  if (environment.usesLocalBackend) {
+  final isGuest = ref.watch(isGuestSessionProvider);
+  if (environment.usesLocalBackend || isGuest) {
     return LocalBossRushRepository(
       store: ref.watch(localGameStateStoreProvider),
     );
@@ -137,7 +152,8 @@ final bossRushCoordinatorProvider = Provider<BossRushCoordinator>((ref) {
 
 final progressionRepositoryProvider = Provider<ProgressionRepository>((ref) {
   final environment = ref.watch(appEnvironmentProvider);
-  if (environment.usesLocalBackend) {
+  final isGuest = ref.watch(isGuestSessionProvider);
+  if (environment.usesLocalBackend || isGuest) {
     return LocalProgressionRepository(
       store: ref.watch(localGameStateStoreProvider),
     );
