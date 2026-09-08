@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_router.dart';
 import 'app_theme.dart';
+import 'widgets/horizontal_orientation_guard.dart';
 
 class JanososApp extends ConsumerWidget {
   const JanososApp({super.key});
@@ -15,6 +16,11 @@ class JanososApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: buildJanososTheme(),
       routerConfig: router,
+      builder: (context, child) {
+        return HorizontalOrientationGuard(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

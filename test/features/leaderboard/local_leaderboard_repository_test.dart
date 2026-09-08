@@ -91,4 +91,45 @@ void main() {
     expect(bossRush, hasLength(1));
     expect(bossRush.first.completionsCount, 3);
   });
+
+  test('auto-migrates historical runs from database when cache is empty', () async {
+    await database.saveResultProjection(
+      id: 'run-1',
+      userId: 'user-a',
+      characterId: 'parker',
+      mode: 'endless',
+      outcome: 'defeat',
+      validationStatus: 'valid',
+      contentVersion: 'v6-preview-1',
+      score: 9999,
+      durationMs: 65000,
+      levelReached: 1,
+      endedAt: DateTime.now().subtract(const Duration(days: 2)),
+      isSynced: true,
+    );
+
+    await database.saveResultProjection(
+      id: 'run-br',
+      userId: 'user-a',
+      characterId: 'jano',
+      mode: 'boss_rush',
+      outcome: 'victory',
+      validationStatus: 'valid',
+      contentVersion: 'v6-preview-1',
+      score: 500,
+      durationMs: 30000,
+      levelReached: 1,
+      endedAt: DateTime.now().subtract(const Duration(days: 1)),
+      isSynced: true,
+    );
+
+    final endless = await repository.fetchEndlessLeaderboard();
+    expect(endless, hasLength(1));
+    expect(endless.first.score, 9999);
+    expect(endless.first.characterId, CharacterId.parker);
+
+    final bossRush = await repository.fetchBossRushLeaderboard();
+    expect(bossRush, hasLength(1));
+    expect(bossRush.first.completionsCount, 1);
+  });
 }

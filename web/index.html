@@ -122,9 +122,80 @@
       margin-top: 14px;
       letter-spacing: 1px;
     }
+
+    #portrait-orientation-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: radial-gradient(circle at center, #0F1D32 0%, #070D16 100%);
+      z-index: 9999999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+      box-sizing: border-box;
+      font-family: 'Courier New', Courier, monospace, sans-serif;
+      color: #FFFFFF;
+    }
+
+    @media screen and (orientation: portrait) and (max-width: 950px) {
+      #portrait-orientation-warning {
+        display: flex;
+      }
+    }
+
+    .rotate-card {
+      border: 3px solid #00F5FF;
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.5), inset 0 0 15px rgba(0, 245, 255, 0.2);
+      border-radius: 8px;
+      padding: 28px 24px;
+      background: rgba(10, 18, 30, 0.96);
+      max-width: 85vw;
+      box-sizing: border-box;
+    }
+
+    .rotate-icon {
+      font-size: 46px;
+      margin-bottom: 12px;
+      animation: rotatePhone 2.2s ease-in-out infinite;
+      display: inline-block;
+    }
+
+    @keyframes rotatePhone {
+      0%, 15% { transform: rotate(0deg); }
+      50%, 65% { transform: rotate(-90deg); }
+      90%, 100% { transform: rotate(0deg); }
+    }
+
+    .rotate-title {
+      font-size: 15px;
+      font-weight: 900;
+      color: #FFD700;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+      margin-bottom: 10px;
+    }
+
+    .rotate-desc {
+      font-size: 12px;
+      color: #00F5FF;
+      line-height: 1.4;
+      font-weight: bold;
+    }
   </style>
 
   <script>
+    function tryLockLandscape() {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(function() {});
+      }
+    }
+    window.addEventListener('load', tryLockLandscape);
+    window.addEventListener('orientationchange', tryLockLandscape);
     // PWA Install Prompt Capture
     let deferredInstallPrompt = null;
     window.addEventListener('beforeinstallprompt', function(e) {
@@ -189,6 +260,16 @@
   </script>
 </head>
 <body>
+  <!-- Orientation warning overlay for mobile browsers held vertically -->
+  <div id="portrait-orientation-warning">
+    <div class="rotate-card">
+      <div class="rotate-icon">📱</div>
+      <div class="rotate-title">GIRA TU DISPOSITIVO</div>
+      <div class="rotate-subtitle">ORIENTACIÓN HORIZONTAL REQUERIDA</div>
+      <div class="rotate-desc">Another retro runner game requiere jugarse con la pantalla en horizontal (Landscape).</div>
+    </div>
+  </div>
+
   <!-- Retro Loading Screen shown before Flutter engine initializes -->
   <div id="app-loading-screen">
     <div class="retro-card">

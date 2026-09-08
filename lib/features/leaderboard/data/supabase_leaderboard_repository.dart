@@ -56,7 +56,92 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
           ),
         );
       }
-      return entries;
+      if (entries.isEmpty) {
+        try {
+          final legacyRes = await _client
+              .from('leaderboard_entries')
+              .select(
+                'user_id, display_name, character_id, total_score, duration_ms, ended_at',
+              )
+              .eq('mode', 'standard')
+              .order('total_score', ascending: false)
+              .order('duration_ms', ascending: true)
+              .limit(limit * 2);
+          final legacyRows =
+              (legacyRes as List<Object?>).cast<Map<String, Object?>>();
+          if (legacyRows.isNotEmpty) {
+            final uniqueByUser = <String, Map<String, Object?>>{};
+            for (final row in legacyRows) {
+              final uid = row['user_id'] as String? ?? '';
+              if (uid.isNotEmpty && !uniqueByUser.containsKey(uid)) {
+                uniqueByUser[uid] = row;
+              }
+            }
+            var pos = 1;
+            for (final row in uniqueByUser.values) {
+              entries.add(
+                EndlessLeaderboardEntry(
+                  position: pos++,
+                  userId: row['user_id'] as String,
+                  displayName:
+                      (row['display_name'] as String?)?.trim().isNotEmpty ==
+                              true
+                          ? row['display_name'] as String
+                          : 'Jugador',
+                  characterId: CharacterIdSerialization.parse(
+                    row['character_id'] as String? ?? 'jano',
+                  ),
+                  score: (row['total_score'] as num?)?.toInt() ?? 0,
+                  durationMs: (row['duration_ms'] as num?)?.toInt() ?? 0,
+                  updatedAt:
+                      DateTime.tryParse(row['ended_at'] as String? ?? '') ??
+                      DateTime.now(),
+                ),
+              );
+            }
+          }
+        } catch (_) {}
+      }
+
+      // Merge current logged-in user's local best run if not on server yet or higher
+      final user = _authRepository.currentSession.user;
+      if (user != null && !user.isGuest) {
+        try {
+          final localList =
+              await _localRepository.fetchEndlessLeaderboard(limit: 10);
+          final userLocal =
+              localList.where((e) => e.userId == user.id).firstOrNull;
+          if (userLocal != null) {
+            final existingIdx = entries.indexWhere((e) => e.userId == user.id);
+            if (existingIdx == -1) {
+              entries.add(userLocal);
+            } else if (userLocal.score > entries[existingIdx].score) {
+              entries[existingIdx] = userLocal;
+            }
+            entries.sort((a, b) {
+              final cmp = b.score.compareTo(a.score);
+              if (cmp != 0) return cmp;
+              return b.durationMs.compareTo(a.durationMs);
+            });
+            for (var i = 0; i < entries.length; i++) {
+              entries[i] = EndlessLeaderboardEntry(
+                position: i + 1,
+                userId: entries[i].userId,
+                displayName: entries[i].displayName,
+                characterId: entries[i].characterId,
+                score: entries[i].score,
+                durationMs: entries[i].durationMs,
+                updatedAt: entries[i].updatedAt,
+              );
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (entries.isNotEmpty) {
+        return entries.take(limit).toList();
+      }
+      return await _localRepository.fetchEndlessLeaderboard(limit: limit);
     } catch (_) {
       return _localRepository.fetchEndlessLeaderboard(limit: limit);
     }
@@ -93,7 +178,44 @@ class SupabaseLeaderboardRepository implements LeaderboardRepository {
           ),
         );
       }
-      return entries;
+      // Merge current logged-in user's local boss rush clears if higher or missing
+      final user = _authRepository.currentSession.user;
+      if (user != null && !user.isGuest) {
+        try {
+          final localList =
+              await _localRepository.fetchBossRushLeaderboard(limit: 10);
+          final userLocal =
+              localList.where((e) => e.userId == user.id).firstOrNull;
+          if (userLocal != null) {
+            final existingIdx = entries.indexWhere((e) => e.userId == user.id);
+            if (existingIdx == -1) {
+              entries.add(userLocal);
+            } else if (userLocal.completionsCount >
+                entries[existingIdx].completionsCount) {
+              entries[existingIdx] = userLocal;
+            }
+            entries.sort((a, b) {
+              final cmp = b.completionsCount.compareTo(a.completionsCount);
+              if (cmp != 0) return cmp;
+              return a.updatedAt.compareTo(b.updatedAt);
+            });
+            for (var i = 0; i < entries.length; i++) {
+              entries[i] = BossRushLeaderboardEntry(
+                position: i + 1,
+                userId: entries[i].userId,
+                displayName: entries[i].displayName,
+                completionsCount: entries[i].completionsCount,
+                updatedAt: entries[i].updatedAt,
+              );
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (entries.isNotEmpty) {
+        return entries.take(limit).toList();
+      }
+      return await _localRepository.fetchBossRushLeaderboard(limit: limit);
     } catch (_) {
       return _localRepository.fetchBossRushLeaderboard(limit: limit);
     }

@@ -13,9 +13,11 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
     required AppDatabase database,
     required AuthRepository authRepository,
     SharedPreferences? preferences,
-  }) : _authRepository = authRepository,
+  }) : _database = database,
+       _authRepository = authRepository,
        _preferences = preferences;
 
+  final AppDatabase _database;
   final AuthRepository _authRepository;
   final SharedPreferences? _preferences;
 
@@ -31,6 +33,36 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
     int limit = 50,
   }) async {
     final raw = _loadMap(_endlessKey, _memoryEndless);
+
+    // Auto-migrate historical scores from local SQLite database if cache is empty
+    if (raw.isEmpty) {
+      try {
+        final allProjections =
+            await _database.select(_database.resultProjections).get();
+        final currentUser = _authRepository.currentSession.user;
+        for (final p in allProjections) {
+          if (p.mode == 'standard' || p.mode == 'endless') {
+            final existing = raw[p.userId];
+            final existingScore = (existing?['score'] as num?)?.toInt() ?? -1;
+            if (p.score > existingScore) {
+              final dName = (p.userId == currentUser?.id && currentUser != null)
+                  ? currentUser.displayName
+                  : 'Jugador';
+              raw[p.userId] = {
+                'display_name': dName,
+                'character_id': p.characterId,
+                'score': p.score,
+                'duration_ms': p.durationMs,
+                'updated_at': p.endedAt.toIso8601String(),
+              };
+            }
+          }
+        }
+        if (raw.isNotEmpty) {
+          _saveMap(_endlessKey, raw, _memoryEndless);
+        }
+      } catch (_) {}
+    }
     final list = <EndlessLeaderboardEntry>[];
     for (final entry in raw.entries) {
       final map = entry.value;
@@ -81,6 +113,41 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
     int limit = 50,
   }) async {
     final raw = _loadMap(_bossRushKey, _memoryBossRush);
+
+    // Auto-migrate historical boss rush clears from local SQLite database if cache is empty
+    if (raw.isEmpty) {
+      try {
+        final allProjections =
+            await _database.select(_database.resultProjections).get();
+        final currentUser = _authRepository.currentSession.user;
+        final countByUser = <String, int>{};
+        final lastEndedByUser = <String, DateTime>{};
+        for (final p in allProjections) {
+          if (p.mode == 'boss_rush' && p.outcome == 'victory') {
+            countByUser[p.userId] = (countByUser[p.userId] ?? 0) + 1;
+            final prev = lastEndedByUser[p.userId];
+            if (prev == null || p.endedAt.isAfter(prev)) {
+              lastEndedByUser[p.userId] = p.endedAt;
+            }
+          }
+        }
+        for (final entry in countByUser.entries) {
+          final uid = entry.key;
+          final dName = (uid == currentUser?.id && currentUser != null)
+              ? currentUser.displayName
+              : 'Jugador';
+          raw[uid] = {
+            'display_name': dName,
+            'completions_count': entry.value,
+            'updated_at':
+                (lastEndedByUser[uid] ?? DateTime.now()).toIso8601String(),
+          };
+        }
+        if (raw.isNotEmpty) {
+          _saveMap(_bossRushKey, raw, _memoryBossRush);
+        }
+      } catch (_) {}
+    }
     final list = <BossRushLeaderboardEntry>[];
     for (final entry in raw.entries) {
       final map = entry.value;
