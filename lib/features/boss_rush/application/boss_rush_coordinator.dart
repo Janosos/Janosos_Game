@@ -39,10 +39,10 @@ class BossRushCoordinator {
       characterId: characterId,
       contentVersion: _environment.contentVersion,
     );
-    if (!snapshot.storeUnlocked) {
+    if (!snapshot.campaignCompleted) {
       throw const AppFailure(
         AppFailureCode.conflict,
-        'Completa la campaña con este personaje para desbloquear Boss Rush.',
+        'Completa los 10 niveles de la campaña con este personaje para desbloquear Boss Rush.',
       );
     }
     final palette = snapshot.palettes

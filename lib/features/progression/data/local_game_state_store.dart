@@ -75,7 +75,23 @@ class LocalGameStateStore {
 
   LocalGameState _load() {
     final encoded = _preferences.getString(_storageKey);
-    if (encoded == null) return LocalGameState.empty();
+    if (encoded == null) {
+      final currentUserId = _authRepository.currentSession.user?.id;
+      if (currentUserId != null && currentUserId != 'guest') {
+        final guestEncoded = _preferences.getString('${_keyPrefix}guest');
+        if (guestEncoded != null) {
+          try {
+            final value = jsonDecode(guestEncoded);
+            if (value is Map<String, Object?> &&
+                value['version'] == _schemaVersion) {
+              _preferences.setString(_storageKey, guestEncoded);
+              return LocalGameState.fromJson(value);
+            }
+          } catch (_) {}
+        }
+      }
+      return LocalGameState.empty();
+    }
     try {
       final value = jsonDecode(encoded);
       if (value is! Map<String, Object?> ||

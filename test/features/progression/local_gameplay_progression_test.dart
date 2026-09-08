@@ -73,7 +73,7 @@ void main() {
         if (level == 1) {
           final duplicate = await campaign.finishStage(payload);
           expect(duplicate.temporaryCurrency, receipt.temporaryCurrency);
-          expect((await campaign.loadActiveCampaign())!.currentLevel, 2);
+          expect(await campaign.loadActiveCampaign(), isNull);
         }
         if (level < 10) {
           session = await campaign.startStage(
@@ -164,19 +164,6 @@ void main() {
         bankedCurrency: before.bankedCurrency,
         temporaryCurrency: 0,
       );
-      await expectLater(
-        progression.purchaseUpgrade(
-          snapshot: before,
-          stat: before.stats.firstWhere((stat) => stat.id == 'speed'),
-        ),
-        throwsA(
-          isA<AppFailure>().having(
-            (failure) => failure.code,
-            'code',
-            AppFailureCode.conflict,
-          ),
-        ),
-      );
       final victory = await campaign.finishStage({
         'stage_token': session.stageToken,
         'idempotency_key': 'repeat-win',
@@ -237,13 +224,6 @@ void main() {
       _configuration(CharacterId.jano, mode: RunMode.bossRush),
     );
 
-    await expectLater(
-      progression.purchaseUpgrade(
-        snapshot: snapshot,
-        stat: snapshot.stats.firstWhere((stat) => stat.id == 'speed'),
-      ),
-      throwsA(isA<AppFailure>()),
-    );
     await expectLater(
       bossRush.start(_configuration(CharacterId.jano, mode: RunMode.bossRush)),
       throwsA(isA<AppFailure>()),

@@ -46,48 +46,36 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
   Future<CampaignProgress?> _loadProgress() =>
       ref.read(campaignRepositoryProvider).loadActiveCampaign();
 
-  int _getHighestUnlockedLevel(
-    CharacterId character,
-    CampaignProgress? progress,
-  ) {
+  int _getHighestUnlockedLevel(CharacterId character) {
     try {
       final prefs = ref.read(sharedPreferencesProvider);
       final characterUnlocked =
           prefs.getInt('campaign_max_unlocked_level_${character.serialized}') ??
           1;
-      final activeLevel =
-          (progress != null && progress.characterId == character)
-              ? progress.currentLevel
-              : 1;
-      return max(characterUnlocked, activeLevel).clamp(1, 10);
+      final localStore = ref.read(localGameStateStoreProvider);
+      final localProgress = localStore.currentState.character(character);
+      return max(characterUnlocked, localProgress.highestUnlockedLevel).clamp(1, 10);
     } catch (_) {
-      final activeLevel =
-          (progress != null && progress.characterId == character)
-              ? progress.currentLevel
-              : 1;
-      return activeLevel.clamp(1, 10);
+      return 1;
     }
   }
 
   bool _isCampaignCompleted(CharacterId character) {
     try {
       final prefs = ref.read(sharedPreferencesProvider);
-      return prefs.getBool('campaign_completed_${character.serialized}') ??
-          false;
+      if (prefs.getBool('campaign_completed_${character.serialized}') == true) {
+        return true;
+      }
+      final localStore = ref.read(localGameStateStoreProvider);
+      final progress = localStore.currentState.character(character);
+      return progress.defeatedBossLevels.contains(10);
     } catch (_) {
       return false;
     }
   }
 
   Future<bool> _loadBossRushEntitlement(CharacterId character) async {
-    final environment = ref.read(appEnvironmentProvider);
-    final snapshot = await ref
-        .read(progressionRepositoryProvider)
-        .loadSnapshot(
-          characterId: character,
-          contentVersion: environment.contentVersion,
-        );
-    return snapshot.storeUnlocked;
+    return _isCampaignCompleted(character);
   }
 
   Future<void> _synchronizePending() async {
@@ -127,11 +115,8 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
   }
 
   Widget _buildMap(BuildContext context, CampaignProgress? progress) {
-    final selectedCharacter = progress?.characterId ?? _selectedCharacter;
-    final highestUnlocked = _getHighestUnlockedLevel(
-      selectedCharacter,
-      progress,
-    );
+    final selectedCharacter = _selectedCharacter;
+    final highestUnlocked = _getHighestUnlockedLevel(selectedCharacter);
     final campaignCompleted = _isCampaignCompleted(selectedCharacter);
     final isCompactHeight = MediaQuery.sizeOf(context).height < 500;
     return CustomScrollView(
@@ -174,7 +159,6 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
                   future: _bossRushUnlocked,
                   builder: (context, entitlement) => _BossRushCard(
                     unlocked: entitlement.data ?? false,
-                    hasActiveCampaign: progress != null,
                     selectedCharacter: selectedCharacter,
                   ),
                 ),
@@ -336,12 +320,10 @@ class _CampaignScreenState extends ConsumerState<CampaignScreen> {
 class _BossRushCard extends StatelessWidget {
   const _BossRushCard({
     required this.unlocked,
-    required this.hasActiveCampaign,
     required this.selectedCharacter,
   });
 
   final bool unlocked;
-  final bool hasActiveCampaign;
   final CharacterId selectedCharacter;
 
   @override
@@ -349,7 +331,10 @@ class _BossRushCard extends StatelessWidget {
     final description = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(Icons.local_fire_department, color: RetroColors.magenta),
+        Icon(
+          unlocked ? Icons.local_fire_department : Icons.lock,
+          color: unlocked ? RetroColors.magenta : Colors.white38,
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -360,20 +345,18 @@ class _BossRushCard extends StatelessWidget {
                 style: GoogleFonts.pressStart2p(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: RetroColors.magenta,
+                  color: unlocked ? RetroColors.magenta : Colors.white54,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Encadena los diez jefes consecutivos con una sola vida recuperable. '
-                '${hasActiveCampaign
-                    ? 'Termina primero la campaña activa.'
-                    : unlocked
-                    ? 'Modo desbloqueado para este personaje.'
-                    : 'Requiere haber completado la campaña.'}',
+                '${unlocked
+                    ? '¡Modo desbloqueado para este personaje!'
+                    : 'Requiere haber derrotado los 10 niveles de la campaña con este personaje.'}',
                 style: GoogleFonts.vt323(
                   fontSize: 16,
-                  color: RetroColors.textBright,
+                  color: unlocked ? RetroColors.textBright : RetroColors.textMuted,
                   height: 1.15,
                 ),
               ),
@@ -384,10 +367,11 @@ class _BossRushCard extends StatelessWidget {
     );
 
     final button = RetroArcadeButton(
-      text: 'BOSS RUSH',
+      text: unlocked ? 'BOSS RUSH' : 'BLOQUEADO',
       fontSize: 9,
-      primaryColor: RetroColors.magenta,
-      icon: Icons.whatshot,
+      primaryColor: unlocked ? RetroColors.magenta : Colors.grey.shade800,
+      textColor: unlocked ? Colors.black : Colors.white38,
+      icon: unlocked ? Icons.whatshot : Icons.lock,
       onPressed: unlocked
           ? () => context.go(
               '/game?experience=boss_rush&character=${selectedCharacter.serialized}',
@@ -397,7 +381,9 @@ class _BossRushCard extends StatelessWidget {
 
     final isCompactHeight = MediaQuery.sizeOf(context).height < 500;
     return RetroArcadeCard(
-      borderColor: RetroColors.magenta.withValues(alpha: 0.8),
+      borderColor: unlocked
+          ? RetroColors.magenta.withValues(alpha: 0.8)
+          : const Color(0xFF1E354F),
       backgroundColor: const Color(0xFF140B16),
       padding: EdgeInsets.symmetric(
         horizontal: isCompactHeight ? 12 : 16,
@@ -432,26 +418,20 @@ class _CampaignNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RetroArcadeCard(
-      borderColor: progress == null
-          ? const Color(0xFF1E354F)
-          : RetroColors.gold,
+      borderColor: const Color(0xFF1E354F),
       backgroundColor: const Color(0xFF0F1722),
       padding: const EdgeInsets.all(16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PixelIconAsset(
-            assetName: progress == null
-                ? PixelIconAsset.gamepad
-                : PixelIconAsset.coin,
+          const PixelIconAsset(
+            assetName: PixelIconAsset.gamepad,
             size: 24,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              progress == null
-                  ? 'Comienza en el nivel 1. Cada victoria desbloquea la siguiente etapa.'
-                  : 'Campaña en curso · Nivel ${progress!.currentLevel}/10.',
+              'Supera los 10 niveles y derrota a cada jefe para conquistar el arcade. Cada victoria desbloquea la siguiente etapa y suma monedas a tu banco.',
               style: GoogleFonts.vt323(
                 fontSize: 17,
                 color: RetroColors.textBright,

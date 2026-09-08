@@ -22,13 +22,8 @@ class LocalCampaignRepository implements CampaignRepository {
   @override
   Future<CampaignProgress?> loadActiveCampaign() {
     return _store.mutate((state) {
-      final campaign = state.campaign;
-      if (campaign == null) return null;
-      if (campaign.expectedSequence == 11) {
-        _bankCompletedCampaign(state, campaign);
-        return null;
-      }
-      return _progress(campaign);
+      state.campaign = null;
+      return null;
     });
   }
 
@@ -65,7 +60,7 @@ class LocalCampaignRepository implements CampaignRepository {
           characterId: configuration.characterId,
           level: effectiveLevel,
           expectedSequence: effectiveLevel,
-          temporaryCurrency: 0,
+          temporaryCurrency: temporaryCurrency,
           totalScore: 0,
           totalDurationMs: 0,
           startedAt: DateTime.now().toUtc(),
@@ -178,7 +173,6 @@ class LocalCampaignRepository implements CampaignRepository {
           campaign.expectedSequence = 11;
           progress.highestUnlockedLevel = 10;
           progress.storeUnlocked = true;
-          state.campaign = null;
         } else {
           campaign.level = sequence + 1;
           campaign.expectedSequence = sequence + 1;
@@ -189,6 +183,8 @@ class LocalCampaignRepository implements CampaignRepository {
         }
       } else {
         lostCurrency = campaign.temporaryCurrency;
+        progress.bankedCurrency =
+            (progress.bankedCurrency - lostCurrency).clamp(0, 999999999);
         state.campaign = null;
       }
 
@@ -218,16 +214,10 @@ class LocalCampaignRepository implements CampaignRepository {
       final prior = state.receipt('complete-campaign', idempotencyKey);
       if (prior != null) return _completionReceipt(prior);
       final campaign = state.campaign;
-      if (campaign == null ||
-          campaign.id != payload['campaign_id'] ||
-          campaign.expectedSequence != 11) {
-        throw const AppFailure(
-          AppFailureCode.conflict,
-          'La campaña local todavía no está lista para completarse.',
-        );
+      final newlyBanked = campaign?.temporaryCurrency ?? 0;
+      if (campaign != null) {
+        _bankCompletedCampaign(state, campaign);
       }
-      final newlyBanked = campaign.temporaryCurrency;
-      _bankCompletedCampaign(state, campaign);
       final response = <String, Object?>{
         'accepted': true,
         'ranked': false,
@@ -267,16 +257,6 @@ class LocalCampaignRepository implements CampaignRepository {
   @override
   Future<void> clearPreparedStage() async {}
 
-  static CampaignProgress _progress(LocalCampaignState campaign) =>
-      CampaignProgress(
-        campaignId: campaign.id,
-        characterId: campaign.characterId,
-        currentLevel: campaign.level,
-        expectedSequence: campaign.expectedSequence,
-        temporaryCurrency: campaign.temporaryCurrency,
-        expiresAt: DateTime.utc(9999),
-      );
-
   static String _stageToken(LocalCampaignState campaign) =>
       'local:${campaign.id}:${campaign.expectedSequence}';
 
@@ -285,9 +265,9 @@ class LocalCampaignRepository implements CampaignRepository {
     LocalCampaignState campaign,
   ) {
     final progress = state.character(campaign.characterId);
-    progress.bankedCurrency += campaign.temporaryCurrency;
     progress.storeUnlocked = true;
     progress.highestUnlockedLevel = 10;
+    progress.defeatedBossLevels.add(10);
     state.campaign = null;
   }
 

@@ -225,6 +225,7 @@ class LocalProgressionRepository implements ProgressionRepository {
       bankedCurrency: progress.bankedCurrency,
       temporaryCurrency: temporaryCurrency,
       storeUnlocked: true,
+      campaignCompleted: progress.defeatedBossLevels.contains(10),
       authorizedBuild: AuthorizedBuild(
         speedBasisPoints: effective['speed'] ?? 0,
         jumpBasisPoints: effective['jump'] ?? 0,

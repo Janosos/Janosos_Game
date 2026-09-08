@@ -20,17 +20,18 @@ class LocalBossRushRepository implements BossRushRepository {
   @override
   Future<BossRushSession> start(RunConfiguration configuration) {
     return _store.mutate((state) {
-      if (state.campaign != null || state.bossRush != null) {
+      state.campaign = null;
+      if (state.bossRush != null) {
         throw const AppFailure(
           AppFailureCode.conflict,
           'Termina o abandona la partida activa antes de iniciar Boss Rush.',
         );
       }
       final progress = state.character(configuration.characterId);
-      if (!progress.storeUnlocked) {
+      if (!progress.defeatedBossLevels.contains(10)) {
         throw const AppFailure(
           AppFailureCode.conflict,
-          'Completa la campaña con este personaje para desbloquear Boss Rush.',
+          'Completa los 10 niveles de la campaña con este personaje para desbloquear Boss Rush.',
         );
       }
       final attempt = LocalBossRushState(

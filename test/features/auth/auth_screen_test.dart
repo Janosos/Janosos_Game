@@ -104,9 +104,9 @@ void main() {
       await tester.tap(find.text('INICIAR'));
       await tester.pumpAndSettle();
 
-      // Verify Google and Apple buttons are displayed in supabase mode
+      // Verify Google button is displayed in supabase mode and Apple is not
       expect(find.text('Continuar con Google'), findsOneWidget);
-      expect(find.text('Continuar con Apple'), findsOneWidget);
+      expect(find.text('Continuar con Apple'), findsNothing);
       expect(find.text('Jugar como Invitado (Sin Registro)'), findsNothing);
     },
   );

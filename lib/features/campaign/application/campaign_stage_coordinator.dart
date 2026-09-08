@@ -26,8 +26,7 @@ class CampaignStageCoordinator {
     CharacterId requestedCharacter, {
     int requestedLevel = 1,
   }) async {
-    final active = await _loadActiveCampaignSafely();
-    final characterId = active?.characterId ?? requestedCharacter;
+    final characterId = requestedCharacter;
     final level = requestedLevel.clamp(1, 10);
     final cached = await _campaignRepository.loadPreparedStage(characterId);
     if (cached != null && cached.configuration.level == level) return cached;
@@ -87,14 +86,6 @@ class CampaignStageCoordinator {
         bankedCurrency: 0,
         temporaryCurrency: 0,
       );
-    }
-  }
-
-  Future<CampaignProgress?> _loadActiveCampaignSafely() async {
-    try {
-      return await _campaignRepository.loadActiveCampaign();
-    } on Object {
-      return null;
     }
   }
 

@@ -178,6 +178,7 @@ class SupabaseProgressionRepository implements ProgressionRepository {
       bankedCurrency: _requiredInt(row, 'banked_currency'),
       temporaryCurrency: _requiredInt(row, 'temporary_currency'),
       storeUnlocked: true,
+      campaignCompleted: row['campaign_completed'] == true,
       authorizedBuild: AuthorizedBuild(
         speedBasisPoints: _requiredInt(statsRow, 'speed_basis_points'),
         jumpBasisPoints: _requiredInt(statsRow, 'jump_basis_points'),

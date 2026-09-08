@@ -159,6 +159,7 @@ class ProgressionSnapshot {
     required this.bankedCurrency,
     required this.temporaryCurrency,
     required this.storeUnlocked,
+    this.campaignCompleted = false,
     required this.authorizedBuild,
     required List<ProgressionStat> stats,
     required List<ProgressionSkill> skills,
@@ -176,6 +177,7 @@ class ProgressionSnapshot {
   final int bankedCurrency;
   final int temporaryCurrency;
   final bool storeUnlocked;
+  final bool campaignCompleted;
   final AuthorizedBuild authorizedBuild;
   final List<ProgressionStat> stats;
   final List<ProgressionSkill> skills;

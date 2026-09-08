@@ -9,12 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../support/fake_auth_repository.dart';
 
 void main() {
   testWidgets(
     'shows economy, exclusive skills, palettes, and purchase feedback',
     (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
       tester.view.physicalSize = const Size(1200, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -29,6 +33,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            sharedPreferencesProvider.overrideWithValue(preferences),
             appEnvironmentProvider.overrideWithValue(
               AppEnvironment(
                 backendMode: BackendMode.local,
@@ -74,14 +79,15 @@ void main() {
   testWidgets(
     'adapts responsively to compact landscape phone screen without overflow',
     (tester) async {
-      tester.view.physicalSize = const Size(800, 390);
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      tester.view.physicalSize = const Size(800, 360);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-
       final authRepository = FakeAuthRepository.signedIn(
-        userId: 'user-landscape',
-        displayName: 'Landscape Player',
+        userId: 'user-progression',
+        displayName: 'Progression Player',
       );
       addTearDown(authRepository.dispose);
       final repository = _FixtureProgressionRepository();
@@ -89,6 +95,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            sharedPreferencesProvider.overrideWithValue(preferences),
             appEnvironmentProvider.overrideWithValue(
               AppEnvironment(
                 backendMode: BackendMode.local,

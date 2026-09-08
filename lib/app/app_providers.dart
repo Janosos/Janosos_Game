@@ -11,20 +11,17 @@ import '../features/auth/domain/auth_models.dart';
 import '../features/auth/domain/auth_repository.dart';
 import '../features/boss_rush/application/boss_rush_coordinator.dart';
 import '../features/boss_rush/data/local_boss_rush_repository.dart';
-import '../features/boss_rush/data/supabase_boss_rush_repository.dart';
 import '../features/boss_rush/domain/boss_rush_repository.dart';
 import '../features/campaign/application/run_result_recorder.dart';
 import '../features/campaign/application/campaign_stage_coordinator.dart';
 import '../features/campaign/application/campaign_result_coordinator.dart';
 import '../features/campaign/data/local_campaign_repository.dart';
-import '../features/campaign/data/supabase_campaign_repository.dart';
 import '../features/campaign/domain/campaign_repository.dart';
 import '../features/leaderboard/data/local_leaderboard_repository.dart';
 import '../features/leaderboard/data/supabase_leaderboard_repository.dart';
 import '../features/leaderboard/domain/leaderboard_repository.dart';
 import '../features/progression/data/local_progression_repository.dart';
 import '../features/progression/data/local_game_state_store.dart';
-import '../features/progression/data/supabase_progression_repository.dart';
 import '../features/progression/domain/progression_repository.dart';
 
 final appEnvironmentProvider = Provider<AppEnvironment>((ref) {
@@ -96,17 +93,8 @@ final runResultRecorderProvider = Provider<RunResultRecorder>((ref) {
 });
 
 final campaignRepositoryProvider = Provider<CampaignRepository>((ref) {
-  final environment = ref.watch(appEnvironmentProvider);
-  final isGuest = ref.watch(isGuestSessionProvider);
-  if (environment.usesLocalBackend || isGuest) {
-    return LocalCampaignRepository(
-      store: ref.watch(localGameStateStoreProvider),
-    );
-  }
-  return SupabaseCampaignRepository(
-    client: Supabase.instance.client,
-    protectedStore: ref.watch(protectedStoreProvider),
-    authRepository: ref.watch(authRepositoryProvider),
+  return LocalCampaignRepository(
+    store: ref.watch(localGameStateStoreProvider),
   );
 });
 
@@ -125,23 +113,16 @@ final campaignResultCoordinatorProvider = Provider<CampaignResultCoordinator>((
 ) {
   return CampaignResultCoordinator(
     repository: ref.watch(campaignRepositoryProvider),
-    localRepository: LocalCampaignRepository(
-      store: ref.watch(localGameStateStoreProvider),
-    ),
+    localRepository: ref.watch(campaignRepositoryProvider),
     outbox: ref.watch(encryptedOutboxProvider),
     recorder: ref.watch(runResultRecorderProvider),
   );
 });
 
 final bossRushRepositoryProvider = Provider<BossRushRepository>((ref) {
-  final environment = ref.watch(appEnvironmentProvider);
-  final isGuest = ref.watch(isGuestSessionProvider);
-  if (environment.usesLocalBackend || isGuest) {
-    return LocalBossRushRepository(
-      store: ref.watch(localGameStateStoreProvider),
-    );
-  }
-  return SupabaseBossRushRepository(client: Supabase.instance.client);
+  return LocalBossRushRepository(
+    store: ref.watch(localGameStateStoreProvider),
+  );
 });
 
 final bossRushCoordinatorProvider = Provider<BossRushCoordinator>((ref) {
@@ -155,14 +136,9 @@ final bossRushCoordinatorProvider = Provider<BossRushCoordinator>((ref) {
 });
 
 final progressionRepositoryProvider = Provider<ProgressionRepository>((ref) {
-  final environment = ref.watch(appEnvironmentProvider);
-  final isGuest = ref.watch(isGuestSessionProvider);
-  if (environment.usesLocalBackend || isGuest) {
-    return LocalProgressionRepository(
-      store: ref.watch(localGameStateStoreProvider),
-    );
-  }
-  return SupabaseProgressionRepository(client: Supabase.instance.client);
+  return LocalProgressionRepository(
+    store: ref.watch(localGameStateStoreProvider),
+  );
 });
 
 final encryptedOutboxProvider = Provider<EncryptedOutbox>((ref) {
