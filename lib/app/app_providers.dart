@@ -7,6 +7,7 @@ import '../core/persistence/app_database.dart';
 import '../core/security/protected_store.dart';
 import '../core/session/user_session_coordinator.dart';
 import '../core/sync/encrypted_outbox.dart';
+import '../features/auth/domain/auth_models.dart';
 import '../features/auth/domain/auth_repository.dart';
 import '../features/boss_rush/application/boss_rush_coordinator.dart';
 import '../features/boss_rush/data/local_boss_rush_repository.dart';
@@ -60,7 +61,7 @@ final authSessionProvider = StreamProvider<AuthSessionSnapshot>((ref) {
 final isGuestSessionProvider = Provider<bool>((ref) {
   final authAsync = ref.watch(authSessionProvider);
   final session =
-      authAsync.valueOrNull ?? ref.watch(authRepositoryProvider).currentSession;
+      authAsync.value ?? ref.watch(authRepositoryProvider).currentSession;
   return session.user?.isGuest == true || !session.isAuthenticated;
 });
 
