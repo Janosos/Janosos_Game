@@ -44,11 +44,12 @@ class DinoSkinAuraComponent extends PositionComponent {
         center,
         baseRadius * 1.15,
         [
-          const Color(0xEEFFE600),
-          const Color(0x9900F5FF),
+          const Color(0x00000000), // Transparent center so Nanic is completely visible
+          const Color(0x44FFE600),
+          const Color(0x8800F5FF),
           const Color(0x000044FF),
         ],
-        [0.0, 0.6, 1.0],
+        [0.0, 0.45, 0.8, 1.0],
       );
       canvas.drawCircle(center, baseRadius * 1.15, glowPaint);
     } else {
