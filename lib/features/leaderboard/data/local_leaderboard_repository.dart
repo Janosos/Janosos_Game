@@ -21,10 +21,10 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
     LeaderboardCursor? after,
     int pageSize = 25,
   }) async {
-    final userId = _authRepository.currentSession.user?.id;
-    if (userId != null) {
+    final user = _authRepository.currentSession.user;
+    if (user != null && !user.isGuest) {
       final rows = await _database.personalResultHistory(
-        userId: userId,
+        userId: user.id,
         characterId: filter.characterId.serialized,
         mode: filter.mode.serialized,
         limit: 100,
@@ -39,8 +39,7 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
             LeaderboardEntry(
               id: row.id,
               position: i + 1,
-              displayName:
-                  _authRepository.currentSession.user?.displayName ?? 'Jugador',
+              displayName: user.displayName,
               characterId: filter.characterId,
               mode: filter.mode,
               completed: row.outcome == 'victory',
@@ -64,8 +63,7 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
       entries: [],
       nextCursor: null,
       availabilityMessage:
-          'El ranking global requiere iniciar sesión con una cuenta. '
-          'Tus partidas locales se registrarán aquí automáticamente.',
+          'Para ver las puntuaciones y rankings se requiere iniciar sesión con una cuenta.',
     );
   }
 
@@ -74,12 +72,12 @@ class LocalLeaderboardRepository implements LeaderboardRepository {
     required LeaderboardFilter filter,
     int limit = 100,
   }) async {
-    final userId = _authRepository.currentSession.user?.id;
-    if (userId == null) {
+    final user = _authRepository.currentSession.user;
+    if (user == null || user.isGuest) {
       return const [];
     }
     final rows = await _database.personalResultHistory(
-      userId: userId,
+      userId: user.id,
       characterId: filter.characterId.serialized,
       mode: filter.mode.serialized,
       limit: limit,

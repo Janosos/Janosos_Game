@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/app_providers.dart';
 import '../../../app/widgets/character_sprite_preview.dart';
 import '../../../app/widgets/retro_pixel_widgets.dart';
 import '../../../game/domain/character_definition.dart';
 import '../../../game/domain/character_id.dart';
 import '../../../game/domain/run_configuration.dart';
+import '../../auth/application/auth_controller.dart';
 import '../application/leaderboard_controller.dart';
 import '../domain/leaderboard_models.dart';
 
@@ -15,6 +18,11 @@ class LeaderboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isGuest = ref.watch(isGuestSessionProvider);
+    if (isGuest) {
+      return const _LeaderboardAuthRequiredView();
+    }
+
     final asyncState = ref.watch(leaderboardControllerProvider);
     return asyncState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -817,4 +825,99 @@ String _formatDate(DateTime value) {
   String two(int part) => part.toString().padLeft(2, '0');
   return '${two(local.day)}/${two(local.month)}/${local.year} '
       '${two(local.hour)}:${two(local.minute)}';
+}
+
+class _LeaderboardAuthRequiredView extends ConsumerWidget {
+  const _LeaderboardAuthRequiredView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final media = MediaQuery.sizeOf(context);
+    final isCompactHeight = media.height < 520;
+    final auth = ref.watch(authControllerProvider);
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompactHeight ? 16 : 24,
+          vertical: isCompactHeight ? 12 : 24,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: RetroArcadeCard(
+            borderColor: RetroColors.cyan,
+            glow: true,
+            padding: EdgeInsets.all(isCompactHeight ? 18 : 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PixelIconAsset(
+                  assetName: PixelIconAsset.trophy,
+                  size: isCompactHeight ? 40 : 54,
+                ),
+                SizedBox(height: isCompactHeight ? 12 : 18),
+                Text(
+                  'INICIO DE SESIÓN REQUERIDO',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.pressStart2p(
+                    fontSize: isCompactHeight ? 10.5 : 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: RetroColors.cyan,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 10 : 16),
+                Text(
+                  'Para ver las puntuaciones y rankings/leaderboards se requiere inicio de sesión.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.vt323(
+                    fontSize: isCompactHeight ? 18 : 20,
+                    color: RetroColors.textBright,
+                    height: 1.25,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 6 : 10),
+                Text(
+                  'Inicia sesión con tu cuenta para desbloquear el Top Global por personaje, comparar tus récords contra otros jugadores y sincronizar tu historial.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.vt323(
+                    fontSize: isCompactHeight ? 15 : 17,
+                    color: RetroColors.textMuted,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: isCompactHeight ? 18 : 26),
+                RetroArcadeButton(
+                  text: 'INICIAR SESIÓN',
+                  icon: Icons.login,
+                  primaryColor: RetroColors.cyan,
+                  fontSize: isCompactHeight ? 8.5 : 9.5,
+                  isFullWidth: true,
+                  onPressed: auth.isBusy
+                      ? null
+                      : () async {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .signOut();
+                          if (context.mounted) {
+                            context.go('/auth');
+                          }
+                        },
+                ),
+                SizedBox(height: isCompactHeight ? 8 : 12),
+                RetroArcadeButton(
+                  text: 'VOLVER AL INICIO',
+                  icon: Icons.home_outlined,
+                  primaryColor: RetroColors.textMuted,
+                  fontSize: isCompactHeight ? 8 : 9,
+                  isFullWidth: true,
+                  onPressed: () => context.go('/home'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

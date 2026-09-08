@@ -1,5 +1,6 @@
 import 'package:dino_run_flame/app/app_providers.dart';
 import 'package:dino_run_flame/core/config/app_environment.dart';
+import 'package:dino_run_flame/features/auth/domain/auth_models.dart';
 import 'package:dino_run_flame/features/leaderboard/domain/leaderboard_models.dart';
 import 'package:dino_run_flame/features/leaderboard/domain/leaderboard_repository.dart';
 import 'package:dino_run_flame/features/leaderboard/presentation/leaderboard_screen.dart';
@@ -10,6 +11,55 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../support/fake_auth_repository.dart';
 
 void main() {
+  testWidgets('shows auth required message when user is in guest mode', (
+    tester,
+  ) async {
+    final authRepository = FakeAuthRepository(
+      session: const AuthSessionSnapshot.authenticated(
+        AuthUserProfile(
+          id: 'guest-user',
+          email: 'guest@example.com',
+          displayName: 'Guest',
+          isEmailVerified: true,
+          isGuest: true,
+        ),
+      ),
+    );
+    addTearDown(authRepository.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appEnvironmentProvider.overrideWithValue(
+            AppEnvironment(
+              backendMode: BackendMode.local,
+              supabaseUrl: '',
+              supabasePublishableKey: '',
+              authRedirectUri: Uri(
+                scheme: 'io.janosos.game',
+                host: 'auth',
+                path: '/callback',
+              ),
+              contentVersion: 'v6-preview-1',
+            ),
+          ),
+          authRepositoryProvider.overrideWithValue(authRepository),
+        ],
+        child: const MaterialApp(home: Scaffold(body: LeaderboardScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('INICIO DE SESIÓN REQUERIDO'), findsOneWidget);
+    expect(
+      find.textContaining('se requiere inicio de sesión'),
+      findsOneWidget,
+    );
+    expect(find.text('INICIAR SESIÓN'), findsOneWidget);
+    expect(find.text('VOLVER AL INICIO'), findsOneWidget);
+    expect(find.text('LEADERBOARD POR PERSONAJE'), findsNothing);
+  });
+
   testWidgets('shows verified global data and pending personal history', (
     tester,
   ) async {
